@@ -1,0 +1,59 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--portal-shadow);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+.button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.primary {
+  background: var(--portal-green);
+  color: var(--portal-on-accent);
+  border-color: var(--portal-green);
+  font-weight: 600;
+}
+.secondary {
+  background: var(--portal-surface);
+  color: var(--portal-text);
+  font-weight: 500;
+}
+.primary:not(:disabled):hover {
+  background: var(--portal-accent);
+}
+.secondary:not(:disabled):hover {
+  background: var(--portal-hover);
+  border-color: var(--portal-muted);
+}
+.button:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.primary:disabled {
+  background: var(--portal-disabled-primary);
+  border-color: var(--portal-disabled-primary);
+}
+.secondary:disabled {
+  background: var(--portal-disabled-bg);
+  color: var(--portal-disabled-text);
+}
+.button:focus-visible {
+  outline: 2px solid var(--portal-focus);
+  outline-offset: 3px;
+}
