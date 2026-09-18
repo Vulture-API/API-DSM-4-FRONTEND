@@ -1,6 +1,48 @@
 @import "tailwindcss";
 
 :root {
+  --portal-background: #f5f6f0;
+  --portal-surface: #ffffff;
+  --portal-green: #1b3824;
+  --portal-accent: #2c5c35;
+  --portal-soft: #eaf3ec;
+  --portal-text: #202720;
+  --portal-secondary: #626c65;
+  --portal-muted: #6c776f;
+  --portal-border: #dfe3da;
+  --portal-success: #2c653b;
+  --portal-hover: #f6f9f6;
+  --portal-disabled-bg: #edf0eb;
+  --portal-disabled-text: #67736a;
+  --portal-disabled-primary: #536c59;
+  --portal-on-accent: #ffffff;
+  --portal-sidebar-text: #c6d3c8;
+  --portal-sidebar-muted: #acbfb0;
+  --portal-sidebar-surface: #ffffff0d;
+  --portal-focus: #438455;
+  --portal-danger: #9b3e36;
+  --portal-danger-soft: #fbefed;
+  --portal-shadow: 0 1px 2px #1b382408;
+  --portal-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --control-height: 40px;
+  --avatar-size: 36px;
+  --table-row-height: 68px;
+  --table-head-height: 48px;
+  --page-inset: clamp(16px, 2vw, 32px);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-control: 8px;
+  --radius-panel: 12px;
+  --radius-round: 999px;
   --background: #ffffff;
   --foreground: #171717;
 }
