@@ -1,5 +1,10 @@
 "use client"
 import React, { useState } from 'react'
+import { PortalLayout } from '@/components/layout/PortalLayout/PortalLayout'
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput'
+import { Button } from '@/components/ui/Button/Button'
+import { Icon } from '@/components/ui/Icon/Icon'
+import { FeedbackState } from '@/components/ui/FeedbackState/FeedbackState'
 import styles from './App.module.css'
 
 interface Station {
@@ -451,85 +456,24 @@ const Page = () => {
   }
 
   return (
-    <div className={styles.pageWrapper}>
-      <header className={styles.topHeader}>
-        <div className={styles.headerContent}>
-          <h1 className={styles.headerTitle}>Estações de Monitoramento</h1>
-
-          <div className={styles.headerRightActions}>
-            <button
-              className={styles.headerBellBtn}
-              aria-label="Notificações"
-              title="Notificações"
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </button>
-
-            <div className={styles.serverActiveBadge}>
-              <span className={styles.serverDot} />
-              <span>Servidor Ativo</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className={styles.mainContainer}>
+    <PortalLayout title="Estações de Monitoramento">
+      <div className={styles.mainContainer}>
         <div className={styles.topActionBar}>
-          <div className={styles.searchWrapper}>
-            <svg
-              className={styles.searchIconSvg}
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              className={styles.searchInput}
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filtrar estações..."
-            />
-          </div>
+          <SearchInput
+            label="Filtrar estações"
+            placeholder="Filtrar estações..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
+          />
 
-          <button
-            className={styles.btnNewStation}
+          <Button
+            variant="primary"
             onClick={() => setIsNewModalOpen(true)}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
+            <Icon name="plus" />
             Nova Estação
-          </button>
+          </Button>
         </div>
 
         <div className={styles.dashboardGrid}>
@@ -617,8 +561,12 @@ const Page = () => {
               </table>
 
               {filteredStations.length === 0 && (
-                <div className={styles.emptyState}>
-                  <p>Nenhuma estação encontrada para &quot;{search}&quot;.</p>
+                <div style={{ padding: '24px 16px' }}>
+                  <FeedbackState
+                    kind="empty"
+                    title="Nenhuma estação encontrada"
+                    description={`Nenhuma estação encontrada correspondente a "${search}".`}
+                  />
                 </div>
               )}
             </div>
@@ -921,7 +869,7 @@ const Page = () => {
             </div>
           </aside>
         </div>
-      </main>
+      </div>
 
       {isDetailModalOpen && (
         <div
@@ -933,25 +881,12 @@ const Page = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalTopNav}>
-              <button
-                className={styles.btnVoltarLista}
+              <Button
+                variant="secondary"
                 onClick={() => setIsDetailModalOpen(false)}
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                Voltar para a lista
-              </button>
+                ← Voltar para a lista
+              </Button>
 
               <button
                 className={styles.modalCloseIconBtn}
@@ -1124,12 +1059,12 @@ const Page = () => {
             </div>
 
             <div className={styles.modalBottomActions}>
-              <button
-                className={styles.btnModalCancel}
+              <Button
+                variant="secondary"
                 onClick={() => setIsDetailModalOpen(false)}
               >
                 Fechar
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1142,25 +1077,12 @@ const Page = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalTopNav}>
-              <button
-                className={styles.btnVoltarLista}
+              <Button
+                variant="secondary"
                 onClick={handleCloseNewModal}
               >
-                <svg
-                  width="15"
-                  height="15"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                Voltar para a lista
-              </button>
+                ← Voltar para a lista
+              </Button>
 
               <button
                 className={styles.modalCloseIconBtn}
@@ -1421,36 +1343,24 @@ const Page = () => {
             {formError && <p className={styles.formErrorMsg}>{formError}</p>}
 
             <div className={styles.modalBottomActions}>
-              <button
-                className={styles.btnModalCancel}
+              <Button
+                variant="secondary"
                 onClick={handleCloseNewModal}
               >
                 Cancelar
-              </button>
-              <button
-                className={styles.btnModalSubmit}
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleCreateStation}
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <Icon name="plus" />
                 Criar Estação
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PortalLayout>
   )
 }
 

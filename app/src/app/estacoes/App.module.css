@@ -84,11 +84,7 @@
 }
 
 .mainContainer {
-  flex: 1;
-  max-width: 1440px;
   width: 100%;
-  margin: 0 auto;
-  padding: 28px 32px;
   box-sizing: border-box;
 }
 

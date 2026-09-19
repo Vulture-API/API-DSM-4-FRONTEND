@@ -1,8 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon/Icon";
 import styles from "./Sidebar.module.css";
 
-export function Sidebar() {
+export function Sidebar({ currentPath }: { currentPath?: string }) {
+  const pathnameHook = usePathname();
+  const pathname = currentPath ?? pathnameHook ?? "/administracao/usuarios";
+
+  const isEstacoesActive = pathname?.startsWith("/estacoes");
+  const isAdmActive = pathname?.startsWith("/administracao") && !isEstacoesActive;
+
   return (
     <aside className={styles.sidebar} aria-label="Menu do portal">
       <div className={styles.brand}>
@@ -19,18 +28,22 @@ export function Sidebar() {
           <Icon name="chart" />
           Dashboard Climático
         </span>
-        <span aria-disabled="true" className={styles.item}>
+        <Link
+          href="/estacoes"
+          aria-current={isEstacoesActive ? "page" : undefined}
+          className={`${styles.item} ${isEstacoesActive ? styles.active : ""}`}
+        >
           <Icon name="pin" />
-          Estações no Mapa
-        </span>
+          Estações
+        </Link>
         <span aria-disabled="true" className={styles.item}>
           <Icon name="document" />
           Relatórios &amp; Alertas
         </span>
         <Link
           href="/administracao/usuarios"
-          aria-current="page"
-          className={`${styles.item} ${styles.active}`}
+          aria-current={isAdmActive ? "page" : undefined}
+          className={`${styles.item} ${isAdmActive ? styles.active : ""}`}
         >
           <Icon name="users" />
           Administração
