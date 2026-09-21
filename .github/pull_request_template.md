@@ -17,8 +17,6 @@ Closes SCRUM-
 - [ ] A branch contém a chave `SCRUM-XX`
 - [ ] Commits com a chave do Jira na mensagem
 - [ ] Testes unitários escritos/atualizados
-- [ ] `npm run lint` passando
-- [ ] `npm test` passando com cobertura ≥ 80%
-- [ ] `npm run build` passando
+- [ ] Pipeline de CI verde (lint, tipos, testes com cobertura ≥ 80% e build)
 - [ ] Documentação atualizada, se aplicável
 - [ ] Code Review solicitado a outro Developer
