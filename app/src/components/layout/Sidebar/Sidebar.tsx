@@ -10,7 +10,9 @@ export function Sidebar({ currentPath }: { currentPath?: string }) {
   const pathname = currentPath ?? pathnameHook ?? "/administracao/usuarios";
 
   const isEstacoesActive = pathname?.startsWith("/estacoes");
-  const isAdmActive = pathname?.startsWith("/administracao") && !isEstacoesActive;
+  const isAlertasActive = pathname?.startsWith("/alertas");
+  const isAdmActive =
+    pathname?.startsWith("/administracao") && !isEstacoesActive && !isAlertasActive;
 
   return (
     <aside className={styles.sidebar} aria-label="Menu do portal">
@@ -36,10 +38,14 @@ export function Sidebar({ currentPath }: { currentPath?: string }) {
           <Icon name="pin" />
           Estações
         </Link>
-        <span aria-disabled="true" className={styles.item}>
+        <Link
+          href="/alertas"
+          aria-current={isAlertasActive ? "page" : undefined}
+          className={`${styles.item} ${isAlertasActive ? styles.active : ""}`}
+        >
           <Icon name="document" />
           Relatórios &amp; Alertas
-        </span>
+        </Link>
         <Link
           href="/administracao/usuarios"
           aria-current={isAdmActive ? "page" : undefined}

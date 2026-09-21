@@ -1,0 +1,110 @@
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.card {
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-panel);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--portal-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(27, 56, 36, 0.06);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--portal-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.iconBadge {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-control);
+  display: grid;
+  place-items: center;
+}
+
+.iconBadge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.cardValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.cardValue {
+  font-size: clamp(24px, 2vw, 32px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--portal-text);
+  letter-spacing: -0.03em;
+}
+
+.cardChange {
+  font-size: var(--text-xs);
+  color: var(--portal-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.trendUp {
+  color: var(--portal-success);
+  font-weight: 600;
+}
+
+/* Color variations */
+.totalIcon {
+  background: var(--portal-soft);
+  color: var(--portal-green);
+}
+
+.warningIcon {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.criticalIcon {
+  background: var(--portal-danger-soft);
+  color: var(--portal-danger);
+}
+
+.resolvedIcon {
+  background: #eaf3ec;
+  color: var(--portal-success);
+}
+
+@media (max-width: 1024px) {
+  .cardsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .cardsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+}
