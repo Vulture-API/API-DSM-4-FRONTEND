@@ -1416,6 +1416,113 @@
   color: #2e7d44;
 }
 
+/* CRUD Action Buttons in Modal */
+.modalHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btnEditModal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #edf5ef;
+  border: 1px solid #d0e4d4;
+  border-radius: 8px;
+  color: #193822;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnEditModal:hover {
+  background: #ddeadf;
+  border-color: #bad3c0;
+}
+
+.btnDeleteModal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #fdeeee;
+  border: 1px solid #f8d2ce;
+  border-radius: 8px;
+  color: #b9352a;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btnDeleteModal:hover {
+  background: #f9d8d4;
+  border-color: #e9b1ab;
+}
+
+.confirmDeleteBox {
+  background: #fef8f8;
+  border: 1px solid #f9d8d4;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confirmDeleteTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #b9352a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirmDeleteDesc {
+  margin: 0;
+  font-size: 13px;
+  color: #555555;
+  line-height: 1.5;
+}
+
+.confirmDeleteActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btnConfirmDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: #b9352a;
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btnConfirmDelete:hover {
+  background: #9d2b21;
+}
+
+.editFormContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
