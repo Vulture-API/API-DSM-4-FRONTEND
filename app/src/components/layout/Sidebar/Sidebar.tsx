@@ -2,68 +2,127 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { Icon } from "@/components/ui/Icon/Icon";
+
 import styles from "./Sidebar.module.css";
 
-export function Sidebar({
-  section = "users",
-}: {
+type SidebarProps = {
+  currentPath?: string;
   section?: "users" | "parameters";
-}) {
-  const pathname =
-    usePathname() ??
-    `/administracao/${section === "parameters" ? "parametros" : "usuarios"}`;
+};
+
+export function Sidebar({
+  currentPath,
+  section = "users",
+}: SidebarProps) {
+  const pathnameHook = usePathname();
+
+  const fallbackPath =
+    section === "parameters"
+      ? "/administracao/parametros"
+      : "/administracao/usuarios";
+
+  const pathname = currentPath ?? pathnameHook ?? fallbackPath;
+
   const administrationLinks = [
-    { href: "/administracao/usuarios", label: "Usuários" },
-    { href: "/administracao/parametros", label: "Parâmetros meteorológicos" },
+    {
+      href: "/administracao/usuarios",
+      label: "Usuários",
+    },
+    {
+      href: "/administracao/parametros",
+      label: "Parâmetros meteorológicos",
+    },
   ];
+
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
-  const administrationActive = administrationLinks.some(({ href }) => isActive(href));
+
+  const isEstacoesActive = isActive("/estacoes");
+  const isAlertasActive = isActive("/alertas");
+
+  const administrationActive = administrationLinks.some(({ href }) =>
+    isActive(href),
+  );
+
   return (
     <aside className={styles.sidebar} aria-label="Menu do portal">
       <div className={styles.brand}>
         <span className={styles.logo}>
           <Icon name="leaf" />
         </span>
+
         <div>
           <strong>AGRITECH</strong>
           <span>PORTAL CLIMÁTICO</span>
         </div>
       </div>
+
       <nav aria-label="Navegação principal" className={styles.nav}>
         <span aria-disabled="true" className={styles.item}>
           <Icon name="chart" />
           Dashboard Climático
         </span>
-        <span aria-disabled="true" className={styles.item}>
+
+        <Link
+          href="/estacoes"
+          aria-current={isEstacoesActive ? "page" : undefined}
+          className={`${styles.item} ${
+            isEstacoesActive ? styles.active : ""
+          }`}
+        >
           <Icon name="pin" />
-          Estações no Mapa
-        </span>
-        <span aria-disabled="true" className={styles.item}>
+          Estações
+        </Link>
+
+        <Link
+          href="/alertas"
+          aria-current={isAlertasActive ? "page" : undefined}
+          className={`${styles.item} ${
+            isAlertasActive ? styles.active : ""
+          }`}
+        >
           <Icon name="document" />
           Relatórios &amp; Alertas
-        </span>
-        <div className={styles.group} role="group" aria-label="Administração">
-          <div className={`${styles.item} ${administrationActive ? styles.active : ""}`}>
+        </Link>
+
+        <div
+          className={styles.group}
+          role="group"
+          aria-label="Administração"
+        >
+          <div
+            className={`${styles.item} ${
+              administrationActive ? styles.active : ""
+            }`}
+          >
             <Icon name="users" />
             Administração
           </div>
+
           <ul className={styles.submenu}>
-            {administrationLinks.map(({ href, label }) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={isActive(href) ? "page" : undefined}
-                  className={`${styles.subitem} ${isActive(href) ? styles.selected : ""}`}
-                >
-                  {label}
-                </Link>
-              </li>
-            ))}
+            {administrationLinks.map(({ href, label }) => {
+              const active = isActive(href);
+
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={`${styles.subitem} ${
+                      active ? styles.selected : ""
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </nav>
+
       {/*
       <div className={styles.profile}>
         <span className={styles.avatar}>
@@ -73,7 +132,8 @@ export function Sidebar({
           <strong>Ambiente de demonstração</strong>
           <span>Dados mockados</span>
         </div>
-      </div> */}
+      </div>
+      */}
     </aside>
   );
 }
