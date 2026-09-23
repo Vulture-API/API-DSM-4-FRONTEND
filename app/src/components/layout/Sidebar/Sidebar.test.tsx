@@ -14,7 +14,7 @@ describe("Navegação administrativa", () => {
     render(<Sidebar />);
     const links = within(screen.getByRole("group", { name: "Administração" })).getAllByRole("link");
     expect(links.map((link) => link.textContent)).toEqual(["Usuários", "Parâmetros meteorológicos"]);
-    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(links).toHaveLength(2);
     for (const link of links) {
       expect(existsSync(resolve("src/app", `.${link.getAttribute("href")}/page.tsx`))).toBe(true);
     }

@@ -29,7 +29,7 @@ export function UsersTable({ users }: { users: UserListItem[] }) {
                 <Link
                   href={`/administracao/usuarios/${user.id}`}
                   className={styles.rowLink}
-                  aria-label={`Ver detalhes de ${user.nome}`}
+                  
                 >
                   <div className={styles.identity}>
                     <span className={styles.avatar} aria-hidden="true">
@@ -44,6 +44,8 @@ export function UsersTable({ users }: { users: UserListItem[] }) {
                       <span
                         className={styles.email}
                         title={user.email ?? undefined}
+                        aria-hidden="true"
+                        
                       >
                         {user.email ?? "E-mail não informado"}
                       </span>
