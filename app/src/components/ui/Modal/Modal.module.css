@@ -1,0 +1,25 @@
+.modal {
+  width: min(440px, calc(100% - 32px));
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: var(--space-6);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-panel);
+  color: var(--portal-text);
+  background: var(--portal-surface);
+  font: inherit;
+  box-shadow: 0 16px 48px #1b382426;
+}
+.modal::backdrop {
+  background: #10291ccc;
+}
+.modal h2 {
+  margin: 0 0 var(--space-4);
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.formSize { width: min(600px, calc(100% - 32px)); }
+.formSize h2 { padding-right: var(--space-8); font-size: 26px; margin-bottom: var(--space-1); }
+.close { position: absolute; top: var(--space-4); right: var(--space-4); }

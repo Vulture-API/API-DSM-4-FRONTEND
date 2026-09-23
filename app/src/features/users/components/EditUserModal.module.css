@@ -1,0 +1,126 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.description {
+  margin: -4px 0 0;
+  color: var(--portal-secondary);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  color: var(--portal-text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.label span {
+  color: var(--portal-danger);
+}
+
+.select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 38px 0 13px;
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-control);
+  outline: none;
+  background: var(--portal-surface);
+  color: var(--portal-text);
+  font: inherit;
+  font-size: var(--text-base);
+}
+
+.select:focus-visible {
+  border-color: var(--portal-accent);
+  box-shadow: 0 0 0 3px rgb(41 100 60 / 12%);
+}
+
+.invalid {
+  border-color: var(--portal-danger);
+}
+
+.error {
+  color: var(--portal-danger);
+  font-size: var(--text-xs);
+}
+
+.statusFieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.statusOptions {
+  display: flex;
+  gap: 22px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.radioLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-base);
+}
+
+.radioLabel input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--portal-accent);
+}
+
+.emailNotice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: 14px var(--space-4);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-control);
+  background: var(--portal-soft);
+}
+
+.emailNotice strong {
+  font-size: var(--text-sm);
+}
+
+.emailNotice span {
+  font-size: var(--text-base);
+}
+
+.emailNotice small {
+  margin-top: 2px;
+  color: var(--portal-secondary);
+  line-height: 1.4;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: var(--space-1) -24px -24px;
+  padding: 18px var(--space-6);
+  border-top: 1px solid var(--portal-border);
+}
+
+@media (max-width: 560px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+}

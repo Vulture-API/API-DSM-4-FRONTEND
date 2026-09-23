@@ -25,26 +25,13 @@ describe("Listagem de usuários", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("explica os controles indisponíveis sem depender de tooltip nativo", async () => {
-    render(<UsersList />);
-    await screen.findByRole("table");
-    for (const name of ["Filtrar por Grupo", "Convidar Membro"]) {
-      const button = screen.getByRole("button", { name });
-      expect(button).toBeDisabled();
-      expect(button).toHaveAccessibleDescription(
-        /Filtro por grupo indisponível/,
-      );
-      expect(button).not.toHaveAttribute("title");
-    }
-  });
-
   it("preserva o nome e e-mail completos no conteúdo acessível mesmo quando longos", async () => {
     const [base] = await new MockUserRepository().list();
     const nome = "Maria Aparecida de Albuquerque e Silva";
     const email = "maria.aparecida.albuquerque.silva@example.com";
     render(
       <UsersList
-        repository={{ list: async () => [{ ...base, nome, email }] }}
+        repository={Object.assign(new MockUserRepository(), { list: async () => [{ ...base, nome, email }] })}
       />,
     );
     expect(await screen.findByText(email)).toHaveAttribute("title", email);
@@ -59,7 +46,7 @@ describe("Listagem de usuários", () => {
     expect(
       screen.getByRole("navigation", { name: "Navegação principal" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Administração" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Usuários" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -79,21 +66,19 @@ describe("Listagem de usuários", () => {
     expect(within(table).getAllByText("Ativo")).toHaveLength(3);
     expect(within(table).getAllByText("Inativo")).toHaveLength(3);
     expect(
-      screen.getByRole("button", { name: "Filtrar por Grupo" }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "Convidar Membro" }),
-    ).toBeDisabled();
+      screen.getByRole("combobox", { name: "Filtrar por cargo" }),
+    ).toBeEnabled();
+
   });
 
   it("mostra loading enquanto aguarda os dados e então apresenta o resultado", async () => {
     let resolve!: (users: UserListItem[]) => void;
-    const repository: UserRepository = {
+    const repository: UserRepository = Object.assign(new MockUserRepository(), {
       list: () =>
         new Promise((done) => {
           resolve = done;
         }),
-    };
+    });
     render(<UsersList repository={repository} />);
     expect(screen.getByRole("status")).toHaveTextContent("Carregando usuários");
     expect(screen.getByRole("searchbox")).toBeDisabled();
@@ -106,7 +91,7 @@ describe("Listagem de usuários", () => {
   });
 
   it("apresenta estado vazio quando não há usuários cadastrados", async () => {
-    render(<UsersList repository={{ list: async () => [] }} />);
+    render(<UsersList repository={Object.assign(new MockUserRepository(), { list: async () => [] })} />);
     expect(
       await screen.findByText("Nenhum usuário cadastrado."),
     ).toBeInTheDocument();
@@ -116,11 +101,11 @@ describe("Listagem de usuários", () => {
   it("apresenta erro sem expor detalhes internos do repository", async () => {
     render(
       <UsersList
-        repository={{
+        repository={Object.assign(new MockUserRepository(), {
           list: async () => {
             throw new Error("detalhe privado");
           },
-        }}
+        })}
       />,
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -174,16 +159,34 @@ describe("Listagem de usuários", () => {
     const user = userEvent.setup();
     render(
       <UsersList
-        repository={{
+        repository={Object.assign(new MockUserRepository(), {
           list: async () => [
             { ...base, email: null, cargo: { id: 4, nome: "PESQUISADOR" } },
           ],
-        }}
+        })}
       />,
     );
     expect(await screen.findByText("E-mail não informado")).toBeInTheDocument();
-    expect(screen.getByText("PESQUISADOR")).toBeInTheDocument();
+    expect(within(screen.getByRole("table")).getByText("PESQUISADOR")).toBeInTheDocument();
     await user.type(screen.getByRole("searchbox"), "@example");
     expect(screen.getByText("Nenhum usuário encontrado.")).toBeInTheDocument();
+  });
+});
+
+
+describe("Filtro de usuários por cargo", () => {
+  it("combina cargo com busca e permite voltar a todos os cargos", async () => {
+    const user = userEvent.setup();
+    render(<UsersList />);
+    await screen.findByRole("table");
+    const filter = screen.getByRole("combobox", { name: "Filtrar por cargo" });
+    await user.selectOptions(filter, "1");
+    expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(2);
+    expect(screen.getByText("joao.feijao@example.com")).toBeInTheDocument();
+    await user.type(screen.getByRole("searchbox"), "inexistente");
+    expect(screen.getByText("Nenhum usuário encontrado.")).toBeInTheDocument();
+    await user.clear(screen.getByRole("searchbox"));
+    await user.selectOptions(filter, "");
+    expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(7);
   });
 });
