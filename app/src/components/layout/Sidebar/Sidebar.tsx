@@ -14,14 +14,16 @@ type SidebarProps = {
 
 export function Sidebar({
   currentPath,
-  section = "users",
+  section,
 }: SidebarProps) {
   const pathnameHook = usePathname();
 
   const fallbackPath =
     section === "parameters"
       ? "/administracao/parametros"
-      : "/administracao/usuarios";
+      : section === "users"
+        ? "/administracao/usuarios"
+        : "";
 
   const pathname = currentPath ?? pathnameHook ?? fallbackPath;
 

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function UsersPage() {
   return (
-    <PortalLayout title="Administração de Usuários">
+    <PortalLayout title="Administração de Usuários" section="users">
       <UsersList />
     </PortalLayout>
   );

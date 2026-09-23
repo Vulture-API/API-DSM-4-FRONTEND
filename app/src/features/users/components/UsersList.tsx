@@ -30,13 +30,14 @@ export function UsersList({ repository = userRepository }: { repository?: UserRe
 
   return (
     <section className={styles.section} aria-label="Listagem de usuários">
-      <div className={styles.toolbar}>
+      <div className={styles.toolbar} suppressHydrationWarning>
         <label className={styles.filter}>
           <span>Filtrar por cargo</span>
           <select
             value={cargoId}
             onChange={(event) => setCargoId(event.target.value)}
             disabled={state.status !== "success"}
+            suppressHydrationWarning
           >
             <option value="">Todos os cargos</option>
             {cargos.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>)}
