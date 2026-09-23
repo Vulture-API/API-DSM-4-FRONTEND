@@ -10,9 +10,7 @@ describe("CommunicationSummaryCards", () => {
     unstableCount: 2,
     offlineCount: 2,
     globalAvailabilitySla: 96.4,
-    packetsReceived24h: 14280,
-    packetsLost24h: 420,
-    avgLatencyMs: 148,
+    consistentDataRate: 75,
     onlinePercentage: 67,
     slaTarget: 95.0,
   };
@@ -29,6 +27,6 @@ describe("CommunicationSummaryCards", () => {
     expect(screen.getByText("Sem Conexão")).toBeInTheDocument();
     expect(screen.getByText("SLA Disponibilidade")).toBeInTheDocument();
     expect(screen.getByText("96.4%")).toBeInTheDocument();
-    expect(screen.getByText("Latência média: 148 ms")).toBeInTheDocument();
+    expect(screen.getByText("Consistência de dados: 75%")).toBeInTheDocument();
   });
 });

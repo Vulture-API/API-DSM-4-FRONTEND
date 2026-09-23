@@ -31,11 +31,11 @@ export function WeatherTrendsChart({ data }: Props) {
     return padTop + (1 - ratio) * innerH;
   };
 
-  // Humidity scale: 30% to 100%
-  const minHum = 30;
-  const maxHum = 100;
-  const getHumY = (hum: number) => {
-    const ratio = (hum - minHum) / (maxHum - minHum);
+  // Soil moisture scale: 10% to 50%
+  const minMoisture = 10;
+  const maxMoisture = 50;
+  const getMoistureY = (moisture: number) => {
+    const ratio = (moisture - minMoisture) / (maxMoisture - minMoisture);
     return padTop + (1 - ratio) * innerH;
   };
 
@@ -49,9 +49,9 @@ export function WeatherTrendsChart({ data }: Props) {
     y: getTempY(d.temperature),
   }));
 
-  const humPoints = data.map((d, i) => ({
+  const moisturePoints = data.map((d, i) => ({
     x: getX(i),
-    y: getHumY(d.humidity),
+    y: getMoistureY(d.soilMoisture),
   }));
 
   const tempPathD = tempPoints.reduce(
@@ -59,28 +59,29 @@ export function WeatherTrendsChart({ data }: Props) {
     ""
   );
 
-  const humPathD = humPoints.reduce(
+  const moisturePathD = moisturePoints.reduce(
     (acc, curr, i) => (i === 0 ? `M ${curr.x} ${curr.y}` : `${acc} L ${curr.x} ${curr.y}`),
     ""
   );
 
   const tempSteps = [15, 20, 25, 30, 35];
+  const moistureSteps = [10, 20, 30, 40, 50];
 
   return (
     <div className={styles.chartContainer} aria-label="Evolução Climática (24h)">
       <header className={styles.chartHeader}>
         <div className={styles.chartTitle}>
           <Icon name="thermometer" />
-          Temperatura e Umidade Relativa (24h)
+          Temperatura do Ar e Umidade do Solo (24h)
         </div>
         <div className={styles.legend}>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ backgroundColor: "#e65100" }} />
-            <span>Temperatura (°C)</span>
+            <span>Temp. do Ar (°C)</span>
           </div>
           <div className={styles.legendItem}>
             <span className={styles.legendDot} style={{ backgroundColor: "#0288d1" }} />
-            <span>Umidade do Ar (%)</span>
+            <span>Umidade do Solo (%)</span>
           </div>
         </div>
       </header>
@@ -90,7 +91,7 @@ export function WeatherTrendsChart({ data }: Props) {
           className={styles.chartSvg}
           viewBox={`0 0 ${width} ${height}`}
           role="img"
-          aria-label="Gráfico de linhas de temperatura e umidade"
+          aria-label="Gráfico de linhas de temperatura e umidade do solo"
         >
           {/* Grid lines and left Y labels (temperature) */}
           {tempSteps.map((step) => {
@@ -116,9 +117,9 @@ export function WeatherTrendsChart({ data }: Props) {
             );
           })}
 
-          {/* Right Y labels (humidity) */}
-          {[40, 60, 80, 100].map((step) => {
-            const y = getHumY(step);
+          {/* Right Y labels (soil moisture) */}
+          {moistureSteps.map((step) => {
+            const y = getMoistureY(step);
             return (
               <text
                 key={step}
@@ -135,13 +136,13 @@ export function WeatherTrendsChart({ data }: Props) {
 
           {/* Paths */}
           <path d={tempPathD} className={styles.tempPath} />
-          <path d={humPathD} className={styles.humidityPath} />
+          <path d={moisturePathD} className={styles.humidityPath} />
 
           {/* Data Points */}
           {data.map((d, i) => {
             const tx = getX(i);
             const ty = getTempY(d.temperature);
-            const hy = getHumY(d.humidity);
+            const my = getMoistureY(d.soilMoisture);
 
             return (
               <g key={d.time}>
@@ -157,13 +158,13 @@ export function WeatherTrendsChart({ data }: Props) {
                 />
                 <circle
                   cx={tx}
-                  cy={hy}
+                  cy={my}
                   r="4"
                   className={styles.humidityPoint}
                   onMouseEnter={() => setActivePoint(d)}
                   onMouseLeave={() => setActivePoint(null)}
                   tabIndex={0}
-                  aria-label={`${d.time}: Umidade ${d.humidity}%`}
+                  aria-label={`${d.time}: Umidade ${d.soilMoisture}%`}
                 />
                 <text
                   x={tx}
@@ -186,14 +187,14 @@ export function WeatherTrendsChart({ data }: Props) {
               top: `${(getTempY(activePoint.temperature) / height) * 100}%`,
             }}
           >
-            <strong>{activePoint.time}</strong>: {activePoint.temperature}°C | {activePoint.humidity}% ar | {activePoint.soilMoisture}% solo
+            <strong>{activePoint.time}</strong>: {activePoint.temperature}°C ar | {activePoint.soilMoisture}% umidade solo | {activePoint.soilTemperature}°C solo
           </div>
         )}
       </div>
 
       <footer className={styles.chartFooter}>
-        <span>Eixo Esquerdo: Temperatura (°C)</span>
-        <span>Eixo Direito: Umidade do Ar (%)</span>
+        <span>Eixo Esquerdo: Temperatura do Ar (°C)</span>
+        <span>Eixo Direito: Umidade do Solo (%)</span>
       </footer>
     </div>
   );

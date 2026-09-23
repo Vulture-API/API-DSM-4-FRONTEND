@@ -93,7 +93,7 @@ export function CommunicationSummaryCards({ summary }: Props) {
           <span className={styles.badgeSuccess}>Meta &ge; {summary.slaTarget}%</span>
         </div>
         <div className={styles.cardFooter}>
-          <span>Latência média: {summary.avgLatencyMs} ms</span>
+          <span>Consistência de dados: {summary.consistentDataRate}%</span>
         </div>
       </article>
     </section>

@@ -18,10 +18,10 @@ export function WeatherMetricsCards({ weather }: Props) {
       </div>
 
       <div className={styles.cardsGrid}>
-        {/* 1. Temperatura do Ar */}
-        <article className={styles.weatherCard} aria-label="Temperatura média do ar">
+        {/* 1. Temperatura do Ar (Sensor TEMPAR-01) */}
+        <article className={styles.weatherCard} aria-label="Temperatura do ar">
           <div className={styles.cardHeader}>
-            <span className={styles.cardLabel}>Temperatura do Ar</span>
+            <span className={styles.cardLabel}>Temp. do Ar</span>
             <span className={styles.cardIcon}>
               <Icon name="thermometer" />
             </span>
@@ -36,8 +36,25 @@ export function WeatherMetricsCards({ weather }: Props) {
           </div>
         </article>
 
-        {/* 2. Umidade do Solo */}
-        <article className={styles.weatherCard} aria-label="Umidade média do solo">
+        {/* 2. Temperatura do Solo (Sensor TEMP-01) */}
+        <article className={styles.weatherCard} aria-label="Temperatura do solo">
+          <div className={styles.cardHeader}>
+            <span className={styles.cardLabel}>Temp. do Solo</span>
+            <span className={styles.cardIcon}>
+              <Icon name="thermometer" />
+            </span>
+          </div>
+          <div className={styles.metricValueRow}>
+            <span className={styles.metricValue}>{weather.avgSoilTemperature.toFixed(1)}</span>
+            <span className={styles.metricUnit}>°C</span>
+          </div>
+          <div className={styles.cardFooter}>
+            <span>Sensor subterrâneo TEMP-01</span>
+          </div>
+        </article>
+
+        {/* 3. Umidade do Solo (Sensor HUM-01) */}
+        <article className={styles.weatherCard} aria-label="Umidade do solo">
           <div className={styles.cardHeader}>
             <span className={styles.cardLabel}>Umidade do Solo</span>
             <span className={styles.cardIcon}>
@@ -54,24 +71,7 @@ export function WeatherMetricsCards({ weather }: Props) {
           </div>
         </article>
 
-        {/* 3. Umidade Relativa do Ar */}
-        <article className={styles.weatherCard} aria-label="Umidade relativa do ar">
-          <div className={styles.cardHeader}>
-            <span className={styles.cardLabel}>Umidade do Ar</span>
-            <span className={styles.cardIcon}>
-              <Icon name="drop" />
-            </span>
-          </div>
-          <div className={styles.metricValueRow}>
-            <span className={styles.metricValue}>{weather.avgAirHumidity}</span>
-            <span className={styles.metricUnit}>%</span>
-          </div>
-          <div className={styles.cardFooter}>
-            <span>Variação diária: 48% - 88%</span>
-          </div>
-        </article>
-
-        {/* 4. Precipitação Acumulada */}
+        {/* 4. Precipitação Acumulada (Sensor RAIN-01) */}
         <article className={styles.weatherCard} aria-label="Precipitação acumulada">
           <div className={styles.cardHeader}>
             <span className={styles.cardLabel}>Precipitação</span>
@@ -88,7 +88,7 @@ export function WeatherMetricsCards({ weather }: Props) {
           </div>
         </article>
 
-        {/* 5. Vento */}
+        {/* 5. Velocidade do Vento (Sensor WIND-01) */}
         <article className={styles.weatherCard} aria-label="Velocidade do vento">
           <div className={styles.cardHeader}>
             <span className={styles.cardLabel}>Vento Médio</span>
@@ -102,23 +102,6 @@ export function WeatherMetricsCards({ weather }: Props) {
           </div>
           <div className={styles.cardFooter}>
             <span>Rajada máx: {weather.maxWindGust} km/h</span>
-          </div>
-        </article>
-
-        {/* 6. Radiação Solar */}
-        <article className={styles.weatherCard} aria-label="Radiação solar">
-          <div className={styles.cardHeader}>
-            <span className={styles.cardLabel}>Radiação Solar</span>
-            <span className={styles.cardIcon}>
-              <Icon name="gauge" />
-            </span>
-          </div>
-          <div className={styles.metricValueRow}>
-            <span className={styles.metricValue}>{weather.solarRadiation}</span>
-            <span className={styles.metricUnit}>W/m²</span>
-          </div>
-          <div className={styles.cardFooter}>
-            <span>Índice UV: Moderado (6.2)</span>
           </div>
         </article>
       </div>

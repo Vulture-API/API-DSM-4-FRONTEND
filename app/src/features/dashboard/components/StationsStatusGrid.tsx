@@ -42,18 +42,12 @@ export function StationsStatusGrid({ stations }: Props) {
     }
   };
 
-  const getBatteryColor = (pct: number) => {
-    if (pct >= 50) return "var(--portal-success)";
-    if (pct >= 20) return "#f59e0b";
-    return "var(--portal-danger)";
-  };
-
   return (
     <section className={styles.container} aria-label="Monitor de status das estações">
       <header className={styles.header}>
         <div className={styles.titleGroup}>
           <h2 className={styles.title}>
-            <Icon name="signal" />
+            <Icon name="chart" />
             Status Operacional das Estações
           </h2>
           <span className={styles.stationCount}>
@@ -102,7 +96,10 @@ export function StationsStatusGrid({ stations }: Props) {
           >
             <div className={styles.stationCardHeader}>
               <div>
-                <h3 className={styles.stationName}>{station.name}</h3>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span className={styles.stationCodeBadge}>{station.codigo}</span>
+                  <h3 className={styles.stationName}>{station.name}</h3>
+                </div>
                 <span className={styles.stationProperty}>{station.property}</span>
               </div>
               <span
@@ -115,44 +112,46 @@ export function StationsStatusGrid({ stations }: Props) {
 
             <div className={styles.telemetryRow}>
               <div className={styles.telemetryItem}>
-                <span className={styles.telemetryLabel}>Sinal</span>
+                <span className={styles.telemetryLabel}>Sensores Ativos</span>
                 <span className={styles.telemetryValue}>
-                  <Icon name="wifi" />
-                  {station.signalDbm} dBm
+                  {station.activeSensorsCount} / {station.totalSensorsCount}
                 </span>
               </div>
 
               <div className={styles.telemetryItem}>
-                <span className={styles.telemetryLabel}>Bateria</span>
+                <span className={styles.telemetryLabel}>Consistência</span>
                 <span
                   className={styles.telemetryValue}
-                  style={{ color: getBatteryColor(station.batteryPct) }}
+                  style={{
+                    color: station.dataConsistent
+                      ? "var(--portal-success)"
+                      : "var(--portal-danger)",
+                  }}
                 >
-                  <Icon name="battery" />
-                  {station.batteryPct}%
+                  {station.dataConsistent ? "Válida" : "Inconsistente"}
                 </span>
               </div>
 
               <div className={styles.telemetryItem}>
-                <span className={styles.telemetryLabel}>Sensores</span>
-                <span className={styles.telemetryValue}>
-                  {station.activeSensorsCount} / {station.totalSensorsCount} ativos
-                </span>
-              </div>
-
-              <div className={styles.telemetryItem}>
-                <span className={styles.telemetryLabel}>Último Envio</span>
+                <span className={styles.telemetryLabel}>Última Leitura</span>
                 <span className={styles.telemetryValue}>
                   {station.lastCommunicationMinutesAgo <= 5
                     ? "há instantes"
                     : `há ${station.lastCommunicationMinutesAgo} min`}
                 </span>
               </div>
+
+              <div className={styles.telemetryItem}>
+                <span className={styles.telemetryLabel}>Coordenadas</span>
+                <span className={styles.telemetryValue} style={{ fontSize: "11px" }}>
+                  {station.latitude.toFixed(2)}, {station.longitude.toFixed(2)}
+                </span>
+              </div>
             </div>
 
             <footer className={styles.stationFooter}>
               <span className={styles.macCode}>{station.macAddress}</span>
-              <span>{station.firmwareVersion}</span>
+              <span>{station.lastCommunication}</span>
             </footer>
           </article>
         ))}

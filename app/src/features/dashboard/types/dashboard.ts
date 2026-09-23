@@ -6,9 +6,7 @@ export interface CommunicationSummary {
   unstableCount: number;
   offlineCount: number;
   globalAvailabilitySla: number;
-  packetsReceived24h: number;
-  packetsLost24h: number;
-  avgLatencyMs: number;
+  consistentDataRate: number;
   onlinePercentage: number;
   slaTarget: number;
 }
@@ -18,11 +16,10 @@ export interface WeatherOverview {
   minTemperature: number;
   maxTemperature: number;
   avgSoilMoisture: number;
-  avgAirHumidity: number;
+  avgSoilTemperature: number;
   accumulatedRainfall: number;
   avgWindSpeed: number;
   maxWindGust: number;
-  solarRadiation: number;
   soilMoistureStatus: "adequate" | "warning" | "critical";
 }
 
@@ -37,8 +34,8 @@ export interface HourlyCommunicationPoint {
 export interface WeatherTrendPoint {
   time: string;
   temperature: number;
-  humidity: number;
   soilMoisture: number;
+  soilTemperature: number;
 }
 
 export interface RainfallPoint {
@@ -48,25 +45,25 @@ export interface RainfallPoint {
 
 export interface StationCommunicationDetail {
   id: number;
+  codigo: string;
   name: string;
   property: string;
   status: StationCommunicationStatus;
-  signalStrength: "excellent" | "good" | "fair" | "poor" | "none";
-  signalDbm: number;
-  batteryPct: number;
+  latitude: number;
+  longitude: number;
   lastCommunication: string;
   lastCommunicationMinutesAgo: number;
   activeSensorsCount: number;
   totalSensorsCount: number;
+  dataConsistent: boolean;
   macAddress: string;
-  firmwareVersion: string;
 }
 
 export interface CommunicationIncident {
   id: string;
   stationName: string;
   propertyName: string;
-  type: "offline" | "packet_loss" | "high_latency" | "sensor_timeout";
+  type: "offline" | "inconsistent_data" | "sensor_inactive" | "no_communication";
   severity: "critical" | "warning" | "info";
   description: string;
   occurredAt: string;
