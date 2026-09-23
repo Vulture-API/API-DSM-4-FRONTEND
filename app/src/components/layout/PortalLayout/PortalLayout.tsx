@@ -6,7 +6,7 @@ import styles from "./PortalLayout.module.css";
 export function PortalLayout({
   title,
   children,
-  section = "users",
+  section,
 }: {
   title: string;
   children: ReactNode;

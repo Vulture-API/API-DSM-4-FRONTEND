@@ -24,7 +24,13 @@ export function SearchInput({
       <label htmlFor={inputId} className={styles.label}>
         {label}
       </label>
-      <input id={inputId} ref={input} type="search" {...props} />
+      <input
+        id={inputId}
+        ref={input}
+        type="search"
+        suppressHydrationWarning
+        {...props}
+      />
       {onClear && props.value && (
         <IconButton
           label="Limpar busca"

@@ -13,6 +13,7 @@ export function Button({
     <button
       type={type}
       className={`${styles.button} ${styles[variant]} ${className}`}
+      suppressHydrationWarning
       {...props}
     />
   );

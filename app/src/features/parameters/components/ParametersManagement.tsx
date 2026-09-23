@@ -60,7 +60,7 @@ export function ParametersManagement({
             <h2 ref={heading} tabIndex={-1}>Parâmetros Meteorológicos</h2>
             <p>Gerencie os tipos de medição disponíveis para os sensores.</p>
           </div>
-          <div className={styles.toolbar}>
+          <div className={styles.toolbar} suppressHydrationWarning>
             <SearchInput
               label="Buscar parâmetros por nome ou unidade"
               placeholder="Buscar parâmetros..."
