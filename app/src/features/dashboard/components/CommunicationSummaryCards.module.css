@@ -1,7 +1,7 @@
 .cardsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-5);
   margin-bottom: var(--space-6);
 }
 
@@ -9,29 +9,30 @@
   background: var(--portal-surface);
   border: 1px solid var(--portal-border);
   border-radius: var(--radius-panel);
-  padding: var(--space-4) var(--space-5);
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   justifyContent: space-between;
   box-shadow: var(--portal-shadow);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-height: 148px;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(27, 56, 36, 0.08);
+  box-shadow: 0 6px 16px rgba(27, 56, 36, 0.08);
 }
 
 .cardTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .cardLabel {
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--portal-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -41,14 +42,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-control);
 }
 
 .iconBadge svg {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .totalIcon {
@@ -80,18 +81,18 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .cardValue {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 36px;
+  font-weight: 800;
   color: var(--portal-text);
   line-height: 1.1;
 }
 
 .cardSubtext {
-  font-size: var(--text-xs);
+  font-size: 14px;
   color: var(--portal-muted);
 }
 
@@ -99,14 +100,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-xs);
+  font-size: 13px;
   font-weight: 500;
   color: var(--portal-muted);
 }
 
 .indicatorDot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: var(--radius-round);
   display: inline-block;
 }
@@ -126,26 +127,26 @@
 .badgeSuccess {
   background: #eaf6ec;
   color: var(--portal-success);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: var(--radius-round);
 }
 
 .badgeWarning {
   background: #fff8e6;
   color: #b86200;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: var(--radius-round);
 }
 
 .badgeDanger {
   background: var(--portal-danger-soft);
   color: var(--portal-danger);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: var(--radius-round);
 }

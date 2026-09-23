@@ -1,7 +1,7 @@
 .pageContainer {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
   padding: 0;
 }
 
@@ -10,11 +10,11 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--space-4);
   background: var(--portal-surface);
   border: 1px solid var(--portal-border);
   border-radius: var(--radius-panel);
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-6);
   box-shadow: var(--portal-shadow);
 }
 
@@ -22,67 +22,91 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
-.selectGroup {
+.selectContainer {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  background: #f6f8f5;
+  border: 1.5px solid var(--portal-border);
+  border-radius: var(--radius-control);
+  padding: 0 14px;
+  height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.selectContainer:focus-within {
+  border-color: var(--portal-accent);
+  box-shadow: 0 0 0 3px rgba(44, 92, 53, 0.15);
+  background: #ffffff;
+}
+
+.selectIcon {
+  color: var(--portal-accent);
+  display: flex;
+  align-items: center;
+}
+
+.selectIcon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .selectLabel {
-  font-size: var(--text-xs);
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 750;
   color: var(--portal-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .selectControl {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--portal-border);
-  background: #ffffff;
+  border: none;
+  background: transparent;
   color: var(--portal-text);
-  font-size: var(--text-sm);
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.selectControl:focus {
-  border-color: var(--portal-accent);
+  padding-right: 6px;
+  font-family: inherit;
 }
 
 .periodButtonGroup {
   display: inline-flex;
-  border: 1px solid var(--portal-border);
+  background: #f0f3ee;
+  border: 1.5px solid var(--portal-border);
   border-radius: var(--radius-control);
-  overflow: hidden;
-  background: #f6f8f5;
+  padding: 3px;
+  height: 44px;
+  align-items: center;
 }
 
 .periodBtn {
   background: transparent;
   border: none;
-  padding: 6px 14px;
-  font-size: var(--text-xs);
+  padding: 0 16px;
+  height: 36px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--portal-secondary);
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .periodBtn:hover {
-  background: #eef2ec;
   color: var(--portal-green);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .periodBtnActive {
   background: var(--portal-accent);
   color: #ffffff;
+  box-shadow: 0 2px 6px rgba(44, 92, 53, 0.2);
 }
 
 .periodBtnActive:hover {
@@ -93,38 +117,39 @@
 .actionControls {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .lastUpdatedText {
-  font-size: var(--text-xs);
+  font-size: 13px;
+  font-weight: 500;
   color: var(--portal-muted);
 }
 
 .refreshButton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
   border-radius: var(--radius-control);
-  border: 1px solid var(--portal-border);
-  background: #ffffff;
+  border: 1.5px solid var(--portal-border);
+  background: var(--portal-soft);
   color: var(--portal-green);
-  font-size: var(--text-xs);
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .refreshButton:hover {
-  background: var(--portal-soft);
+  background: #dbebe0;
   border-color: var(--portal-accent);
 }
 
 .refreshButton svg {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
 }
 
 .spinning {
@@ -142,9 +167,15 @@
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: var(--space-4);
-  margin-bottom: var(--space-2);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 1200px) {
+  .chartsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {

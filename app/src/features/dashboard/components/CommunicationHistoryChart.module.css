@@ -2,10 +2,11 @@
   background: var(--portal-surface);
   border: 1px solid var(--portal-border);
   border-radius: var(--radius-panel);
-  padding: var(--space-5);
+  padding: var(--space-6);
   box-shadow: var(--portal-shadow);
   display: flex;
   flex-direction: column;
+  justifyContent: space-between;
 }
 
 .chartHeader {
@@ -18,8 +19,8 @@
 }
 
 .chartTitle {
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 750;
   color: var(--portal-green);
   display: flex;
   align-items: center;
@@ -28,20 +29,23 @@
 
 .chartTitle svg {
   color: var(--portal-accent);
+  width: 22px;
+  height: 22px;
 }
 
 .legend {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  font-size: var(--text-xs);
+  gap: var(--space-3);
+  font-size: 13px;
+  font-weight: 600;
   color: var(--portal-secondary);
 }
 
 .legendItem {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
 }
 
 .legendDot {
@@ -51,7 +55,7 @@
 }
 
 .legendLine {
-  width: 14px;
+  width: 16px;
   height: 2px;
 }
 
@@ -59,6 +63,7 @@
   width: 100%;
   position: relative;
   overflow: hidden;
+  margin: var(--space-2) 0;
 }
 
 .chartSvg {
@@ -74,21 +79,22 @@
 }
 
 .axisText {
-  font-size: 11px;
+  font-size: 12px;
   fill: var(--portal-muted);
   font-family: inherit;
+  font-weight: 500;
 }
 
 .slaLine {
   stroke: #f59e0b;
   stroke-dasharray: 6 4;
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 
 .slaLabel {
-  font-size: 10px;
+  font-size: 11px;
   fill: #b86200;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .uptimeArea {
@@ -99,7 +105,7 @@
 .uptimePath {
   fill: none;
   stroke: var(--portal-success);
-  stroke-width: 3;
+  stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -107,30 +113,30 @@
 .pointCircle {
   fill: var(--portal-surface);
   stroke: var(--portal-success);
-  stroke-width: 2.5;
+  stroke-width: 3;
   transition: r 0.15s ease, stroke-width 0.15s ease;
   cursor: pointer;
 }
 
 .pointCircle:hover {
-  r: 6;
-  stroke-width: 3.5;
+  r: 7;
+  stroke-width: 4;
   stroke: var(--portal-green);
 }
 
 .tooltipBox {
   background: var(--portal-green);
   color: #ffffff;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   position: absolute;
   pointer-events: none;
   transform: translate(-50%, -100%);
-  margin-top: -8px;
+  margin-top: -10px;
   white-space: nowrap;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   z-index: 10;
 }
 
@@ -141,6 +147,6 @@
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--portal-border);
-  font-size: var(--text-xs);
+  font-size: 12px;
   color: var(--portal-muted);
 }

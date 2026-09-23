@@ -45,7 +45,10 @@ export default function DashboardPage() {
         {/* Top Control Bar */}
         <div className={styles.topBar}>
           <div className={styles.filterControls}>
-            <div className={styles.selectGroup}>
+            <div className={styles.selectContainer}>
+              <span className={styles.selectIcon}>
+                <Icon name="pin" />
+              </span>
               <label htmlFor="property-filter" className={styles.selectLabel}>
                 Propriedade:
               </label>
@@ -110,17 +113,13 @@ export default function DashboardPage() {
         {/* 2. Indicadores Climáticos Consolidados (Página 2 Clima) */}
         <WeatherMetricsCards weather={weather} />
 
-        {/* 3. Gráficos Principais: Disponibilidade de Rede e Curvas Climáticas */}
+        {/* 3. Gráficos Principais: Disponibilidade de Rede, Curvas Climáticas e Precipitação */}
         <div className={styles.chartsGrid}>
           <CommunicationHistoryChart
             data={hourlyCommunication}
             slaTarget={summary.slaTarget}
           />
           <WeatherTrendsChart data={weatherTrends} />
-        </div>
-
-        {/* 4. Gráfico Pluviométrico */}
-        <div className={styles.chartsGrid}>
           <RainfallChart data={rainfall} />
         </div>
 
