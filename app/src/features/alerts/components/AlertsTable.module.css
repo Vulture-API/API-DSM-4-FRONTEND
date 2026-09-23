@@ -74,33 +74,88 @@
   border-radius: 4px;
 }
 
+.thDesc {
+  min-width: 240px;
+}
+
+.thStation {
+  min-width: 150px;
+}
+
+.thSensor {
+  min-width: 120px;
+}
+
 .descCell {
-  max-width: 280px;
+  min-width: 240px;
+  max-width: 540px;
 }
 
 .descText {
   font-weight: 500;
+  font-size: 13.5px;
   line-height: 1.4;
+  color: var(--portal-text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
+.conditionCode {
+  display: inline-block;
+  font-family: ui-monospace, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #edf4ee;
+  color: #26432d;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  letter-spacing: -0.2px;
+}
+
 .stationCell {
+  min-width: 150px;
   white-space: nowrap;
 }
 
 .stationName {
   display: block;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 13px;
   color: var(--portal-text);
 }
 
-.sensorName {
+.propertyName {
   display: block;
   font-size: var(--text-xs);
   color: var(--portal-muted);
+  margin-top: 2px;
+}
+
+.sensorCell {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.sensorBadge {
+  display: inline-block;
+  font-family: ui-monospace, monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #172b1d;
+  background: #f1f6f2;
+  border: 1px solid #d4e3d6;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.sensorSubName {
+  display: block;
+  font-size: 11px;
+  color: #718173;
+  margin-top: 2px;
 }
 
 .dateCell {
@@ -144,11 +199,6 @@
 .typeBateria {
   background: #fffbeb;
   color: #b45309;
-}
-
-.typeCultura {
-  background: #ecfdf5;
-  color: #047857;
 }
 
 .typeSensor {
@@ -206,46 +256,42 @@
   background: #e11d48;
 }
 
-/* Actions */
-.actionsCell {
-  white-space: nowrap;
-  text-align: right;
-}
-
-.actionButtonGroup {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.actionButton {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-control);
-  padding: 6px;
+.tableRow {
   cursor: pointer;
-  color: var(--portal-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 140ms ease;
+  transition: background 140ms ease;
 }
 
-.actionButton:hover {
-  background: var(--portal-soft);
-  border-color: var(--portal-border);
+.tableRow:hover {
+  background: var(--portal-hover);
+}
+
+.selectedRow {
+  background: #f0f5f1 !important;
+  cursor: pointer;
+}
+
+.thAction {
+  width: 36px;
+  padding-right: 16px !important;
+}
+
+.cellChevron {
+  width: 36px;
+  color: #9cb0a0;
+  padding-right: 18px !important;
+  text-align: right;
+  vertical-align: middle;
+}
+
+.cellChevron svg {
+  vertical-align: middle;
+  transition: transform 140ms ease, color 140ms ease;
+}
+
+.tableRow:hover .cellChevron svg,
+.selectedRow .cellChevron svg {
   color: var(--portal-green);
-}
-
-.actionButtonDanger:hover {
-  background: var(--portal-danger-soft);
-  border-color: #f9d5d2;
-  color: var(--portal-danger);
-}
-
-.actionButton svg {
-  width: 16px;
-  height: 16px;
+  transform: translateX(2px);
 }
 
 /* Table Footer & Pagination */

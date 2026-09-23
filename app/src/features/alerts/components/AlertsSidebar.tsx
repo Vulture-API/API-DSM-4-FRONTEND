@@ -15,7 +15,6 @@ const alertTypes: AlertType[] = [
   "Chuva",
   "Vento",
   "Bateria",
-  "Cultura",
   "Sensor",
 ];
 
