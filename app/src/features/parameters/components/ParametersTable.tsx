@@ -8,8 +8,8 @@ const measurementIcons = {
   "%": "drop",
   "m/s": "wind",
   "°": "direction",
-  mm: "rain",
-  hPa: "gauge",
+  "mm": "rain",
+  "hPa": "gauge",
 } as const;
 const number = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 2,
