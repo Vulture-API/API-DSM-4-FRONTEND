@@ -102,12 +102,20 @@ export function Sidebar({
           aria-label="Administração"
         >
           <div
-            className={`${styles.item} ${
+            className={`${styles.item} ${styles.groupHeader} ${
               administrationActive ? styles.active : ""
             }`}
           >
-            <Icon name="users" />
-            Administração
+            <div className={styles.groupTitle}>
+              <Icon name="users" />
+              <span>Administração</span>
+            </div>
+            <Icon
+              name="chevron"
+              className={`${styles.groupChevron} ${
+                administrationActive ? styles.groupChevronOpen : ""
+              }`}
+            />
           </div>
 
           <ul className={styles.submenu}>
