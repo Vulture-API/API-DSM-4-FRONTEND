@@ -2,17 +2,49 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { Icon } from "@/components/ui/Icon/Icon";
+
 import styles from "./Sidebar.module.css";
 
-export function Sidebar({ currentPath }: { currentPath?: string }) {
-  const pathnameHook = usePathname();
-  const pathname = currentPath ?? pathnameHook ?? "/administracao/usuarios";
+type SidebarProps = {
+  currentPath?: string;
+  section?: "users" | "parameters";
+};
 
-  const isEstacoesActive = pathname?.startsWith("/estacoes");
-  const isAlertasActive = pathname?.startsWith("/alertas");
-  const isAdmActive =
-    pathname?.startsWith("/administracao") && !isEstacoesActive && !isAlertasActive;
+export function Sidebar({
+  currentPath,
+  section = "users",
+}: SidebarProps) {
+  const pathnameHook = usePathname();
+
+  const fallbackPath =
+    section === "parameters"
+      ? "/administracao/parametros"
+      : "/administracao/usuarios";
+
+  const pathname = currentPath ?? pathnameHook ?? fallbackPath;
+
+  const administrationLinks = [
+    {
+      href: "/administracao/usuarios",
+      label: "Usuários",
+    },
+    {
+      href: "/administracao/parametros",
+      label: "Parâmetros meteorológicos",
+    },
+  ];
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  const isEstacoesActive = isActive("/estacoes");
+  const isAlertasActive = isActive("/alertas");
+
+  const administrationActive = administrationLinks.some(({ href }) =>
+    isActive(href),
+  );
 
   return (
     <aside className={styles.sidebar} aria-label="Menu do portal">
@@ -20,41 +52,78 @@ export function Sidebar({ currentPath }: { currentPath?: string }) {
         <span className={styles.logo}>
           <Icon name="leaf" />
         </span>
+
         <div>
           <strong>AGRITECH</strong>
           <span>PORTAL CLIMÁTICO</span>
         </div>
       </div>
+
       <nav aria-label="Navegação principal" className={styles.nav}>
         <span aria-disabled="true" className={styles.item}>
           <Icon name="chart" />
           Dashboard Climático
         </span>
+
         <Link
           href="/estacoes"
           aria-current={isEstacoesActive ? "page" : undefined}
-          className={`${styles.item} ${isEstacoesActive ? styles.active : ""}`}
+          className={`${styles.item} ${
+            isEstacoesActive ? styles.active : ""
+          }`}
         >
           <Icon name="pin" />
           Estações
         </Link>
+
         <Link
           href="/alertas"
           aria-current={isAlertasActive ? "page" : undefined}
-          className={`${styles.item} ${isAlertasActive ? styles.active : ""}`}
+          className={`${styles.item} ${
+            isAlertasActive ? styles.active : ""
+          }`}
         >
           <Icon name="document" />
           Relatórios &amp; Alertas
         </Link>
-        <Link
-          href="/administracao/usuarios"
-          aria-current={isAdmActive ? "page" : undefined}
-          className={`${styles.item} ${isAdmActive ? styles.active : ""}`}
+
+        <div
+          className={styles.group}
+          role="group"
+          aria-label="Administração"
         >
-          <Icon name="users" />
-          Administração
-        </Link>
+          <div
+            className={`${styles.item} ${
+              administrationActive ? styles.active : ""
+            }`}
+          >
+            <Icon name="users" />
+            Administração
+          </div>
+
+          <ul className={styles.submenu}>
+            {administrationLinks.map(({ href, label }) => {
+              const active = isActive(href);
+
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    className={`${styles.subitem} ${
+                      active ? styles.selected : ""
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </nav>
+
+      {/*
       <div className={styles.profile}>
         <span className={styles.avatar}>
           <Icon name="users" />
@@ -64,6 +133,7 @@ export function Sidebar({ currentPath }: { currentPath?: string }) {
           <span>Dados mockados</span>
         </div>
       </div>
+      */}
     </aside>
   );
 }

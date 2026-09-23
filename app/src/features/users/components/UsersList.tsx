@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { Icon } from "@/components/ui/Icon/Icon";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
@@ -8,25 +8,40 @@ import { FeedbackState } from "@/components/ui/FeedbackState/FeedbackState";
 import { useUsers } from "../hooks/useUsers";
 import type { UserRepository } from "../repositories/UserRepository";
 import { searchUsers } from "../services/searchUsers";
+import { userRepository } from "../repositories";
+import { CreateUserModal } from "./CreateUserModal";
 import { UsersTable } from "./UsersTable";
 import styles from "./UsersList.module.css";
 
-export function UsersList({ repository }: { repository?: UserRepository }) {
+export function UsersList({ repository = userRepository }: { repository?: UserRepository }) {
   const state = useUsers(repository);
   const [term, setTerm] = useState("");
-  const availabilityId = useId();
-  const users =
-    state.status === "success" ? searchUsers(state.users, term) : [];
+  const [cargoId, setCargoId] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [notice, setNotice] = useState("");
+  const cargos = state.status === "success"
+    ? Array.from(new Map(state.users.map(({ cargo }) => [cargo.id, cargo])).values())
+    : [];
+  const users = state.status === "success"
+    ? searchUsers(state.users, term).filter((user) => !cargoId || String(user.cargo.id) === cargoId)
+    : [];
   const noMatches =
     state.status === "success" && state.users.length > 0 && users.length === 0;
 
   return (
     <section className={styles.section} aria-label="Listagem de usuários">
       <div className={styles.toolbar}>
-        <Button variant="secondary" disabled aria-describedby={availabilityId}>
-          Filtrar por Grupo
-          <Icon name="chevron" />
-        </Button>
+        <label className={styles.filter}>
+          <span>Filtrar por cargo</span>
+          <select
+            value={cargoId}
+            onChange={(event) => setCargoId(event.target.value)}
+            disabled={state.status !== "success"}
+          >
+            <option value="">Todos os cargos</option>
+            {cargos.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>)}
+          </select>
+        </label>
         <div className={styles.actions}>
           <SearchInput
             label="Buscar usuários por nome ou e-mail"
@@ -36,19 +51,28 @@ export function UsersList({ repository }: { repository?: UserRepository }) {
             onClear={() => setTerm("")}
             disabled={state.status !== "success"}
           />
-          <Button disabled aria-describedby={availabilityId}>
+          <Button disabled={state.status !== "success"} onClick={() => { setNotice(""); setCreating(true); }}>
             <Icon name="plus" />
-            Convidar Membro
+            Novo usuário
           </Button>
         </div>
       </div>
-      <p id={availabilityId} className={styles.availability}>
-        <Icon name="info" />
-        <span>
-          Filtro por grupo indisponível nesta etapa. Convites estarão
-          disponíveis na gestão de usuários.
-        </span>
-      </p>
+      {notice && <p role="status" className={styles.availability}>{notice}</p>}
+      {creating && state.status === "success" && (
+        <CreateUserModal
+          open
+          cargos={state.cargos}
+          repository={repository}
+          onClose={() => setCreating(false)}
+          onCreated={(user) => {
+            state.addUser(user);
+            setTerm("");
+            setCargoId("");
+            setNotice("Usuário cadastrado com sucesso.");
+            setCreating(false);
+          }}
+        />
+      )}
       <div className={styles.panel} aria-busy={state.status === "loading"}>
         {state.status === "loading" && (
           <FeedbackState kind="loading" title="Carregando usuários..." />
@@ -73,7 +97,7 @@ export function UsersList({ repository }: { repository?: UserRepository }) {
               }
               description={
                 noMatches
-                  ? "Tente buscar por outro nome ou e-mail."
+                  ? "Tente outro nome, e-mail ou cargo."
                   : "Os usuários aparecerão aqui quando estiverem disponíveis."
               }
             />

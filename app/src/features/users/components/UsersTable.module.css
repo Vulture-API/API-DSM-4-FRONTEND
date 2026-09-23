@@ -48,6 +48,27 @@
 .table tbody tr:hover {
   background: var(--portal-hover);
 }
+.linkCell {
+  padding: 0 !important;
+}
+.rowLink {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--table-row-height);
+  padding: var(--space-3) var(--space-5);
+  color: inherit;
+  text-decoration: none;
+}
+.rowLink:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--portal-focus);
+  outline-offset: -2px;
+}
+.linkCell .rowLink:hover {
+  color: inherit;
+}
 .identity {
   display: flex;
   align-items: center;
