@@ -1,0 +1,162 @@
+"use client";
+
+import { useState } from "react";
+import { Icon } from "@/components/ui/Icon/Icon";
+import type {
+  StationCommunicationDetail,
+  StationCommunicationStatus,
+} from "../types/dashboard";
+import styles from "./StationsStatusGrid.module.css";
+
+interface Props {
+  stations: StationCommunicationDetail[];
+}
+
+export function StationsStatusGrid({ stations }: Props) {
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const filtered =
+    filterStatus === "all"
+      ? stations
+      : stations.filter((s) => s.status === filterStatus);
+
+  const getStatusLabel = (status: StationCommunicationStatus) => {
+    switch (status) {
+      case "online":
+        return "Online";
+      case "unstable":
+        return "Instável";
+      case "offline":
+        return "Offline";
+    }
+  };
+
+  const getStatusClass = (status: StationCommunicationStatus) => {
+    switch (status) {
+      case "online":
+        return styles.statusOnline;
+      case "unstable":
+        return styles.statusUnstable;
+      case "offline":
+        return styles.statusOffline;
+    }
+  };
+
+  const getBatteryColor = (pct: number) => {
+    if (pct >= 50) return "var(--portal-success)";
+    if (pct >= 20) return "#f59e0b";
+    return "var(--portal-danger)";
+  };
+
+  return (
+    <section className={styles.container} aria-label="Monitor de status das estações">
+      <header className={styles.header}>
+        <div className={styles.titleGroup}>
+          <h2 className={styles.title}>
+            <Icon name="signal" />
+            Status Operacional das Estações
+          </h2>
+          <span className={styles.stationCount}>
+            {filtered.length} de {stations.length} estações
+          </span>
+        </div>
+
+        <div className={styles.filterTabs} role="group" aria-label="Filtro de status de conexão">
+          <button
+            type="button"
+            className={`${styles.filterBtn} ${filterStatus === "all" ? styles.filterBtnActive : ""}`}
+            onClick={() => setFilterStatus("all")}
+          >
+            Todas ({stations.length})
+          </button>
+          <button
+            type="button"
+            className={`${styles.filterBtn} ${filterStatus === "online" ? styles.filterBtnActive : ""}`}
+            onClick={() => setFilterStatus("online")}
+          >
+            Online ({stations.filter((s) => s.status === "online").length})
+          </button>
+          <button
+            type="button"
+            className={`${styles.filterBtn} ${filterStatus === "unstable" ? styles.filterBtnActive : ""}`}
+            onClick={() => setFilterStatus("unstable")}
+          >
+            Instáveis ({stations.filter((s) => s.status === "unstable").length})
+          </button>
+          <button
+            type="button"
+            className={`${styles.filterBtn} ${filterStatus === "offline" ? styles.filterBtnActive : ""}`}
+            onClick={() => setFilterStatus("offline")}
+          >
+            Offline ({stations.filter((s) => s.status === "offline").length})
+          </button>
+        </div>
+      </header>
+
+      <div className={styles.stationsGrid}>
+        {filtered.map((station) => (
+          <article
+            key={station.id}
+            className={styles.stationCard}
+            aria-label={`${station.name} - ${getStatusLabel(station.status)}`}
+          >
+            <div className={styles.stationCardHeader}>
+              <div>
+                <h3 className={styles.stationName}>{station.name}</h3>
+                <span className={styles.stationProperty}>{station.property}</span>
+              </div>
+              <span
+                className={`${styles.statusPill} ${getStatusClass(station.status)}`}
+              >
+                <span className={styles.statusDot} />
+                {getStatusLabel(station.status)}
+              </span>
+            </div>
+
+            <div className={styles.telemetryRow}>
+              <div className={styles.telemetryItem}>
+                <span className={styles.telemetryLabel}>Sinal</span>
+                <span className={styles.telemetryValue}>
+                  <Icon name="wifi" />
+                  {station.signalDbm} dBm
+                </span>
+              </div>
+
+              <div className={styles.telemetryItem}>
+                <span className={styles.telemetryLabel}>Bateria</span>
+                <span
+                  className={styles.telemetryValue}
+                  style={{ color: getBatteryColor(station.batteryPct) }}
+                >
+                  <Icon name="battery" />
+                  {station.batteryPct}%
+                </span>
+              </div>
+
+              <div className={styles.telemetryItem}>
+                <span className={styles.telemetryLabel}>Sensores</span>
+                <span className={styles.telemetryValue}>
+                  {station.activeSensorsCount} / {station.totalSensorsCount} ativos
+                </span>
+              </div>
+
+              <div className={styles.telemetryItem}>
+                <span className={styles.telemetryLabel}>Último Envio</span>
+                <span className={styles.telemetryValue}>
+                  {station.lastCommunicationMinutesAgo <= 5
+                    ? "há instantes"
+                    : `há ${station.lastCommunicationMinutesAgo} min`}
+                </span>
+              </div>
+            </div>
+
+            <footer className={styles.stationFooter}>
+              <span className={styles.macCode}>{station.macAddress}</span>
+              <span>{station.firmwareVersion}</span>
+            </footer>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,146 @@
+.chartContainer {
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-panel);
+  padding: var(--space-5);
+  box-shadow: var(--portal-shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chartTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--portal-green);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chartTitle svg {
+  color: var(--portal-accent);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--portal-secondary);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-round);
+}
+
+.legendLine {
+  width: 14px;
+  height: 2px;
+}
+
+.svgWrapper {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.chartSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gridLine {
+  stroke: #e6eae4;
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+}
+
+.axisText {
+  font-size: 11px;
+  fill: var(--portal-muted);
+  font-family: inherit;
+}
+
+.slaLine {
+  stroke: #f59e0b;
+  stroke-dasharray: 6 4;
+  stroke-width: 1.5;
+}
+
+.slaLabel {
+  font-size: 10px;
+  fill: #b86200;
+  font-weight: 600;
+}
+
+.uptimeArea {
+  fill: url(#uptimeGradient);
+  opacity: 0.35;
+}
+
+.uptimePath {
+  fill: none;
+  stroke: var(--portal-success);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pointCircle {
+  fill: var(--portal-surface);
+  stroke: var(--portal-success);
+  stroke-width: 2.5;
+  transition: r 0.15s ease, stroke-width 0.15s ease;
+  cursor: pointer;
+}
+
+.pointCircle:hover {
+  r: 6;
+  stroke-width: 3.5;
+  stroke: var(--portal-green);
+}
+
+.tooltipBox {
+  background: var(--portal-green);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.chartFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--portal-border);
+  font-size: var(--text-xs);
+  color: var(--portal-muted);
+}

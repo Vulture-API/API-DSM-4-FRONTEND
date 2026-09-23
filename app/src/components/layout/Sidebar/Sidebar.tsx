@@ -41,6 +41,7 @@ export function Sidebar({
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
+  const isDashboardActive = isActive("/dashboard");
   const isEstacoesActive = isActive("/estacoes");
   const isAlertasActive = isActive("/alertas");
 
@@ -62,10 +63,16 @@ export function Sidebar({
       </div>
 
       <nav aria-label="Navegação principal" className={styles.nav}>
-        <span aria-disabled="true" className={styles.item}>
+        <Link
+          href="/dashboard"
+          aria-current={isDashboardActive ? "page" : undefined}
+          className={`${styles.item} ${
+            isDashboardActive ? styles.active : ""
+          }`}
+        >
           <Icon name="chart" />
           Dashboard Climático
-        </span>
+        </Link>
 
         <Link
           href="/estacoes"
