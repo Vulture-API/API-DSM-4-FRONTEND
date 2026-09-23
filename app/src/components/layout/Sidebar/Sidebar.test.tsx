@@ -18,7 +18,15 @@ describe("Navegação administrativa", () => {
     for (const link of links) {
       expect(existsSync(resolve("src/app", `.${link.getAttribute("href")}/page.tsx`))).toBe(true);
     }
-    expect(screen.getByText("Dashboard Climático")).toHaveAttribute("aria-disabled", "true");
+    const dashboardLink = screen.getByRole("link", { name: "Dashboard Climático" });
+    expect(dashboardLink).toHaveAttribute("href", "/dashboard");
+    expect(existsSync(resolve("src/app", "./dashboard/page.tsx"))).toBe(true);
+  });
+
+  it("marca Dashboard Climático como ativo quando na rota /dashboard", () => {
+    vi.mocked(usePathname).mockReturnValue("/dashboard");
+    render(<Sidebar />);
+    expect(screen.getByRole("link", { name: "Dashboard Climático" })).toHaveAttribute("aria-current", "page");
   });
 
   it("acompanha a URL, mesmo quando a seção fornecida está desatualizada", () => {

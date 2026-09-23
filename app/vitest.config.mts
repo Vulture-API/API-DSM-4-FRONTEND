@@ -11,10 +11,12 @@ export default defineConfig({
       include: [
         "src/features/users/**/*.{ts,tsx}",
         "src/features/parameters/**/*.{ts,tsx}",
+        "src/features/dashboard/**/*.{ts,tsx}",
         "src/components/**/*.{ts,tsx}",
         "src/lib/http/**/*.ts",
         "src/app/administracao/usuarios/page.tsx",
         "src/app/administracao/parametros/page.tsx",
+        "src/app/dashboard/page.tsx",
       ],
       exclude: [
         "**/*.test.{ts,tsx}",

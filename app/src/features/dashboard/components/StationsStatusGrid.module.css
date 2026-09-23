@@ -1,0 +1,220 @@
+.container {
+  background: var(--portal-surface);
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-panel);
+  padding: var(--space-6);
+  box-shadow: var(--portal-shadow);
+  margin-bottom: var(--space-6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 750;
+  color: var(--portal-green);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.title svg {
+  color: var(--portal-accent);
+  width: 22px;
+  height: 22px;
+}
+
+.stationCount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--portal-muted);
+  background: var(--portal-soft);
+  padding: 6px 14px;
+  border-radius: var(--radius-round);
+}
+
+.filterTabs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  background: transparent;
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-control);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--portal-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 38px;
+}
+
+.filterBtn:hover {
+  background: var(--portal-soft);
+  color: var(--portal-green);
+}
+
+.filterBtnActive {
+  background: var(--portal-accent);
+  color: #ffffff;
+  border-color: var(--portal-accent);
+}
+
+.filterBtnActive:hover {
+  background: var(--portal-green);
+  color: #ffffff;
+}
+
+.stationsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-5);
+}
+
+.stationCard {
+  border: 1px solid var(--portal-border);
+  border-radius: var(--radius-panel);
+  padding: var(--space-5);
+  background: #fafbfa;
+  display: flex;
+  flex-direction: column;
+  justifyContent: space-between;
+  gap: var(--space-4);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.stationCard:hover {
+  border-color: var(--portal-accent);
+  box-shadow: 0 4px 14px rgba(27, 56, 36, 0.08);
+  transform: translateY(-2px);
+}
+
+.stationCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.stationName {
+  font-size: 18px;
+  font-weight: 750;
+  color: var(--portal-text);
+  margin-bottom: 2px;
+}
+
+.stationCodeBadge {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  background: var(--portal-soft);
+  color: var(--portal-green);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.stationProperty {
+  font-size: 13px;
+  color: var(--portal-muted);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-round);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.statusOnline {
+  background: #eaf6ec;
+  color: var(--portal-success);
+}
+
+.statusUnstable {
+  background: #fff8e6;
+  color: #b86200;
+}
+
+.statusOffline {
+  background: var(--portal-danger-soft);
+  color: var(--portal-danger);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-round);
+  background: currentColor;
+}
+
+.telemetryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  background: #ffffff;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+  border: 1px solid #eef2ec;
+}
+
+.telemetryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.telemetryLabel {
+  font-size: 11px;
+  color: var(--portal-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.telemetryValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--portal-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stationFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--portal-muted);
+  border-top: 1px solid #eef2ec;
+  padding-top: var(--space-3);
+}
+
+.macCode {
+  font-family: monospace;
+  font-size: 12px;
+  background: #f0f2ee;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--portal-secondary);
+}
