@@ -19,9 +19,7 @@ export function UsersList({ repository = userRepository }: { repository?: UserRe
   const [cargoId, setCargoId] = useState("");
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState("");
-  const cargos = state.status === "success"
-    ? Array.from(new Map(state.users.map(({ cargo }) => [cargo.id, cargo])).values())
-    : [];
+  const cargos = state.status === "success" ? state.cargos : [];
   const users = state.status === "success"
     ? searchUsers(state.users, term).filter((user) => !cargoId || String(user.cargo.id) === cargoId)
     : [];
@@ -65,8 +63,8 @@ export function UsersList({ repository = userRepository }: { repository?: UserRe
           cargos={state.cargos}
           repository={repository}
           onClose={() => setCreating(false)}
-          onCreated={(user) => {
-            state.addUser(user);
+          onCreated={() => {
+            state.refresh();
             setTerm("");
             setCargoId("");
             setNotice("Usuário cadastrado com sucesso.");
@@ -104,6 +102,29 @@ export function UsersList({ repository = userRepository }: { repository?: UserRe
             />
           ))}
       </div>
+      {state.status === "success" && state.pagination.totalPages > 1 && (
+        <nav className={styles.pagination} aria-label="Paginação de usuários">
+          <Button
+            variant="secondary"
+            disabled={state.pagination.currentPage <= 1}
+            onClick={() => state.goToPage(state.pagination.currentPage - 1)}
+          >
+            Página anterior
+          </Button>
+          <span aria-live="polite">
+            Página {state.pagination.currentPage} de {state.pagination.totalPages}
+          </span>
+          <Button
+            variant="secondary"
+            disabled={
+              state.pagination.currentPage >= state.pagination.totalPages
+            }
+            onClick={() => state.goToPage(state.pagination.currentPage + 1)}
+          >
+            Próxima página
+          </Button>
+        </nav>
+      )}
     </section>
   );
 }

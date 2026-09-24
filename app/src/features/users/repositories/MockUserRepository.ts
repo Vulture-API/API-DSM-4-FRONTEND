@@ -3,7 +3,12 @@ import { cargos, publicCredentials, users } from "../mocks/users";
 import { createUserSchema, type CreateUserFormValues } from "../schemas/createUserSchema";
 import { editUserSchema, type EditUserFormValues } from "../schemas/editUserSchema";
 import type { Cargo, UserListItem } from "../types/user";
-import type { UserRepository } from "./UserRepository";
+import {
+  resolveUserListOptions,
+  type PaginatedUsers,
+  type UserListOptions,
+  type UserRepository,
+} from "./UserRepository";
 
 const copyUser = (user: UserListItem): UserListItem => ({ ...user, cargo: { ...user.cargo } });
 
@@ -24,8 +29,18 @@ export class MockUserRepository implements UserRepository {
     this.nextId = Math.max(0, ...this.items.map(({ id }) => id)) + 1;
   }
 
-  async list(): Promise<UserListItem[]> {
-    return this.items.map(copyUser);
+  async list(options?: UserListOptions): Promise<PaginatedUsers> {
+    const { page, limit } = resolveUserListOptions(options);
+    const start = (page - 1) * limit;
+
+    return {
+      items: this.items.slice(start, start + limit).map(copyUser),
+      pagination: {
+        totalRecords: this.items.length,
+        totalPages: Math.ceil(this.items.length / limit),
+        currentPage: page,
+      },
+    };
   }
 
   async getById(id: number): Promise<UserListItem | null> {
