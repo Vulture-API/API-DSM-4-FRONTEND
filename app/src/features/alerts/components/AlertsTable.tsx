@@ -9,8 +9,7 @@ interface Props {
   pageSize: number;
   onPageChange: (page: number) => void;
   onViewDetails: (alert: AlertItem) => void;
-  onEditAlert?: (alert: AlertItem) => void;
-  onDeleteAlert?: (alert: AlertItem) => void;
+  selectedAlertId?: string;
 }
 
 const typeClassMap: Record<AlertType, string> = {
@@ -19,7 +18,6 @@ const typeClassMap: Record<AlertType, string> = {
   Chuva: styles.typeChuva,
   Vento: styles.typeVento,
   Bateria: styles.typeBateria,
-  Cultura: styles.typeCultura,
   Sensor: styles.typeSensor,
 };
 
@@ -37,8 +35,7 @@ export function AlertsTable({
   pageSize,
   onPageChange,
   onViewDetails,
-  onEditAlert,
-  onDeleteAlert,
+  selectedAlertId,
 }: Props) {
   const totalPages = Math.max(1, Math.ceil(totalAlerts / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
@@ -70,16 +67,26 @@ export function AlertsTable({
             <tr>
               <th scope="col">ID</th>
               <th scope="col">Tipo</th>
-              <th scope="col">Descrição</th>
-              <th scope="col">Estação / Sensor</th>
+              <th scope="col" className={styles.thDesc}>Descrição</th>
+              <th scope="col" className={styles.thStation}>Estação</th>
+              <th scope="col" className={styles.thSensor}>Sensor</th>
               <th scope="col">Data e Hora</th>
               <th scope="col">Status</th>
-              <th scope="col" style={{ textAlign: "right" }}>Ações</th>
+              <th scope="col" className={styles.thAction} aria-label="Ver detalhes"></th>
             </tr>
           </thead>
           <tbody>
             {pageItems.map((alert) => (
-              <tr key={alert.id}>
+              <tr
+                key={alert.id}
+                className={
+                  selectedAlertId === alert.id
+                    ? styles.selectedRow
+                    : styles.tableRow
+                }
+                onClick={() => onViewDetails(alert)}
+                title="Clique para ver os detalhes do alerta"
+              >
                 <td className={styles.idCell}>
                   <code>{alert.id}</code>
                 </td>
@@ -89,13 +96,24 @@ export function AlertsTable({
                   </span>
                 </td>
                 <td className={styles.descCell}>
-                  <span className={styles.descText} title={alert.description}>
-                    {alert.description}
+                  <span className={styles.descText} title={alert.message || alert.description}>
+                    {alert.message || alert.description}
+                  </span>
+                  <span className={styles.conditionCode}>
+                    {alert.sensor} {alert.comparisonOperator} {alert.referenceValue} {alert.unitOfMeasure}
                   </span>
                 </td>
                 <td className={styles.stationCell}>
                   <span className={styles.stationName}>{alert.station}</span>
-                  <span className={styles.sensorName}>{alert.sensor}</span>
+                  {alert.property && (
+                    <span className={styles.propertyName}>{alert.property}</span>
+                  )}
+                </td>
+                <td className={styles.sensorCell}>
+                  <span className={styles.sensorBadge}>{alert.sensor}</span>
+                  {alert.sensorName && (
+                    <span className={styles.sensorSubName}>{alert.sensorName}</span>
+                  )}
                 </td>
                 <td className={styles.dateCell}>{alert.timestamp}</td>
                 <td>
@@ -104,72 +122,19 @@ export function AlertsTable({
                     {alert.status}
                   </span>
                 </td>
-                <td className={styles.actionsCell}>
-                  <div className={styles.actionButtonGroup}>
-                    <button
-                      type="button"
-                      className={styles.actionButton}
-                      title="Visualizar detalhes"
-                      aria-label={`Visualizar detalhes do alerta ${alert.id}`}
-                      onClick={() => onViewDetails(alert)}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    </button>
-                    {onEditAlert && (
-                      <button
-                        type="button"
-                        className={styles.actionButton}
-                        title="Editar alerta"
-                        aria-label={`Editar alerta ${alert.id}`}
-                        onClick={() => onEditAlert(alert)}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                      </button>
-                    )}
-                    {onDeleteAlert && (
-                      <button
-                        type="button"
-                        className={`${styles.actionButton} ${styles.actionButtonDanger}`}
-                        title="Excluir alerta"
-                        aria-label={`Excluir alerta ${alert.id}`}
-                        onClick={() => onDeleteAlert(alert)}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          <line x1="10" y1="11" x2="10" y2="17"></line>
-                          <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+                <td className={styles.cellChevron}>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
                 </td>
               </tr>
             ))}
