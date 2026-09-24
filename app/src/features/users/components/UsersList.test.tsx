@@ -1,11 +1,46 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import UsersPage from "@/app/administracao/usuarios/page";
 import { MockUserRepository } from "../repositories/MockUserRepository";
-import type { UserRepository } from "../repositories/UserRepository";
+import type {
+  PaginatedUsers,
+  UserRepository,
+} from "../repositories/UserRepository";
 import type { UserListItem } from "../types/user";
 import { UsersList } from "./UsersList";
+
+vi.mock("../repositories", async () => {
+  const { MockUserRepository } = await import(
+    "../repositories/MockUserRepository"
+  );
+
+  return { userRepository: new MockUserRepository() };
+});
+
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute("open");
+  };
+});
+
+function page(
+  items: UserListItem[],
+  currentPage = 1,
+  totalPages = items.length > 0 ? 1 : 0,
+): PaginatedUsers {
+  return {
+    items,
+    pagination: {
+      totalRecords: items.length,
+      totalPages,
+      currentPage,
+    },
+  };
+}
 
 describe("Listagem de usuários", () => {
   it("limpa a busca pelo teclado e devolve o foco ao campo", async () => {
@@ -26,12 +61,14 @@ describe("Listagem de usuários", () => {
   });
 
   it("preserva o nome e e-mail completos no conteúdo acessível mesmo quando longos", async () => {
-    const [base] = await new MockUserRepository().list();
+    const [base] = (await new MockUserRepository().list()).items;
     const nome = "Maria Aparecida de Albuquerque e Silva";
     const email = "maria.aparecida.albuquerque.silva@example.com";
     render(
       <UsersList
-        repository={Object.assign(new MockUserRepository(), { list: async () => [{ ...base, nome, email }] })}
+        repository={Object.assign(new MockUserRepository(), {
+          list: async () => page([{ ...base, nome, email }]),
+        })}
       />,
     );
     expect(await screen.findByText(email)).toHaveAttribute("title", email);
@@ -72,7 +109,7 @@ describe("Listagem de usuários", () => {
   });
 
   it("mostra loading enquanto aguarda os dados e então apresenta o resultado", async () => {
-    let resolve!: (users: UserListItem[]) => void;
+    let resolve!: (users: PaginatedUsers) => void;
     const repository: UserRepository = Object.assign(new MockUserRepository(), {
       list: () =>
         new Promise((done) => {
@@ -91,7 +128,13 @@ describe("Listagem de usuários", () => {
   });
 
   it("apresenta estado vazio quando não há usuários cadastrados", async () => {
-    render(<UsersList repository={Object.assign(new MockUserRepository(), { list: async () => [] })} />);
+    render(
+      <UsersList
+        repository={Object.assign(new MockUserRepository(), {
+          list: async () => page([]),
+        })}
+      />,
+    );
     expect(
       await screen.findByText("Nenhum usuário cadastrado."),
     ).toBeInTheDocument();
@@ -155,14 +198,19 @@ describe("Listagem de usuários", () => {
   });
 
   it("suporta usuário sem credencial e cargo sem enum fechado", async () => {
-    const [base] = await new MockUserRepository().list();
+    const [base] = (await new MockUserRepository().list()).items;
     const user = userEvent.setup();
     render(
       <UsersList
         repository={Object.assign(new MockUserRepository(), {
-          list: async () => [
-            { ...base, email: null, cargo: { id: 4, nome: "PESQUISADOR" } },
-          ],
+          list: async () =>
+            page([
+              {
+                ...base,
+                email: null,
+                cargo: { id: 4, nome: "PESQUISADOR" },
+              },
+            ]),
         })}
       />,
     );
@@ -170,6 +218,31 @@ describe("Listagem de usuários", () => {
     expect(within(screen.getByRole("table")).getByText("PESQUISADOR")).toBeInTheDocument();
     await user.type(screen.getByRole("searchbox"), "@example");
     expect(screen.getByText("Nenhum usuário encontrado.")).toBeInTheDocument();
+  });
+
+  it("cadastra um usuário e recarrega a página atual", async () => {
+    const repository = new MockUserRepository();
+    const interaction = userEvent.setup();
+    render(<UsersList repository={repository} />);
+    await screen.findByRole("table");
+
+    await interaction.click(screen.getByRole("button", { name: "Novo usuário" }));
+    await interaction.type(screen.getByLabelText(/Nome completo/), "Ana Lima");
+    await interaction.type(screen.getByLabelText(/E-mail/), "ana@example.com");
+    await interaction.selectOptions(
+      screen.getByRole("combobox", { name: /Cargo/ }),
+      "2",
+    );
+    await interaction.type(screen.getByLabelText(/Senha/), "password123");
+    await interaction.click(
+      screen.getByRole("button", { name: "Cadastrar usuário" }),
+    );
+
+    expect(
+      await screen.findByText("Usuário cadastrado com sucesso."),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Ana Lima")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });
 
@@ -188,5 +261,32 @@ describe("Filtro de usuários por cargo", () => {
     await user.clear(screen.getByRole("searchbox"));
     await user.selectOptions(filter, "");
     expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(7);
+  });
+});
+
+describe("Paginação de usuários", () => {
+  it("navega pelas páginas usando o metadado retornado pelo repository", async () => {
+    const [first, second] = (await new MockUserRepository().list()).items;
+    const list = vi.fn(async ({ page: requestedPage = 1 } = {}) =>
+      requestedPage === 1
+        ? page([first], 1, 2)
+        : page([second], 2, 2),
+    );
+    const repository = Object.assign(new MockUserRepository(), { list });
+    const interaction = userEvent.setup();
+
+    render(<UsersList repository={repository} />);
+
+    expect(await screen.findByText(first.nome)).toBeInTheDocument();
+    expect(screen.getByText("Página 1 de 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Página anterior" })).toBeDisabled();
+
+    await interaction.click(
+      screen.getByRole("button", { name: "Próxima página" }),
+    );
+
+    expect(await screen.findByText(second.nome)).toBeInTheDocument();
+    expect(screen.getByText("Página 2 de 2")).toBeInTheDocument();
+    expect(list).toHaveBeenLastCalledWith({ page: 2, limit: 20 });
   });
 });

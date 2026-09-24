@@ -3,13 +3,19 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import UserDetailsPage from "@/app/administracao/usuarios/[id]/page";
 import { MockUserRepository } from "../repositories/MockUserRepository";
-import { ApiUserRepository } from "../repositories/ApiUserRepository";
 import { editUserSchema } from "../schemas/editUserSchema";
 import { UserDetailsScreen } from "./UserDetailsScreen";
 import { UsersList } from "./UsersList";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }), usePathname: () => "/administracao/usuarios/1" }));
+vi.mock("../repositories", async () => {
+  const { MockUserRepository } = await import(
+    "../repositories/MockUserRepository"
+  );
+
+  return { userRepository: new MockUserRepository() };
+});
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function () { this.removeAttribute("open"); };
@@ -147,7 +153,7 @@ describe("Detalhes do usuário", () => {
     const repository = new MockUserRepository();
     render(<UsersList repository={repository} />);
     await screen.findByRole("table");
-    for (const user of await repository.list()) {
+    for (const user of (await repository.list()).items) {
       expect(screen.getByRole("link", { name: user.nome })).toHaveAttribute("href", `/administracao/usuarios/${user.id}`);
     }
   });
@@ -162,7 +168,7 @@ describe("Detalhes do usuário", () => {
   });
 
   it("exibe usuário de nome único, inativo e sem credencial", async () => {
-    const [base] = await new MockUserRepository().list();
+    const [base] = (await new MockUserRepository().list()).items;
     const repository = new MockUserRepository([{ ...base, nome: "Ana", email: null, ativo: false }]);
     const interaction = userEvent.setup();
     render(<UserDetailsScreen id={base.id} repository={repository} />);
@@ -189,16 +195,10 @@ describe("Operações do repository de detalhes", () => {
     await expect(repository.update(1, { ...input, cargo_id: 999 })).rejects.toThrow("Selecione um cargo existente.");
     await expect(repository.update(1, { ...input, nome: " " })).rejects.toThrow();
     await repository.delete(1);
-    expect(await repository.list()).toHaveLength(5);
+    expect((await repository.list()).items).toHaveLength(5);
     expect(await repository.getById(1)).toBeNull();
     await expect(repository.update(1, input)).rejects.toThrow("Usuário não encontrado.");
     await expect(repository.delete(1)).rejects.toThrow("Usuário não encontrado.");
   });
 
-  it("mantém API explicitamente pendente", async () => {
-    const repository = new ApiUserRepository();
-    await expect(repository.getById(1)).rejects.toThrow("contrato OpenAPI");
-    await expect(repository.update(1, { nome: "Nome", cargo_id: 1, ativo: true })).rejects.toThrow("contrato OpenAPI");
-    await expect(repository.delete(1)).rejects.toThrow("contrato OpenAPI");
-  });
 });

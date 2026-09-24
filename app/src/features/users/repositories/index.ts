@@ -1,5 +1,4 @@
-import { MockUserRepository } from "./MockUserRepository";
+import { ApiUserRepository } from "./ApiUserRepository";
 import type { UserRepository } from "./UserRepository";
 
-// Ponto de composição: substituir apenas quando houver contrato OpenAPI oficial.
-export const userRepository: UserRepository = new MockUserRepository();
+export const userRepository: UserRepository = new ApiUserRepository();

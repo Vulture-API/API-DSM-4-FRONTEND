@@ -1,4 +1,3 @@
-/** Porta HTTP para a futura integração; não define URLs, payloads ou DTOs. */
 export interface HttpClient {
   request(url: URL, options?: RequestInit): Promise<Response>;
 }
