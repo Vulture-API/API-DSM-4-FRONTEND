@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { PortalLayout } from '@/components/layout/PortalLayout/PortalLayout'
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput'
 import { Button } from '@/components/ui/Button/Button'
@@ -708,7 +709,9 @@ const Page = () => {
                   </svg>
                   <h3>Alertas e notificações</h3>
                 </div>
-                <button className={styles.linkVerTodos}>Ver todos &gt;</button>
+                <Link href="/alertas" className={styles.linkVerTodos}>
+                  Ver todos &gt;
+                </Link>
               </div>
 
               <div className={styles.alertsList}>

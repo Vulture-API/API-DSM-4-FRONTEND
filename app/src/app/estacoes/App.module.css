@@ -524,6 +524,9 @@
   cursor: pointer;
   padding: 0;
   transition: color 0.15s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .linkVerTodos:hover {
