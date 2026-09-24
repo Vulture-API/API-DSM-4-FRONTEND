@@ -44,6 +44,7 @@ export function Sidebar({
   const isDashboardActive = isActive("/dashboard");
   const isEstacoesActive = isActive("/estacoes");
   const isAlertasActive = isActive("/alertas");
+  const isRegrasActive = isActive("/regras");
 
   const administrationActive = administrationLinks.some(({ href }) =>
     isActive(href),
@@ -94,6 +95,17 @@ export function Sidebar({
         >
           <Icon name="document" />
           Relatórios &amp; Alertas
+        </Link>
+
+        <Link
+          href="/regras"
+          aria-current={isRegrasActive ? "page" : undefined}
+          className={`${styles.item} ${
+            isRegrasActive ? styles.active : ""
+          }`}
+        >
+          <Icon name="bell" />
+          Regras de Alerta
         </Link>
 
         <div
