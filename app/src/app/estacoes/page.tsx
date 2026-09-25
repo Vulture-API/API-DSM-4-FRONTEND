@@ -8,273 +8,19 @@ import { Icon } from '@/components/ui/Icon/Icon'
 import { FeedbackState } from '@/components/ui/FeedbackState/FeedbackState'
 import styles from './App.module.css'
 
-interface Station {
-  id: number
-  name: string
-  propertyId: number
-  propriedade: string
-  macAddress: string
-  latitude: number
-  longitude: number
-  status: 'ativo' | 'inativo'
-  lastCommunicationAt: string
-  createdAt: string
-  umidadeSolo?: number
-  varUmidade?: string
-  tempSolo?: number
-  varTempSolo?: string
-  tempAr?: number
-  varTempAr?: string
-}
+import type {
+  Station,
+  StationFormValues,
+} from '@/features/stations/types/station'
+import { useStations } from '@/features/stations/hooks/useStations'
 
-interface Property {
-  id: number
-  name: string
-  location: string
-}
-
-interface NewStationForm {
-  name: string
-  propertyId: string
-  macAddress: string
-  latitude: string
-  longitude: string
-  status: 'ativo' | 'inativo'
-}
-
-const propertiesMock: Property[] = [
-  { id: 1, name: 'Fazenda Santa Rita', location: 'São José dos Campos - SP' },
-  { id: 2, name: 'Fazenda Boa Vista', location: 'Taubaté - SP' },
-  { id: 3, name: 'Fazenda Esperança', location: 'Jacareí - SP' },
-  { id: 4, name: 'Sítio Boa Vista', location: 'Caçapava - SP' },
-  { id: 5, name: 'Fazenda Água Limpa', location: 'Pindamonhangaba - SP' },
-]
-
-const initialStations: Station[] = [
-  {
-    id: 1,
-    name: 'Estação 01',
-    propertyId: 1,
-    propriedade: 'Fazenda Santa Rita',
-    macAddress: '00:1A:2B:3C:4D:01',
-    latitude: -23.1791,
-    longitude: -45.8872,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:30',
-    createdAt: '15/01/2025',
-    umidadeSolo: 34,
-    varUmidade: '↑ 1% (24h)',
-    tempSolo: 22.8,
-    varTempSolo: '↑ 0,4°C (24h)',
-    tempAr: 24.5,
-    varTempAr: '↑ 0,9°C (24h)',
-  },
-  {
-    id: 2,
-    name: 'Estação 02',
-    propertyId: 1,
-    propriedade: 'Fazenda Santa Rita',
-    macAddress: '00:1A:2B:3C:4D:02',
-    latitude: -23.1755,
-    longitude: -45.879,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:28',
-    createdAt: '18/01/2025',
-    umidadeSolo: 29,
-    varUmidade: '↓ 1% (24h)',
-    tempSolo: 23.0,
-    varTempSolo: '↑ 0,5°C (24h)',
-    tempAr: 26.1,
-    varTempAr: '↑ 1,5°C (24h)',
-  },
-  {
-    id: 3,
-    name: 'Estação 03',
-    propertyId: 1,
-    propriedade: 'Fazenda Santa Rita',
-    macAddress: '00:1A:2B:3C:4D:03',
-    latitude: -23.1702,
-    longitude: -45.876,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:32',
-    createdAt: '20/01/2025',
-    umidadeSolo: 32,
-    varUmidade: '↑ 2% (24h)',
-    tempSolo: 23.4,
-    varTempSolo: '↑ 0,8°C (24h)',
-    tempAr: 25.6,
-    varTempAr: '↑ 1,2°C (24h)',
-  },
-  {
-    id: 4,
-    name: 'Estação 04',
-    propertyId: 2,
-    propriedade: 'Fazenda Boa Vista',
-    macAddress: '00:1A:2B:3C:4D:04',
-    latitude: -23.1868,
-    longitude: -45.8901,
-    status: 'inativo',
-    lastCommunicationAt: '10/06/2025 - 14:20',
-    createdAt: '02/02/2025',
-    umidadeSolo: 18,
-    varUmidade: '↓ 8% (24h)',
-    tempSolo: 27.2,
-    varTempSolo: '↑ 2,1°C (24h)',
-    tempAr: 29.4,
-    varTempAr: '↑ 3,0°C (24h)',
-  },
-  {
-    id: 5,
-    name: 'Estação 05',
-    propertyId: 2,
-    propriedade: 'Fazenda Boa Vista',
-    macAddress: '00:1A:2B:3C:4D:05',
-    latitude: -23.181,
-    longitude: -45.8845,
-    status: 'inativo',
-    lastCommunicationAt: '10/06/2025 - 13:52',
-    createdAt: '05/02/2025',
-    umidadeSolo: 14,
-    varUmidade: '—',
-    tempSolo: 28.0,
-    varTempSolo: '—',
-    tempAr: 30.1,
-    varTempAr: '—',
-  },
-  {
-    id: 6,
-    name: 'Estação 06',
-    propertyId: 3,
-    propriedade: 'Fazenda Esperança',
-    macAddress: '00:1A:2B:3C:4D:06',
-    latitude: -23.1745,
-    longitude: -45.893,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:31',
-    createdAt: '12/02/2025',
-    umidadeSolo: 38,
-    varUmidade: '↑ 4% (24h)',
-    tempSolo: 21.5,
-    varTempSolo: '↓ 0,2°C (24h)',
-    tempAr: 23.8,
-    varTempAr: '↑ 0,5°C (24h)',
-  },
-  {
-    id: 7,
-    name: 'Estação 07',
-    propertyId: 3,
-    propriedade: 'Fazenda Esperança',
-    macAddress: '00:1A:2B:3C:4D:07',
-    latitude: -23.1799,
-    longitude: -45.8801,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:27',
-    createdAt: '15/02/2025',
-    umidadeSolo: 35,
-    varUmidade: '↑ 1% (24h)',
-    tempSolo: 22.0,
-    varTempSolo: '↑ 0,3°C (24h)',
-    tempAr: 24.2,
-    varTempAr: '↑ 0,8°C (24h)',
-  },
-  {
-    id: 8,
-    name: 'Estação 08',
-    propertyId: 4,
-    propriedade: 'Sítio Boa Vista',
-    macAddress: '00:1A:2B:3C:4D:08',
-    latitude: -23.1912,
-    longitude: -45.8888,
-    status: 'inativo',
-    lastCommunicationAt: '10/06/2025 - 14:18',
-    createdAt: '22/02/2025',
-    umidadeSolo: 22,
-    varUmidade: '↓ 5% (24h)',
-    tempSolo: 25.4,
-    varTempSolo: '↑ 1,6°C (24h)',
-    tempAr: 27.8,
-    varTempAr: '↑ 2,0°C (24h)',
-  },
-  {
-    id: 9,
-    name: 'Estação 09',
-    propertyId: 4,
-    propriedade: 'Sítio Boa Vista',
-    macAddress: '00:1A:2B:3C:4D:09',
-    latitude: -23.1955,
-    longitude: -45.877,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:33',
-    createdAt: '01/03/2025',
-    umidadeSolo: 36,
-    varUmidade: '↑ 3% (24h)',
-    tempSolo: 22.5,
-    varTempSolo: '↑ 0,6°C (24h)',
-    tempAr: 24.9,
-    varTempAr: '↑ 1,0°C (24h)',
-  },
-  {
-    id: 10,
-    name: 'Estação 10',
-    propertyId: 5,
-    propriedade: 'Fazenda Água Limpa',
-    macAddress: '00:1A:2B:3C:4D:10',
-    latitude: -23.168,
-    longitude: -45.885,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:25',
-    createdAt: '05/03/2025',
-    umidadeSolo: 40,
-    varUmidade: '↑ 2% (24h)',
-    tempSolo: 21.8,
-    varTempSolo: '↓ 0,4°C (24h)',
-    tempAr: 23.5,
-    varTempAr: '↑ 0,3°C (24h)',
-  },
-  {
-    id: 11,
-    name: 'Estação 11',
-    propertyId: 5,
-    propriedade: 'Fazenda Água Limpa',
-    macAddress: '00:1A:2B:3C:4D:11',
-    latitude: -23.1729,
-    longitude: -45.8919,
-    status: 'ativo',
-    lastCommunicationAt: '10/06/2025 - 14:29',
-    createdAt: '10/03/2025',
-    umidadeSolo: 37,
-    varUmidade: '↑ 1% (24h)',
-    tempSolo: 22.3,
-    varTempSolo: '↑ 0,2°C (24h)',
-    tempAr: 24.0,
-    varTempAr: '↑ 0,6°C (24h)',
-  },
-  {
-    id: 12,
-    name: 'Estação 12',
-    propertyId: 1,
-    propriedade: 'Fazenda Santa Rita',
-    macAddress: '00:1A:2B:3C:4D:12',
-    latitude: -23.184,
-    longitude: -45.882,
-    status: 'inativo',
-    lastCommunicationAt: '10/06/2025 - 12:47',
-    createdAt: '15/03/2025',
-    umidadeSolo: 25,
-    varUmidade: '—',
-    tempSolo: 26.0,
-    varTempSolo: '—',
-    tempAr: 28.5,
-    varTempAr: '—',
-  },
-]
 
 const statusLabel: Record<Station['status'], string> = {
   ativo: 'Ativo',
   inativo: 'Inativo',
 }
 
-const initialForm: NewStationForm = {
+const initialForm: StationFormValues = {
   name: '',
   propertyId: '',
   macAddress: '',
@@ -371,34 +117,41 @@ const StationTowerIcon = ({ className }: { className?: string }) => (
 )
 
 const Page = () => {
-  const [stations, setStations] = useState<Station[]>(initialStations)
-  const [search, setSearch] = useState('')
-  const [selectedStationId, setSelectedStationId] = useState<number>(3)
+  const {
+    stations,
+    properties,
+    pagination,
+    page,
+    setPage,
+    loading,
+    error,
+    search,
+    setSearch,
+    selectedStation,
+    selectedStationId,
+    setSelectedStationId,
+    filteredStations,
+    createStation,
+    updateStation,
+    deleteStation,
+    refresh,
+  } = useStations()
+
   const [isNewModalOpen, setIsNewModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
-  const [editForm, setEditForm] = useState<NewStationForm>(initialForm)
+  const [submitting, setSubmitting] = useState(false)
+  const [editForm, setEditForm] = useState<StationFormValues>(initialForm)
   const [editError, setEditError] = useState('')
-  const [form, setForm] = useState<NewStationForm>(initialForm)
+  const [form, setForm] = useState<StationFormValues>(initialForm)
   const [formError, setFormError] = useState('')
 
-  const filteredStations = stations.filter(
-    (station) =>
-      station.name.toLowerCase().includes(search.toLowerCase()) ||
-      station.propriedade.toLowerCase().includes(search.toLowerCase()) ||
-      station.macAddress.toLowerCase().includes(search.toLowerCase()) ||
-      statusLabel[station.status].toLowerCase().includes(search.toLowerCase())
-  )
-
-  const selectedStation =
-    stations.find((s) => s.id === selectedStationId) || stations[0] || initialStations[2]
-
-  const handleFieldChange = (field: keyof NewStationForm, value: string) => {
+  const handleFieldChange = (field: keyof StationFormValues, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleEditFieldChange = (field: keyof NewStationForm, value: string) => {
+  const handleEditFieldChange = (field: keyof StationFormValues, value: string) => {
     setEditForm((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -435,8 +188,14 @@ const Page = () => {
       name: selectedStation.name,
       propertyId: String(selectedStation.propertyId),
       macAddress: selectedStation.macAddress,
-      latitude: String(selectedStation.latitude),
-      longitude: String(selectedStation.longitude),
+      latitude:
+        selectedStation.latitude !== null && selectedStation.latitude !== undefined
+          ? String(selectedStation.latitude)
+          : '',
+      longitude:
+        selectedStation.longitude !== null && selectedStation.longitude !== undefined
+          ? String(selectedStation.longitude)
+          : '',
       status: selectedStation.status,
     })
     setEditError('')
@@ -449,7 +208,8 @@ const Page = () => {
     setEditError('')
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
+    if (!selectedStation) return
     if (!editForm.name.trim()) {
       setEditError('Informe o nome da estação.')
       return
@@ -463,44 +223,34 @@ const Page = () => {
       return
     }
 
-    const lat = Number(editForm.latitude) || selectedStation.latitude
-    const lng = Number(editForm.longitude) || selectedStation.longitude
-    const prop = propertiesMock.find((p) => p.id === Number(editForm.propertyId))
-
-    setStations((prev) =>
-      prev.map((s) => {
-        if (s.id === selectedStation.id) {
-          return {
-            ...s,
-            name: editForm.name.trim(),
-            propertyId: prop ? prop.id : s.propertyId,
-            propriedade: prop ? prop.name : s.propriedade,
-            macAddress: editForm.macAddress.trim().toUpperCase(),
-            latitude: lat,
-            longitude: lng,
-            status: editForm.status,
-          }
-        }
-        return s
-      })
-    )
-
-    setIsEditing(false)
+    setSubmitting(true)
     setEditError('')
-  }
-
-  const handleDeleteStation = () => {
-    const nextStations = stations.filter((s) => s.id !== selectedStation.id)
-    setStations(nextStations)
-    if (nextStations.length > 0) {
-      setSelectedStationId(nextStations[0].id)
+    try {
+      await updateStation(selectedStation.id, editForm)
+      setIsEditing(false)
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Erro ao salvar alterações.')
+    } finally {
+      setSubmitting(false)
     }
-    setIsDetailModalOpen(false)
-    setIsConfirmingDelete(false)
-    setIsEditing(false)
   }
 
-  const handleCreateStation = () => {
+  const handleDeleteStation = async () => {
+    if (!selectedStation) return
+    setSubmitting(true)
+    try {
+      await deleteStation(selectedStation.id)
+      setIsDetailModalOpen(false)
+      setIsConfirmingDelete(false)
+      setIsEditing(false)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao excluir estação.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleCreateStation = async () => {
     if (!form.name.trim()) {
       setFormError('Informe o nome da estação.')
       return
@@ -514,34 +264,16 @@ const Page = () => {
       return
     }
 
-    const lat = Number(form.latitude) || -23.1800
-    const lng = Number(form.longitude) || -45.8850
-    const prop = propertiesMock.find((p) => p.id === Number(form.propertyId))
-
-    const nextId = stations.length > 0 ? Math.max(...stations.map((s) => s.id)) + 1 : 1
-
-    const newStation: Station = {
-      id: nextId,
-      name: form.name.trim(),
-      propertyId: prop ? prop.id : 1,
-      propriedade: prop ? prop.name : 'Fazenda',
-      macAddress: form.macAddress.trim().toUpperCase(),
-      latitude: lat,
-      longitude: lng,
-      status: form.status,
-      lastCommunicationAt: 'Agora mesmo',
-      createdAt: 'Hoje',
-      umidadeSolo: 32,
-      varUmidade: '↑ 1% (24h)',
-      tempSolo: 23.0,
-      varTempSolo: '↑ 0,5°C (24h)',
-      tempAr: 25.0,
-      varTempAr: '↑ 1,0°C (24h)',
+    setSubmitting(true)
+    setFormError('')
+    try {
+      await createStation(form)
+      handleCloseNewModal()
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Erro ao criar estação.')
+    } finally {
+      setSubmitting(false)
     }
-
-    setStations((prev) => [newStation, ...prev])
-    setSelectedStationId(newStation.id)
-    handleCloseNewModal()
   }
 
   return (
@@ -606,7 +338,13 @@ const Page = () => {
                       </td>
 
                       <td className={styles.cellCoord}>
-                        {station.latitude.toFixed(4)}, {station.longitude.toFixed(4)}
+                        {station.latitude !== null && station.latitude !== undefined
+                          ? station.latitude.toFixed(4)
+                          : '—'}
+                        ,{' '}
+                        {station.longitude !== null && station.longitude !== undefined
+                          ? station.longitude.toFixed(4)
+                          : '—'}
                       </td>
 
                       <td className={styles.cellStatus}>
@@ -649,12 +387,39 @@ const Page = () => {
                 </tbody>
               </table>
 
-              {filteredStations.length === 0 && (
+              {loading && stations.length === 0 && (
+                <div style={{ padding: '24px 16px' }}>
+                  <FeedbackState
+                    kind="loading"
+                    title="Carregando estações..."
+                    description="Buscando informações do servidor."
+                  />
+                </div>
+              )}
+
+              {!loading && error && (
+                <div style={{ padding: '24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <FeedbackState
+                    kind="error"
+                    title="Erro ao carregar estações"
+                    description={error}
+                  />
+                  <Button variant="secondary" onClick={() => refresh()}>
+                    Tentar novamente
+                  </Button>
+                </div>
+              )}
+
+              {!loading && !error && filteredStations.length === 0 && (
                 <div style={{ padding: '24px 16px' }}>
                   <FeedbackState
                     kind="empty"
                     title="Nenhuma estação encontrada"
-                    description={`Nenhuma estação encontrada correspondente a "${search}".`}
+                    description={
+                      search
+                        ? `Nenhuma estação encontrada correspondente a "${search}".`
+                        : "Nenhuma estação cadastrada no momento."
+                    }
                   />
                 </div>
               )}
@@ -662,26 +427,28 @@ const Page = () => {
 
             <div className={styles.tableFooter}>
               <span className={styles.countInfo}>
-                Mostrando {filteredStations.length} de {stations.length} estações
+                Mostrando {filteredStations.length} de {pagination.totalRecords || stations.length} estações
               </span>
 
               <div className={styles.pagination}>
                 <button
                   className={styles.pageBtn}
                   aria-label="Página anterior"
-                  disabled
+                  onClick={() => setPage(page - 1)}
+                  disabled={page <= 1 || loading}
                 >
                   &lt;
                 </button>
                 <button
                   className={`${styles.pageBtn} ${styles.pageBtnActive}`}
                 >
-                  1
+                  {pagination.currentPage || page}
                 </button>
                 <button
                   className={styles.pageBtn}
                   aria-label="Próxima página"
-                  disabled
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= pagination.totalPages || loading}
                 >
                   &gt;
                 </button>
@@ -823,146 +590,156 @@ const Page = () => {
               </div>
             </div>
 
-            <div
-              className={`${styles.sideCard} ${styles.clickableSideCard}`}
-              onClick={() => handleOpenStationDetail(selectedStation.id)}
-              title="Clique para abrir todas as informações desta estação"
-            >
-              <div className={styles.telemetryCardHeader}>
-                <div className={styles.telemetryTitleGroup}>
-                  <StationTowerIcon className={styles.telemetryWifiIcon} />
-                  <span className={styles.telemetrySensorName}>
-                    {selectedStation.name}
-                  </span>
-                  <span
-                    className={`${styles.pillBadge} ${
-                      styles[`pill-${selectedStation.status}`]
-                    }`}
-                  >
-                    <span className={styles.dotIndicator} />
-                    {statusLabel[selectedStation.status]}
-                  </span>
-                </div>
-                <p className={styles.telemetryLocation}>
-                  {selectedStation.propriedade} • MAC: {selectedStation.macAddress}
-                </p>
-              </div>
-
-              <div className={styles.telemetryBody}>
-                <div className={styles.telemetryImgWrapper}>
-                  <svg
-                    className={styles.stationGraphic}
-                    viewBox="0 0 120 140"
-                    preserveAspectRatio="xMidYMid slice"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect width="120" height="140" rx="10" fill="#eaf1ea" />
-                    <rect width="120" height="90" rx="10" fill="#d8e8dc" />
-                    <path
-                      d="M0 80 Q30 75 60 80 T120 78 L120 140 L0 140 Z"
-                      fill="#4f7a55"
-                    />
-                    <path
-                      d="M0 92 Q40 87 80 92 T120 90 L120 140 L0 140 Z"
-                      fill="#375d3c"
-                    />
-                    <rect x="58" y="24" width="4" height="78" fill="#7d9284" />
-                    <line
-                      x1="48"
-                      y1="102"
-                      x2="72"
-                      y2="102"
-                      stroke="#526857"
-                      strokeWidth="3"
-                    />
-                    <polygon
-                      points="42,38 58,34 58,46 42,50"
-                      fill="#3a5a78"
-                      stroke="#22394e"
-                      strokeWidth="1"
-                    />
-                    <circle cx="60" cy="22" r="3" fill="#2d3d32" />
-                    <line
-                      x1="52"
-                      y1="22"
-                      x2="68"
-                      y2="22"
-                      stroke="#2d3d32"
-                      strokeWidth="1.5"
-                    />
-                    <circle cx="52" cy="22" r="2.5" fill="#e74c3c" />
-                    <circle cx="68" cy="22" r="2.5" fill="#e74c3c" />
-                    <rect
-                      x="64"
-                      y="44"
-                      width="10"
-                      height="7"
-                      rx="1"
-                      fill="#ffffff"
-                      stroke="#889c8e"
-                    />
-                  </svg>
-                </div>
-
-                <div className={styles.telemetryMetricsGridThree}>
-                  <div className={styles.metricItem}>
-                    <span className={styles.metricLabel}>Umidade do solo</span>
-                    <span className={styles.metricValue}>
-                      {selectedStation.umidadeSolo !== undefined
-                        ? `${selectedStation.umidadeSolo}%`
-                        : '32%'}
+            {selectedStation ? (
+              <div
+                className={`${styles.sideCard} ${styles.clickableSideCard}`}
+                onClick={() => handleOpenStationDetail(selectedStation.id)}
+                title="Clique para abrir todas as informações desta estação"
+              >
+                <div className={styles.telemetryCardHeader}>
+                  <div className={styles.telemetryTitleGroup}>
+                    <StationTowerIcon className={styles.telemetryWifiIcon} />
+                    <span className={styles.telemetrySensorName}>
+                      {selectedStation.name}
                     </span>
-                    <span className={styles.metricVariationPos}>
-                      {selectedStation.varUmidade || '↑ 2% (24h)'}
+                    <span
+                      className={`${styles.pillBadge} ${
+                        styles[`pill-${selectedStation.status}`]
+                      }`}
+                    >
+                      <span className={styles.dotIndicator} />
+                      {statusLabel[selectedStation.status]}
                     </span>
                   </div>
+                  <p className={styles.telemetryLocation}>
+                    {selectedStation.propriedade} • MAC: {selectedStation.macAddress}
+                  </p>
+                </div>
 
-                  <div className={styles.metricItem}>
-                    <span className={styles.metricLabel}>
-                      Temperatura do solo
-                    </span>
-                    <span className={styles.metricValue}>
-                      {selectedStation.tempSolo !== undefined
-                        ? `${selectedStation.tempSolo}°C`
-                        : '23,4°C'}
-                    </span>
-                    <span className={styles.metricVariationPos}>
-                      {selectedStation.varTempSolo || '↑ 0,8°C (24h)'}
-                    </span>
+                <div className={styles.telemetryBody}>
+                  <div className={styles.telemetryImgWrapper}>
+                    <svg
+                      className={styles.stationGraphic}
+                      viewBox="0 0 120 140"
+                      preserveAspectRatio="xMidYMid slice"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect width="120" height="140" rx="10" fill="#eaf1ea" />
+                      <rect width="120" height="90" rx="10" fill="#d8e8dc" />
+                      <path
+                        d="M0 80 Q30 75 60 80 T120 78 L120 140 L0 140 Z"
+                        fill="#4f7a55"
+                      />
+                      <path
+                        d="M0 92 Q40 87 80 92 T120 90 L120 140 L0 140 Z"
+                        fill="#375d3c"
+                      />
+                      <rect x="58" y="24" width="4" height="78" fill="#7d9284" />
+                      <line
+                        x1="48"
+                        y1="102"
+                        x2="72"
+                        y2="102"
+                        stroke="#526857"
+                        strokeWidth="3"
+                      />
+                      <polygon
+                        points="42,38 58,34 58,46 42,50"
+                        fill="#3a5a78"
+                        stroke="#22394e"
+                        strokeWidth="1"
+                      />
+                      <circle cx="60" cy="22" r="3" fill="#2d3d32" />
+                      <line
+                        x1="52"
+                        y1="22"
+                        x2="68"
+                        y2="22"
+                        stroke="#2d3d32"
+                        strokeWidth="1.5"
+                      />
+                      <circle cx="52" cy="22" r="2.5" fill="#e74c3c" />
+                      <circle cx="68" cy="22" r="2.5" fill="#e74c3c" />
+                      <rect
+                        x="64"
+                        y="44"
+                        width="10"
+                        height="7"
+                        rx="1"
+                        fill="#ffffff"
+                        stroke="#889c8e"
+                      />
+                    </svg>
                   </div>
 
-                  <div className={styles.metricItem}>
-                    <span className={styles.metricLabel}>
-                      Temperatura do ar
-                    </span>
-                    <span className={styles.metricValue}>
-                      {selectedStation.tempAr !== undefined
-                        ? `${selectedStation.tempAr}°C`
-                        : '25,6°C'}
-                    </span>
-                    <span className={styles.metricVariationPos}>
-                      {selectedStation.varTempAr || '↑ 1,2°C (24h)'}
-                    </span>
+                  <div className={styles.telemetryMetricsGridThree}>
+                    <div className={styles.metricItem}>
+                      <span className={styles.metricLabel}>Umidade do solo</span>
+                      <span className={styles.metricValue}>
+                        {selectedStation.umidadeSolo !== undefined
+                          ? `${selectedStation.umidadeSolo}%`
+                          : '32%'}
+                      </span>
+                      <span className={styles.metricVariationPos}>
+                        {selectedStation.varUmidade || '↑ 2% (24h)'}
+                      </span>
+                    </div>
+
+                    <div className={styles.metricItem}>
+                      <span className={styles.metricLabel}>
+                        Temperatura do solo
+                      </span>
+                      <span className={styles.metricValue}>
+                        {selectedStation.tempSolo !== undefined
+                          ? `${selectedStation.tempSolo}°C`
+                          : '23,4°C'}
+                      </span>
+                      <span className={styles.metricVariationPos}>
+                        {selectedStation.varTempSolo || '↑ 0,8°C (24h)'}
+                      </span>
+                    </div>
+
+                    <div className={styles.metricItem}>
+                      <span className={styles.metricLabel}>
+                        Temperatura do ar
+                      </span>
+                      <span className={styles.metricValue}>
+                        {selectedStation.tempAr !== undefined
+                          ? `${selectedStation.tempAr}°C`
+                          : '25,6°C'}
+                      </span>
+                      <span className={styles.metricVariationPos}>
+                        {selectedStation.varTempAr || '↑ 1,2°C (24h)'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className={styles.telemetryFooterClean}>
-                <div className={styles.lastUpdateWrapper}>
-                  <StationTowerIcon className={styles.footerWifiIcon} />
-                  <span>
-                    Última comunicação: {selectedStation.lastCommunicationAt}
-                  </span>
+                <div className={styles.telemetryFooterClean}>
+                  <div className={styles.lastUpdateWrapper}>
+                    <StationTowerIcon className={styles.footerWifiIcon} />
+                    <span>
+                      Última comunicação: {selectedStation.lastCommunicationAt}
+                    </span>
+                  </div>
+                  <span className={styles.openHint}>Clique para detalhes &gt;</span>
                 </div>
-                <span className={styles.openHint}>Clique para detalhes &gt;</span>
               </div>
-            </div>
+            ) : (
+              <div className={styles.sideCard}>
+                <div className={styles.telemetryCardHeader}>
+                  <p className={styles.telemetryLocation}>
+                    Nenhuma estação selecionada.
+                  </p>
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       </div>
 
-      {isDetailModalOpen && (
+      {isDetailModalOpen && selectedStation && (
         <div
           className={styles.modalOverlay}
           onClick={() => setIsDetailModalOpen(false)}
@@ -1054,12 +831,13 @@ const Page = () => {
                     type="button"
                     className={styles.btnConfirmDelete}
                     onClick={handleDeleteStation}
+                    disabled={submitting}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
-                    Confirmar Exclusão
+                    {submitting ? 'Excluindo...' : 'Confirmar Exclusão'}
                   </button>
                 </div>
               </div>
@@ -1150,7 +928,7 @@ const Page = () => {
                             onChange={(e) => handleEditFieldChange('propertyId', e.target.value)}
                           >
                             <option value="">Selecione a propriedade</option>
-                            {propertiesMock.map((property) => (
+                            {properties.map((property) => (
                               <option key={property.id} value={property.id}>
                                 {property.name}
                               </option>
@@ -1307,8 +1085,9 @@ const Page = () => {
                   <Button
                     variant="primary"
                     onClick={handleSaveEdit}
+                    disabled={submitting}
                   >
-                    Salvar Alterações
+                    {submitting ? 'Salvando...' : 'Salvar Alterações'}
                   </Button>
                 </div>
               </div>
@@ -1376,12 +1155,20 @@ const Page = () => {
 
                     <div className={styles.infoTileItem}>
                       <span className={styles.infoTileLabel}>Latitude</span>
-                      <span className={styles.infoTileValue}>{selectedStation.latitude.toFixed(6)}</span>
+                      <span className={styles.infoTileValue}>
+                        {selectedStation.latitude !== null && selectedStation.latitude !== undefined
+                          ? selectedStation.latitude.toFixed(6)
+                          : '—'}
+                      </span>
                     </div>
 
                     <div className={styles.infoTileItem}>
                       <span className={styles.infoTileLabel}>Longitude</span>
-                      <span className={styles.infoTileValue}>{selectedStation.longitude.toFixed(6)}</span>
+                      <span className={styles.infoTileValue}>
+                        {selectedStation.longitude !== null && selectedStation.longitude !== undefined
+                          ? selectedStation.longitude.toFixed(6)
+                          : '—'}
+                      </span>
                     </div>
 
                     <div className={styles.infoTileItem}>
@@ -1595,7 +1382,7 @@ const Page = () => {
                         onChange={(e) => handleFieldChange('propertyId', e.target.value)}
                       >
                         <option value="">Selecione a propriedade</option>
-                        {propertiesMock.map((property) => (
+                        {properties.map((property) => (
                           <option key={property.id} value={property.id}>
                             {property.name}
                           </option>
@@ -1752,9 +1539,10 @@ const Page = () => {
               <Button
                 variant="primary"
                 onClick={handleCreateStation}
+                disabled={submitting}
               >
                 <Icon name="plus" />
-                Criar Estação
+                {submitting ? 'Criando...' : 'Criar Estação'}
               </Button>
             </div>
           </div>
