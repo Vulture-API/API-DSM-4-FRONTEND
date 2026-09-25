@@ -1,0 +1,10 @@
+# Sem isto o COPY . . do Dockerfile levava o node_modules da máquina (no
+# Windows, com binários do Windows) para dentro da imagem Linux.
+node_modules
+.next
+coverage
+.env
+.env.*
+!.env.example
+Dockerfile*
+npm-debug.log*
