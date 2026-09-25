@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PortalLayout } from "@/components/layout/PortalLayout/PortalLayout";
 import { Icon } from "@/components/ui/Icon/Icon";
+import { alertRepository } from "@/features/alerts/repositories";
+import type { SensorCatalogItem, StationCatalogItem } from "@/features/alerts/mocks/alertsData";
 import styles from "./App.module.css";
 
 export type ComparisonOperator = ">" | "<" | ">=" | "<=" | "=" | "!=";
@@ -15,6 +17,7 @@ export interface AlertRule {
   message: string;
   stations: string[];
   active: boolean;
+  sensorId?: number;
 }
 
 const initialAlertRules: AlertRule[] = [
@@ -94,12 +97,76 @@ function formatCondition(
   return `${sensor} ${operator} ${value}${unitSuffix}`;
 }
 
+function resolveSensorId(
+  sensorType: string,
+  catalogSensors: SensorCatalogItem[]
+): number {
+  if (catalogSensors && catalogSensors.length > 0) {
+    const found = catalogSensors.find(
+      (s) =>
+        s.sensorName.toLowerCase().includes(sensorType.toLowerCase()) ||
+        s.type.toLowerCase().includes(sensorType.toLowerCase())
+    );
+    if (found) return found.id;
+  }
+  const lower = sensorType.toLowerCase();
+  if (lower.includes("umid")) return 1;
+  if (lower.includes("temp")) return 2;
+  if (lower.includes("vent")) return 4;
+  if (lower.includes("chuv")) return 5;
+  if (lower.includes("bat")) return 6;
+  return 1;
+}
+
 export default function RegrasPage() {
   const [rules, setRules] = useState<AlertRule[]>(initialAlertRules);
+  const [sensorsCatalog, setSensorsCatalog] = useState<SensorCatalogItem[]>([]);
+  const [stationsCatalog, setStationsCatalog] = useState<StationCatalogItem[]>([]);
+  const stationNames = stationsCatalog.length > 0 ? stationsCatalog.map((s) => s.name) : availableStations;
   const [selectedRule, setSelectedRule] = useState<AlertRule | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadData() {
+      try {
+        const [alertData, stations, sensors] = await Promise.all([
+          alertRepository.listAlerts({ limit: 100 }),
+          alertRepository.listStations(),
+          alertRepository.listSensors(),
+        ]);
+
+        if (active) {
+          setStationsCatalog(stations);
+          setSensorsCatalog(sensors);
+
+          if (alertData.items.length > 0) {
+            const mapped: AlertRule[] = alertData.items.map((item) => ({
+              id: item.alertConfigId,
+              sensorType: item.type || "Temperatura",
+              operator: item.comparisonOperator,
+              value: item.referenceValue,
+              message: item.message,
+              stations: [item.station || "Estação 01"],
+              active: item.active,
+              sensorId: item.sensorId,
+            }));
+            setRules(mapped);
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao carregar regras de alerta:", err);
+      }
+    }
+
+    void loadData();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const [editSensor, setEditSensor] = useState("Temperatura");
   const [editOperator, setEditOperator] = useState<ComparisonOperator>(">");
@@ -177,7 +244,7 @@ export default function RegrasPage() {
     setEditStations((prev) => prev.filter((item) => item !== stationName));
   };
 
-  const handleSaveEdit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveEdit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedRule) return;
 
@@ -206,27 +273,51 @@ export default function RegrasPage() {
       return;
     }
 
-    const updated: AlertRule = {
-      ...selectedRule,
-      sensorType: editSensor,
-      operator: editOperator,
-      value: Number(editValue),
-      message: editMessage.trim(),
-      stations: editStations,
-      active: editActive,
-    };
+    const sensorId = selectedRule.sensorId || resolveSensorId(editSensor, sensorsCatalog);
 
-    setRules((prev) =>
-      prev.map((item) => (item.id === updated.id ? updated : item))
-    );
-    setSelectedRule(updated);
-    setIsEditing(false);
+    try {
+      await alertRepository.updateAlertConfig(selectedRule.id, {
+        sensorId,
+        referenceValue: Number(editValue),
+        comparisonOperator: editOperator,
+        message: editMessage.trim(),
+        active: editActive,
+      });
+
+      const updated: AlertRule = {
+        ...selectedRule,
+        sensorType: editSensor,
+        operator: editOperator,
+        value: Number(editValue),
+        message: editMessage.trim(),
+        stations: editStations,
+        active: editActive,
+        sensorId,
+      };
+
+      setRules((prev) =>
+        prev.map((item) => (item.id === updated.id ? updated : item))
+      );
+      setSelectedRule(updated);
+      setIsEditing(false);
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : "Erro ao salvar alterações no backend."
+      );
+    }
   };
 
-  const handleDeleteRule = () => {
+  const handleDeleteRule = async () => {
     if (!selectedRule) return;
-    setRules((prev) => prev.filter((item) => item.id !== selectedRule.id));
-    handleCloseDetailModal();
+    try {
+      await alertRepository.deleteAlertConfig(selectedRule.id);
+      setRules((prev) => prev.filter((item) => item.id !== selectedRule.id));
+      handleCloseDetailModal();
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : "Erro ao excluir regra no backend."
+      );
+    }
   };
 
   const handleOpenCreateModal = () => {
@@ -257,7 +348,7 @@ export default function RegrasPage() {
     setNewStations((prev) => prev.filter((item) => item !== stationName));
   };
 
-  const handleCreateRule = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateRule = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!newSensor) {
@@ -285,18 +376,36 @@ export default function RegrasPage() {
       return;
     }
 
-    const created: AlertRule = {
-      id: Date.now(),
-      sensorType: newSensor,
-      operator: newOperator,
-      value: Number(newValue),
-      message: newMessage.trim(),
-      stations: newStations,
-      active: newActive,
-    };
+    const sensorId = resolveSensorId(newSensor, sensorsCatalog);
 
-    setRules((prev) => [created, ...prev]);
-    handleCloseCreateModal();
+    try {
+      const createdItem = await alertRepository.createAlertConfig({
+        sensorId,
+        referenceValue: Number(newValue),
+        comparisonOperator: newOperator,
+        message: newMessage.trim(),
+        active: newActive,
+        managerUserId: 1,
+      });
+
+      const created: AlertRule = {
+        id: createdItem.alertConfigId,
+        sensorType: newSensor,
+        operator: newOperator,
+        value: Number(newValue),
+        message: newMessage.trim(),
+        stations: newStations,
+        active: newActive,
+        sensorId,
+      };
+
+      setRules((prev) => [created, ...prev]);
+      handleCloseCreateModal();
+    } catch (err) {
+      setNewError(
+        err instanceof Error ? err.message : "Erro ao criar regra no backend."
+      );
+    }
   };
 
 
@@ -771,7 +880,7 @@ export default function RegrasPage() {
                               <option value="" disabled>
                                 Selecione uma estação para adicionar...
                               </option>
-                              {availableStations
+                              {stationNames
                                 .filter((st) => !editStations.includes(st))
                                 .map((st) => (
                                   <option key={st} value={st}>
@@ -1293,7 +1402,7 @@ export default function RegrasPage() {
                             <option value="" disabled>
                               Selecione uma estação para adicionar...
                             </option>
-                            {availableStations
+                            {stationNames
                               .filter((st) => !newStations.includes(st))
                               .map((st) => (
                                 <option key={st} value={st}>

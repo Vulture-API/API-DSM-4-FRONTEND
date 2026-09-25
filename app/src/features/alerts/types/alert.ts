@@ -13,6 +13,7 @@ export type AlertStatus = "Aberto" | "Em análise" | "Resolvido" | "Crítico";
 export interface AlertItem {
   id: string;
   alertConfigId: number;
+  triggeredAlertId?: number;
   sensorId: number;
   sensor: string;
   sensorName: string;

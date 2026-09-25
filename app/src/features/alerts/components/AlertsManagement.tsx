@@ -4,14 +4,15 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { Icon } from "@/components/ui/Icon/Icon";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
+import { FeedbackState } from "@/components/ui/FeedbackState/FeedbackState";
 import { AlertsTable } from "./AlertsTable";
 import { AlertsSidebar } from "./AlertsSidebar";
 import {
-  initialAlerts,
   topStationsWithAlerts,
   stationsCatalog,
   sensorsCatalog,
 } from "../mocks/alertsData";
+import { useAlerts } from "../hooks/useAlerts";
 import type {
   AlertFiltersState,
   AlertItem,
@@ -57,7 +58,22 @@ const statusClassMap: Record<AlertStatus, string> = {
 };
 
 export function AlertsManagement() {
-  const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts);
+  const {
+    alerts,
+    stations: hookStations,
+    sensors: hookSensors,
+    loading,
+    error: apiError,
+    createAlert,
+    updateAlert,
+    deleteAlert,
+    acknowledgeAlert,
+    getSensorsForStation: hookGetSensorsForStation,
+  } = useAlerts();
+
+  const stations = hookStations.length > 0 ? hookStations : stationsCatalog;
+  const sensors = hookSensors.length > 0 ? hookSensors : sensorsCatalog;
+
   const [currentPage, setCurrentPage] = useState(1);
 
   // Unified Details / Edit / Delete Modal state
@@ -97,8 +113,10 @@ export function AlertsManagement() {
 
   // Helpers to get sensors for a station
   const getSensorsForStation = (stationId: number) => {
-    const list = sensorsCatalog.filter((s) => s.stationId === stationId);
-    return list.length > 0 ? list : sensorsCatalog.slice(0, 6);
+    const list = hookGetSensorsForStation(stationId);
+    if (list.length > 0) return list;
+    const fallbackList = sensors.filter((s) => s.stationId === stationId);
+    return fallbackList.length > 0 ? fallbackList : sensors.slice(0, 6);
   };
 
   const currentNewSensors = getSensorsForStation(newStationId);
@@ -144,7 +162,7 @@ export function AlertsManagement() {
     setEditError("");
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAlert) return;
 
@@ -158,32 +176,23 @@ export function AlertsManagement() {
       return;
     }
 
-    const stationItem = stationsCatalog.find((s) => s.id === editStationId) || stationsCatalog[0];
-    const sensorItem = sensorsCatalog.find((s) => s.id === editSensorId) || sensorsCatalog[0];
+    try {
+      const updated = await updateAlert(selectedAlert.alertConfigId, {
+        sensorId: editSensorId,
+        referenceValue: numRef,
+        comparisonOperator: editOperator,
+        message: editMessage.trim(),
+        active: editActive,
+      });
 
-    const updated: AlertItem = {
-      ...selectedAlert,
-      message: editMessage.trim(),
-      description: editMessage.trim(),
-      stationId: stationItem.id,
-      station: stationItem.name,
-      property: stationItem.property,
-      macAddress: stationItem.macAddress,
-      sensorId: sensorItem.id,
-      sensor: sensorItem.localIdentifier,
-      sensorName: sensorItem.sensorName,
-      unitOfMeasure: sensorItem.unitOfMeasure,
-      type: sensorItem.type,
-      comparisonOperator: editOperator,
-      referenceValue: numRef,
-      active: editActive,
-      status: editStatus,
-    };
-
-    setAlerts((prev) => prev.map((a) => (a.id === selectedAlert.id ? updated : a)));
-    setSelectedAlert(updated);
-    setIsEditing(false);
-    setEditError("");
+      setSelectedAlert(updated);
+      setIsEditing(false);
+      setEditError("");
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : "Erro ao atualizar alerta.",
+      );
+    }
   };
 
   // Deletion handling
@@ -200,21 +209,49 @@ export function AlertsManagement() {
     setIsConfirmingDelete(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedAlert) return;
 
-    const deletedId = selectedAlert.id;
-    setAlerts((prev) => prev.filter((a) => a.id !== deletedId));
-    setSelectedAlert(null);
-    setIsConfirmingDelete(false);
-    setIsEditing(false);
+    try {
+      await deleteAlert(selectedAlert.alertConfigId);
+      setSelectedAlert(null);
+      setIsConfirmingDelete(false);
+      setIsEditing(false);
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : "Erro ao excluir alerta.",
+      );
+    }
+  };
+
+  const handleAcknowledge = async () => {
+    if (!selectedAlert) return;
+    try {
+      const targetId =
+        selectedAlert.triggeredAlertId || selectedAlert.alertConfigId;
+      await acknowledgeAlert(targetId);
+      setSelectedAlert((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "Em análise",
+              acknowledgedBy: "Carlos Mendes",
+              acknowledgedAt: new Date().toISOString(),
+            }
+          : null,
+      );
+    } catch (err) {
+      setEditError(
+        err instanceof Error ? err.message : "Erro ao reconhecer alerta.",
+      );
+    }
   };
 
   // New Alert handlers
   const handleOpenNewModal = () => {
-    const defaultStation = stationsCatalog[0];
-    const sensors = getSensorsForStation(defaultStation.id);
-    const defaultSensor = sensors[0];
+    const defaultStation = stations[0] || stationsCatalog[0];
+    const sensorsList = getSensorsForStation(defaultStation.id);
+    const defaultSensor = sensorsList[0] || sensors[0] || sensorsCatalog[0];
 
     setNewMessage("");
     setNewStationId(defaultStation.id);
@@ -244,7 +281,9 @@ export function AlertsManagement() {
 
   const handleNewSensorChange = (sensorId: number) => {
     setNewSensorId(sensorId);
-    const sensor = sensorsCatalog.find((s) => s.id === sensorId);
+    const sensor =
+      sensors.find((s) => s.id === sensorId) ||
+      sensorsCatalog.find((s) => s.id === sensorId);
     if (sensor) {
       setNewOperator(sensor.defaultOperator);
       setNewReferenceValue(String(sensor.defaultReference));
@@ -253,17 +292,19 @@ export function AlertsManagement() {
 
   const handleEditStationChange = (stationId: number) => {
     setEditStationId(stationId);
-    const sensors = getSensorsForStation(stationId);
-    if (sensors.length > 0) {
-      setEditSensorId(sensors[0].id);
-      setEditOperator(sensors[0].defaultOperator);
-      setEditReferenceValue(String(sensors[0].defaultReference));
+    const sensorList = getSensorsForStation(stationId);
+    if (sensorList.length > 0) {
+      setEditSensorId(sensorList[0].id);
+      setEditOperator(sensorList[0].defaultOperator);
+      setEditReferenceValue(String(sensorList[0].defaultReference));
     }
   };
 
   const handleEditSensorChange = (sensorId: number) => {
     setEditSensorId(sensorId);
-    const sensor = sensorsCatalog.find((s) => s.id === sensorId);
+    const sensor =
+      sensors.find((s) => s.id === sensorId) ||
+      sensorsCatalog.find((s) => s.id === sensorId);
     if (sensor) {
       setEditOperator(sensor.defaultOperator);
       setEditReferenceValue(String(sensor.defaultReference));
@@ -278,7 +319,7 @@ export function AlertsManagement() {
     setEditActive((prev) => !prev);
   };
 
-  const handleCreateAlert = (e: React.FormEvent) => {
+  const handleCreateAlert = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!newMessage.trim()) {
@@ -291,47 +332,25 @@ export function AlertsManagement() {
       return;
     }
 
-    const stationItem = stationsCatalog.find((s) => s.id === newStationId) || stationsCatalog[0];
-    const sensorItem = sensorsCatalog.find((s) => s.id === newSensorId) || sensorsCatalog[0];
+    try {
+      const created = await createAlert({
+        sensorId: newSensorId,
+        referenceValue: numRef,
+        comparisonOperator: newOperator,
+        message: newMessage.trim(),
+        active: newActive,
+        managerUserId: 1,
+      });
 
-    const nextNumber = alerts.length + 1;
-    const formattedId = `A-${String(nextNumber).padStart(3, "0")}`;
-    const today = new Date().toISOString().split("T")[0];
-    const nowHours = new Date().toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const created: AlertItem = {
-      id: formattedId,
-      alertConfigId: nextNumber,
-      sensorId: sensorItem.id,
-      sensor: sensorItem.localIdentifier,
-      sensorName: sensorItem.sensorName,
-      unitOfMeasure: sensorItem.unitOfMeasure,
-      type: sensorItem.type,
-      comparisonOperator: newOperator,
-      referenceValue: numRef,
-      readingValue: numRef * 1.08,
-      message: newMessage.trim(),
-      description: newMessage.trim(),
-      active: newActive,
-      stationId: stationItem.id,
-      station: stationItem.name,
-      property: stationItem.property,
-      macAddress: stationItem.macAddress,
-      managerUserId: 1,
-      managerName: "Carlos Mendes",
-      timestamp: `${today.split("-").reverse().join("/")} - ${nowHours}`,
-      isoDate: today,
-      status: newStatus,
-    };
-
-    setAlerts((prev) => [created, ...prev]);
-    setIsNewModalOpen(false);
-    setSelectedAlert(created);
-    setIsEditing(false);
-    setIsConfirmingDelete(false);
+      setIsNewModalOpen(false);
+      setSelectedAlert(created);
+      setIsEditing(false);
+      setIsConfirmingDelete(false);
+    } catch (err) {
+      setNewError(
+        err instanceof Error ? err.message : "Erro ao criar alerta.",
+      );
+    }
   };
 
   const handleFilterChange = <K extends keyof AlertFiltersState>(
@@ -466,16 +485,29 @@ export function AlertsManagement() {
       {/* Main Grid: Table Content + Optional Sidebar Column */}
       <div className={`${styles.layoutGrid} ${!isSidebarVisible ? styles.layoutGridFull : ""}`}>
         <div className={styles.mainContent}>
-          {/* Table with Pagination */}
-          <AlertsTable
-            alerts={filteredAlerts}
-            totalAlerts={filteredAlerts.length}
-            currentPage={currentPage}
-            pageSize={PAGE_SIZE}
-            onPageChange={setCurrentPage}
-            onViewDetails={handleOpenDetail}
-            selectedAlertId={selectedAlert?.id}
-          />
+          {loading && alerts.length === 0 ? (
+            <FeedbackState
+              kind="loading"
+              title="Carregando alertas..."
+              description="Consultando o microsserviço de alertas em tempo real."
+            />
+          ) : apiError && alerts.length === 0 ? (
+            <FeedbackState
+              kind="error"
+              title="Falha ao carregar alertas"
+              description={apiError}
+            />
+          ) : (
+            <AlertsTable
+              alerts={filteredAlerts}
+              totalAlerts={filteredAlerts.length}
+              currentPage={currentPage}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+              onViewDetails={handleOpenDetail}
+              selectedAlertId={selectedAlert?.id}
+            />
+          )}
         </div>
 
         {/* Right Sidebar Column: 1. Filtros, 2. Estações com mais alertas */}
@@ -516,6 +548,28 @@ export function AlertsManagement() {
               <div className={styles.modalHeaderActions}>
                 {!isEditing && !isConfirmingDelete && (
                   <>
+                    {selectedAlert.status !== "Resolvido" && (
+                      <button
+                        type="button"
+                        className={styles.btnEditModal}
+                        onClick={handleAcknowledge}
+                        title="Reconhecer alerta operacional"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Reconhecer
+                      </button>
+                    )}
                     <button
                       type="button"
                       className={styles.btnEditModal}
@@ -832,7 +886,7 @@ export function AlertsManagement() {
                             value={editStationId}
                             onChange={(e) => handleEditStationChange(Number(e.target.value))}
                           >
-                            {stationsCatalog.map((st) => (
+                            {stations.map((st) => (
                               <option key={st.id} value={st.id}>
                                 {st.name} — {st.property}
                               </option>
@@ -1386,7 +1440,7 @@ export function AlertsManagement() {
                           value={newStationId}
                           onChange={(e) => handleNewStationChange(Number(e.target.value))}
                         >
-                          {stationsCatalog.map((st) => (
+                          {stations.map((st) => (
                             <option key={st.id} value={st.id}>
                               {st.name} — {st.property}
                             </option>
