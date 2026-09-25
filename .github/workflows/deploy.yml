@@ -1,0 +1,97 @@
+name: Continuous Deployment (Producao)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify-prerequisites:
+    name: Validacao de Pre-requisitos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirmar branch de producao
+        run: |
+          echo "Iniciando pipeline de entrega continua para a branch main."
+          echo "Servico: API-DSM-4-FRONTEND (Next.js)"
+
+  deploy-vercel:
+    name: Deploy Frontend (Vercel)
+    needs: verify-prerequisites
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Deploy via Vercel CLI
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: app
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::warning::Secrets da Vercel nao configurados (VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID). Pulando deploy Vercel CLI."
+            exit 0
+          fi
+
+          echo "Instalando Vercel CLI..."
+          npm install --global vercel@latest
+
+          echo "Puxando configuracoes do ambiente de producao..."
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+          echo "Compilando Frontend para producao..."
+          vercel build --prod --token="$VERCEL_TOKEN"
+
+          echo "Publicando na Vercel..."
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          echo "Deploy na Vercel concluido com sucesso."
+
+      - name: Deploy via Hook Alternativo (Render / Webhook)
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "Disparando requisicao de deploy no Render (Frontend)..."
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$RENDER_DEPLOY_HOOK")
+            echo "Hook acionado com status $HTTP_STATUS"
+          fi
+
+      - name: Smoke Test do Frontend
+        env:
+          PROD_FRONT_URL: ${{ secrets.PROD_FRONT_URL }}
+        run: |
+          if [ -z "$PROD_FRONT_URL" ]; then
+            echo "::notice::Secret PROD_FRONT_URL nao configurado. Smoke test pulado."
+            exit 0
+          fi
+
+          echo "Aguardando disponibilidade do portal web em $PROD_FRONT_URL..."
+          sleep 15
+          SUCCESS=0
+          for i in {1..10}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_FRONT_URL" || true)
+            if [ "$STATUS" -eq 200 ] || [ "$STATUS" -eq 304 ]; then
+              echo "Smoke Test concluido com sucesso na tentativa $i. Portal web operacional (HTTP $STATUS)."
+              SUCCESS=1
+              break
+            fi
+            echo "Tentativa $i: status HTTP $STATUS recebido. Aguardando 15 segundos..."
+            sleep 15
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "::error::Falha critica no Smoke Test: Frontend nao respondeu com sucesso dentro do tempo limite."
+            exit 1
+          fi
