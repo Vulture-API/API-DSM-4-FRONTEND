@@ -50,6 +50,7 @@ describe("Station Mappers", () => {
     expect(station.propriedade).toBe("Fazenda Santa Clara");
     expect(station.status).toBe("ativo");
     expect(station.macAddress).toBe("AA:BB:CC:DD:EE:01");
+    expect(station.lastCommunicationMinutesAgo).toBe(0);
   });
 
   it("mapeia status inativo se última comunicação for nula ou antiga", () => {
@@ -70,6 +71,7 @@ describe("Station Mappers", () => {
     expect(station.status).toBe("inativo");
     expect(station.propriedade).toBe("Propriedade #99");
     expect(station.lastCommunicationAt).toBe("Sem comunicação");
+    expect(station.lastCommunicationMinutesAgo).toBeNull();
   });
 
   it("mapeia inputs de criação e edição normalizando mac e campos", () => {

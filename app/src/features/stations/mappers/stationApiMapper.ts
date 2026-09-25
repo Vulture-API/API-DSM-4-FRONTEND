@@ -44,6 +44,13 @@ function formatDateOnly(dateStr: string | null): string {
   return `${day}/${month}/${year}`;
 }
 
+function getMinutesSince(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const timestamp = new Date(dateStr).getTime();
+  if (isNaN(timestamp)) return null;
+  return Math.max(0, Math.floor((Date.now() - timestamp) / (1000 * 60)));
+}
+
 export function mapApiProperty(dto: PropertyApiDto): Property {
   return {
     id: dto.id,
@@ -58,6 +65,7 @@ export function mapApiStation(
 ): Station {
   const property = properties.find((p) => p.id === dto.property_id);
   const propriedade = property ? property.name : `Propriedade #${dto.property_id}`;
+  const lastCommunicationMinutesAgo = getMinutesSince(dto.last_communication_at);
 
   const hasRecentComm = (() => {
     if (!dto.last_communication_at) return false;
@@ -82,6 +90,7 @@ export function mapApiStation(
     longitude: dto.longitude !== null ? Number(dto.longitude) : -45.88,
     status: hasRecentComm ? "ativo" : "inativo",
     lastCommunicationAt: formatDateTime(dto.last_communication_at),
+    lastCommunicationMinutesAgo,
     createdAt: formatDateOnly(dto.created_at),
     umidadeSolo,
     varUmidade: id % 2 === 0 ? "↑ 1% (24h)" : "↓ 2% (24h)",
