@@ -41,7 +41,7 @@ export class ApiParameterRepository implements ParameterRepository {
   private readonly client: HttpClient;
 
   constructor(
-    baseUrl = process.env.NEXT_PUBLIC_PARAMETERS_API_URL || "http://localhost:3001",
+    baseUrl = process.env.NEXT_PUBLIC_PARAMETERS_API_URL || "http://localhost:3004",
     client: HttpClient = new FetchHttpClient(),
   ) {
     this.baseUrl = baseUrl.replace(/\/$/, "");

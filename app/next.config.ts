@@ -7,12 +7,18 @@ const apiServerUrl = (
 const nextConfig: NextConfig = {
   async rewrites() {
     const backendUrl =
-      process.env.NEXT_PUBLIC_PARAMETERS_API_URL || "http://localhost:3001";
+      process.env.NEXT_PUBLIC_PARAMETERS_API_URL || "http://localhost:3004";
+    const alertsUrl =
+      process.env.NEXT_PUBLIC_ALERTS_API_URL || "http://localhost:3003";
 
     return [
       {
         source: "/api/parameters/:path*",
         destination: `${backendUrl}/sensor-types/:path*`,
+      },
+      {
+        source: "/api/alerts/:path*",
+        destination: `${alertsUrl}/api/alerts/:path*`,
       },
       {
         // TEMPORÁRIO: remover quando o gateway ou CORS definitivo estiver pronto.
