@@ -8,6 +8,7 @@ export interface Station {
   longitude: number;
   status: "ativo" | "inativo";
   lastCommunicationAt: string;
+  lastCommunicationMinutesAgo: number | null;
   createdAt: string;
   umidadeSolo?: number;
   varUmidade?: string;

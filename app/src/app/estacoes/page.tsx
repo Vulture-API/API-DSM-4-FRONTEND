@@ -20,6 +20,15 @@ const statusLabel: Record<Station['status'], string> = {
   inativo: 'Inativo',
 }
 
+const getCommunicationDelayText = (minutes: number | null) => {
+  if (minutes === null) return 'Sem registro de comunicação'
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  return `Sem comunicação há ${hours} h${
+    remainingMinutes > 0 ? ` e ${remainingMinutes} min` : ''
+  }`
+}
+
 const initialForm: StationFormValues = {
   name: '',
   propertyId: '',
@@ -354,6 +363,24 @@ const Page = () => {
                           }`}
                         >
                           <span className={styles.dotIndicator} />
+                          {station.lastCommunicationMinutesAgo !== null &&
+                            station.lastCommunicationMinutesAgo > 60 && (
+                            <span
+                              className={styles.communicationAlertIcon}
+                              aria-label={`Alerta de comunicação da ${station.name}: ${getCommunicationDelayText(
+                                station.lastCommunicationMinutesAgo,
+                              ).toLowerCase()}`}
+                              title={getCommunicationDelayText(
+                                station.lastCommunicationMinutesAgo,
+                              )}
+                              data-tooltip={getCommunicationDelayText(
+                                station.lastCommunicationMinutesAgo,
+                              )}
+                              tabIndex={0}
+                            >
+                              <Icon name="alert" />
+                            </span>
+                          )}
                           {statusLabel[station.status]}
                         </span>
                       </td>

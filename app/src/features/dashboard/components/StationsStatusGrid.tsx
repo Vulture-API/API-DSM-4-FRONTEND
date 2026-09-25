@@ -12,6 +12,14 @@ interface Props {
   stations: StationCommunicationDetail[];
 }
 
+const getCommunicationDelayText = (minutes: number) => {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `Sem comunicação há ${hours} h${
+    remainingMinutes > 0 ? ` e ${remainingMinutes} min` : ""
+  }`;
+};
+
 export function StationsStatusGrid({ stations }: Props) {
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
@@ -106,6 +114,23 @@ export function StationsStatusGrid({ stations }: Props) {
                 className={`${styles.statusPill} ${getStatusClass(station.status)}`}
               >
                 <span className={styles.statusDot} />
+                {station.lastCommunicationMinutesAgo > 60 && (
+                  <span
+                    className={styles.communicationAlertIcon}
+                    aria-label={`Alerta de comunicação da ${station.name}: ${getCommunicationDelayText(
+                      station.lastCommunicationMinutesAgo,
+                    ).toLowerCase()}`}
+                    title={getCommunicationDelayText(
+                      station.lastCommunicationMinutesAgo,
+                    )}
+                    data-tooltip={getCommunicationDelayText(
+                      station.lastCommunicationMinutesAgo,
+                    )}
+                    tabIndex={0}
+                  >
+                    <Icon name="alert" />
+                  </span>
+                )}
                 {getStatusLabel(station.status)}
               </span>
             </div>

@@ -44,7 +44,7 @@ describe("StationsStatusGrid", () => {
       latitude: -23.19,
       longitude: -45.87,
       lastCommunication: "10/06/2025 - 13:50",
-      lastCommunicationMinutesAgo: 45,
+      lastCommunicationMinutesAgo: 75,
       activeSensorsCount: 0,
       totalSensorsCount: 5,
       dataConsistent: false,
@@ -90,5 +90,21 @@ describe("StationsStatusGrid", () => {
     expect(screen.getByText("Estação Alpha")).toBeInTheDocument();
     expect(screen.getByText("Estação Beta")).toBeInTheDocument();
     expect(screen.getByText("Estação Gama")).toBeInTheDocument();
+  });
+
+  it("exibe alerta somente após uma hora sem comunicação", () => {
+    render(<StationsStatusGrid stations={mockStations} />);
+
+    expect(
+      screen.getByLabelText(
+        "Alerta de comunicação da Estação Gama: sem comunicação há 1 h e 15 min",
+      ),
+    ).toHaveAttribute("title", "Sem comunicação há 1 h e 15 min");
+    expect(
+      screen.queryByLabelText(/Alerta de comunicação da Estação Beta/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/Alerta de comunicação da Estação Alpha/),
+    ).not.toBeInTheDocument();
   });
 });

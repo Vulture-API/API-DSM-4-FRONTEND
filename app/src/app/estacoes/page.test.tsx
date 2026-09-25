@@ -49,4 +49,17 @@ describe("EstacoesPage", () => {
 
     expect(screen.getAllByText("Estação 01").length).toBeGreaterThanOrEqual(1);
   });
+
+  it("exibe alerta somente após uma hora sem comunicação", async () => {
+    render(<EstacoesPage />);
+
+    expect(
+      await screen.findByLabelText(
+        "Alerta de comunicação da Estação 04: sem comunicação há 1 h e 15 min",
+      ),
+    ).toHaveAttribute("title", "Sem comunicação há 1 h e 15 min");
+    expect(
+      screen.queryByLabelText(/Alerta de comunicação da Estação 01/),
+    ).not.toBeInTheDocument();
+  });
 });
