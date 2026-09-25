@@ -1,22 +1,21 @@
-import type { Metadata } from "next";
-import type React from "react";
+import "@fontsource-variable/inter";
 import "./globals.css";
 
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+
+import { Providers } from "./providers";
+
 export const metadata: Metadata = {
-  title: "Agritech | Portal Climático",
-  description: "Sistema de Monitoramento IoT",
+  title: { default: "Agritech · Portal Climático", template: "%s · Agritech" },
+  description: "Monitoramento de estações meteorológicas IoT",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" className="h-full antialiased" suppressHydrationWarning>
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
+    <html lang="pt-BR">
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

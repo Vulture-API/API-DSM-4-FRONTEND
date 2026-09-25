@@ -1,68 +1,162 @@
 @import "tailwindcss";
 
-:root {
-  --portal-background: #f5f6f0;
-  --portal-surface: #ffffff;
-  --portal-green: #1b3824;
-  --portal-accent: #2c5c35;
-  --portal-soft: #eaf3ec;
-  --portal-text: #202720;
-  --portal-secondary: #626c65;
-  --portal-muted: #6c776f;
-  --portal-border: #dfe3da;
-  --portal-success: #2c653b;
-  --portal-hover: #f6f9f6;
-  --portal-disabled-bg: #edf0eb;
-  --portal-disabled-text: #67736a;
-  --portal-disabled-primary: #536c59;
-  --portal-on-accent: #ffffff;
-  --portal-sidebar-text: #c6d3c8;
-  --portal-sidebar-muted: #acbfb0;
-  --portal-sidebar-surface: #ffffff0d;
-  --portal-focus: #438455;
-  --portal-danger: #9b3e36;
-  --portal-danger-soft: #fbefed;
-  --portal-shadow: 0 1px 2px #1b382408;
-  --portal-font: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  --text-xs: 12px;
-  --text-sm: 13px;
-  --text-base: 14px;
-  --text-lg: 16px;
-  --control-height: 40px;
-  --avatar-size: 36px;
-  --table-row-height: 68px;
-  --table-head-height: 48px;
-  --page-inset: clamp(16px, 2vw, 32px);
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --radius-control: 8px;
-  --radius-panel: 12px;
-  --radius-round: 999px;
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Design tokens. Tudo que é cor, raio e sombra sai daqui: os componentes usam
+ * as classes do Tailwind geradas a partir destes nomes (bg-surface,
+ * text-muted, border-line, bg-forest...).
+ *
+ * Contraste (WCAG 2.1 AA) conferido para texto pequeno: muted e faint passam
+ * 4,5:1 em surface, canvas e subtle; os tons de status passam no próprio
+ * fundo "-soft" e no branco.
+ */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-canvas: #f4f3ee;
+  --color-surface: #ffffff;
+  --color-subtle: #efeee7;
+  --color-line: #e4e2d9;
+  --color-line-strong: #cfccc0;
+  /* Borda de controle (switch desligado): 3:1 no branco. */
+  --color-control: #8f8c80;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-ink: #18201a;
+  --color-muted: #58605a;
+  --color-faint: #636a64;
+
+  /* Faixa escura do topo. */
+  --color-forest: #0f2a1d;
+  --color-forest-2: #153a28;
+  --color-forest-line: #2a4d3d;
+
+  --color-brand-50: #ecf6ef;
+  --color-brand-100: #d5ecdc;
+  --color-brand-200: #b0dabd;
+  --color-brand-300: #93d3a6;
+  --color-brand-400: #56a36f;
+  --color-brand-500: #2f8050;
+  --color-brand-600: #226339;
+  --color-brand-700: #1d5331;
+  --color-brand-800: #18432a;
+  --color-brand-900: #133622;
+
+  --color-ok: #16703f;
+  --color-ok-soft: #e3f3e8;
+  --color-warn: #94560a;
+  --color-warn-soft: #fcf1dc;
+  --color-danger: #b12f1c;
+  --color-danger-soft: #fcebe8;
+  --color-info: #245f9e;
+  --color-info-soft: #e6f0fa;
+
+  /* Pontos de status (mapa, listas, barras): gráfico, sem texto em cima. */
+  --color-dot-ok: #22a35a;
+  --color-dot-warn: #e59b1a;
+  --color-dot-danger: #d8452f;
+
+  --radius-card: 16px;
+  --shadow-card: 0 1px 2px rgb(24 32 26 / 0.05), 0 2px 8px -2px rgb(24 32 26 / 0.06);
+  --shadow-lift: 0 18px 40px -20px rgb(15 42 29 / 0.45), 0 2px 6px rgb(15 42 29 / 0.08);
+  --shadow-pop: 0 16px 40px -12px rgb(24 32 26 / 0.28), 0 2px 6px rgb(24 32 26 / 0.08);
+
+  --animate-fade-in: fade-in 140ms ease-out;
+  --animate-pop-in: pop-in 160ms cubic-bezier(0.2, 0.8, 0.3, 1);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  /* Na faixa escura o contorno verde-escuro some: usa o verde claro. */
+  .on-dark :focus-visible {
+    @apply outline-brand-300;
+  }
+  ::selection {
+    @apply bg-brand-100;
+  }
+  select > option {
+    @apply text-ink;
+  }
+}
+
+@layer components {
+  /* Faixa escura do topo: verde-floresta com curvas de nível bem sutis. */
+  .hero-band {
+    background-color: var(--color-forest);
+    background-image:
+      radial-gradient(110% 90% at 88% -20%, rgb(147 211 166 / 0.18), transparent 55%),
+      radial-gradient(70% 80% at 0% 0%, rgb(34 99 57 / 0.6), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='340' fill='none' stroke='%2393d3a6' stroke-opacity='.08' stroke-width='1.2'%3E%3Cpath d='M-20 250c90-40 150-10 230-50s120-120 230-110 170 70 300 40'/%3E%3Cpath d='M-20 280c100-40 160-5 250-50s130-120 240-100 150 60 270 40'/%3E%3Cpath d='M-20 220c80-40 140-15 210-55s110-120 220-120 190 80 330 45'/%3E%3Cpath d='M-20 190c70-40 130-20 190-60s100-110 200-125 210 85 370 50'/%3E%3Cpath d='M-20 310c110-35 180 0 270-40s140-110 250-90 130 50 240 35'/%3E%3Cpath d='M-20 160c60-40 120-25 170-65s90-100 190-130 230 90 400 55'/%3E%3C/svg%3E");
+    background-size: auto, auto, 720px 340px;
+    background-position: 0 0, 0 0, right -60px bottom -30px;
+    background-repeat: no-repeat;
+  }
+}
+
+/* Leaflet: fundo neutro enquanto os tiles carregam (ou se não carregarem). */
+.leaflet-container {
+  background: #e7e9e1;
+  font: inherit;
+}
+/* Tiles do OSM com menos saturação, no tom do portal. */
+.leaflet-tile-pane {
+  filter: saturate(0.45) brightness(1.04) contrast(0.96);
+}
+.leaflet-container .leaflet-control-attribution {
+  font-size: 10px;
+  background: rgb(255 255 255 / 0.85);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: var(--shadow-pop);
+}
+.leaflet-popup-content {
+  margin: 12px 14px;
+}
+
+@keyframes station-ping {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }

@@ -11,6 +11,16 @@ RUN npm ci
 
 COPY . .
 
+# Destinos dos rewrites do Next: gravados no build, por isso são build args.
+ARG USERS_API_URL=http://localhost:3000
+ARG PARAMETERS_API_URL=http://localhost:3001
+ARG ALERTS_API_URL=http://localhost:3002
+ARG STATIONS_API_URL=http://localhost:3005
+ENV USERS_API_URL=$USERS_API_URL \
+    PARAMETERS_API_URL=$PARAMETERS_API_URL \
+    ALERTS_API_URL=$ALERTS_API_URL \
+    STATIONS_API_URL=$STATIONS_API_URL
+
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

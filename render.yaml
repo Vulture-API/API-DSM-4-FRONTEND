@@ -15,9 +15,12 @@ services:
         value: 3010
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-      - key: API_SERVER_URL
+      # Destinos dos rewrites do Next (lidos no build).
+      - key: USERS_API_URL
         sync: false
-      - key: NEXT_PUBLIC_PARAMETERS_API_URL
+      - key: PARAMETERS_API_URL
         sync: false
-      - key: NEXT_PUBLIC_STATIONS_API_URL
+      - key: ALERTS_API_URL
+        sync: false
+      - key: STATIONS_API_URL
         sync: false
