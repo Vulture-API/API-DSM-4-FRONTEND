@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: api-dsm-4-frontend
+    runtime: node
+    plan: free
+    rootDir: app
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3010
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      # Destinos dos rewrites do Next (lidos no build).
+      - key: USERS_API_URL
+        sync: false
+      - key: PARAMETERS_API_URL
+        sync: false
+      - key: ALERTS_API_URL
+        sync: false
+      - key: STATIONS_API_URL
+        sync: false

@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portal Climático (front-end)
 
-## Getting Started
+Next.js 16 (App Router), React 19, TanStack Query 5, Tailwind CSS 4, lucide-react, Recharts e Leaflet (mapa).
 
-First, run the development server:
+## Rodar
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # endereços dos microsserviços
+npm install
+npm run dev                  # http://localhost:3010
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Para subir tudo junto (APIs, banco com dados de demonstração e simulador de estações), use o repositório `API-DSM-4-INFRA`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Comando | O que faz |
+| --- | --- |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest + cobertura (mínimo de 80%) |
+| `npm run build` | build de produção |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Como está organizado
 
-## Learn More
+```
+src/
+  app/                  rotas: só montam a página da feature
+    (portal)/           grupo com o layout do portal (faixa escura + mega-menu)
+  components/
+    layout/             AppShell (faixa escura do topo), TopNav (mega-menu), nav.ts
+    ui/                 Button, Card, Badge, Avatar, Field, Modal, Table, Segmented, Toast...
+    charts/             TrendChart (média + faixa mín–máx)
+  features/<domínio>/   api.ts (chamadas), hooks.ts (TanStack Query), *Page.tsx, modais
+  lib/api/http.ts       cliente HTTP (erros com a mensagem do serviço)
+  test/                 utilitários, fixtures e mock de fetch
+```
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Dados:** toda leitura passa pelo TanStack Query. Ao voltar para uma tela, o cache aparece na hora e a atualização acontece em segundo plano. Status e alertas fazem polling a cada 30 s (ADR-003).
+- **Sem mock escondido:** se um serviço falha, a tela mostra o erro com o botão "Tentar de novo". O front não troca dados reais por fictícios sem avisar.
+- **Proxy:** o navegador chama só caminhos relativos (`/api/...`). O `next.config.ts` repassa cada caminho para o microsserviço certo.
+  - Os destinos (`USERS_API_URL`, `PARAMETERS_API_URL`, `ALERTS_API_URL` e `STATIONS_API_URL`) são gravados no build.
+  - Se mudar algum destino, rode o build de novo.
+- **Tokens de design:** ficam em `src/app/globals.css` (`@theme`). As cores, raios e sombras vêm dali. Os tons de texto (`muted`, `faint`) e de status passam contraste AA (4,5:1) nos fundos usados.
+- **Layout:** cada página começa com o `PageHeader`, desenhado sobre a faixa verde-escura do topo; o primeiro card sobe por cima dela. Na faixa, use os botões `variant="light"` (ação principal) ou `variant="glass"`, e o `Select variant="glass"`.
+- **Mapa:** `StationsMap` (Leaflet) carrega só no navegador, via `StationsMapLazy`. Os tiles vêm do OpenStreetMap (sem chave; o Referer vai só com a origem, como pede a política de uso do OSM), dessaturados no CSS. Sem internet, os pinos aparecem sobre um fundo neutro. Nas telas, os testes trocam o mapa por uma região vazia (`src/test/setup.ts`); o mapa tem teste próprio.

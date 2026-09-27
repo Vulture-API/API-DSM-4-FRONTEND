@@ -1,0 +1,9 @@
+# Contexto do Dockerfile da raiz (build a partir do repositório inteiro).
+.git
+.github
+app/node_modules
+app/.next
+app/coverage
+app/.env
+app/.env.*
+!app/.env.example
