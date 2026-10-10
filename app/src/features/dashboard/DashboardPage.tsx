@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { sensorVisual } from "@/features/sensor-visual";
-import type { Overview, StationOverview, StationStatus } from "@/features/stations/api";
+import type { CurrentStation, Overview, StationOverview, StationStatus } from "@/features/stations/api";
 import { useOverview, useProperties } from "@/features/stations/hooks";
 import { SeriesCard } from "@/features/stations/SeriesCard";
 import { communicationDelay, LastCommunication } from "@/features/stations/CommunicationDelay";
@@ -19,6 +19,9 @@ import { STATUS_COLOR, StatusDot } from "@/features/stations/StationStatusBadge"
 import { cn } from "@/lib/cn";
 import { formatNumber, formatRelative } from "@/lib/format";
 
+import { useCurrentReadings } from "@/features/stations/useCurrentReadings";
+import { CurrentReadingsState } from "@/features/stations/CurrentReadingsState";
+
 import { PendingAlertsCard } from "./PendingAlertsCard";
 
 /** Tipos mostrados em "Condições agora", na ordem. */
@@ -26,30 +29,33 @@ const CONDITIONS = ["Temperatura", "Umidade", "Velocidade do Vento", "Pressão",
 /** Leitura mais velha que isso não entra na média "agora". */
 const FRESH_SECONDS = 30 * 60;
 
-export function currentConditions(stations: StationOverview[], nowSeconds = Date.now() / 1000) {
-  const groups = new Map<string, { unit: string; values: number[] }>();
+export function currentConditions(stations: CurrentStation[], nowSeconds = Date.now() / 1000) {
+  const groups = new Map<string, { unit: string; values: number[]; stations: Set<number> }>();
   for (const station of stations) {
-    for (const reading of station.latest_readings) {
-      if (nowSeconds - reading.unix_time > FRESH_SECONDS) continue;
-      const group = groups.get(reading.sensor_type) ?? { unit: reading.unit_of_measure, values: [] };
+    const localGroups = new Map<string, { unit: string; values: number[] }>();
+    for (const reading of station.readings) {
+      if (reading.value === null || reading.unix_time === null ||
+          reading.unix_time > nowSeconds || nowSeconds - reading.unix_time > FRESH_SECONDS) continue;
+      const group = localGroups.get(reading.sensor_type) ?? { unit: reading.unit_of_measure, values: [] };
       group.values.push(reading.value);
-      groups.set(reading.sensor_type, group);
+      localGroups.set(reading.sensor_type, group);
+    }
+    for (const [type, local] of localGroups) {
+      const group = groups.get(type) ?? { unit: local.unit, values: [], stations: new Set<number>() };
+      group.values.push(local.values.reduce((a, b) => a + b, 0) / local.values.length);
+      group.stations.add(station.station_id);
+      groups.set(type, group);
     }
   }
   return CONDITIONS.flatMap((type) => {
     const group = groups.get(type);
     if (!group?.values.length) return [];
-    const avg = group.values.reduce((a, b) => a + b, 0) / group.values.length;
-    return [
-      {
-        type,
-        unit: group.unit,
-        avg,
-        min: Math.min(...group.values),
-        max: Math.max(...group.values),
-        stations: group.values.length,
-      },
-    ];
+    return [{
+      type, unit: group.unit,
+      avg: group.values.reduce((a, b) => a + b, 0) / group.values.length,
+      min: Math.min(...group.values), max: Math.max(...group.values),
+      stations: group.stations.size,
+    }];
   });
 }
 
@@ -57,14 +63,17 @@ type Filter = "all" | StationStatus;
 
 export function DashboardPage() {
   const [propertyId, setPropertyId] = useState<number | undefined>();
+  const [stationId, setStationId] = useState<number | undefined>();
+  const current = useCurrentReadings(propertyId, stationId);
   const properties = useProperties();
   const overview = useOverview(propertyId);
   const [filter, setFilter] = useState<Filter>("all");
 
   const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
-  const conditions = useMemo(() => currentConditions(stations), [stations]);
+  const conditions = useMemo(() => currentConditions(current.data?.stations ?? [], current.now / 1000), [current.data, current.now]);
   const summary = overview.data?.summary;
-  const visible = stations.filter((s) => filter === "all" || s.status === filter);
+  const selectedStations = stations.filter((s) => stationId === undefined || s.id === stationId);
+  const visible = selectedStations.filter((s) => filter === "all" || s.status === filter);
 
   return (
     <>
@@ -80,66 +89,78 @@ export function DashboardPage() {
           </span>
         }
         actions={
-          <Select
-            variant="glass"
-            aria-label="Filtrar por propriedade"
-            className="w-64"
-            value={propertyId ?? ""}
-            onChange={(e) => setPropertyId(e.target.value ? Number(e.target.value) : undefined)}
-          >
-            <option value="">Todas as propriedades</option>
-            {properties.data?.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
+          <div className="flex w-full flex-wrap gap-2">
+            <Select
+              variant="glass"
+              aria-label="Filtrar por propriedade"
+              className="w-full sm:w-64"
+              value={propertyId ?? ""}
+              onChange={(e) => { setPropertyId(e.target.value ? Number(e.target.value) : undefined); setStationId(undefined); }}
+            >
+              <option value="">Todas as propriedades</option>
+              {properties.data?.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+            <Select variant="glass" aria-label="Filtrar por estação" className="w-full sm:w-64"
+              value={stationId ?? ""} onChange={(e) => setStationId(e.target.value ? Number(e.target.value) : undefined)}>
+              <option value="">Todas as estações</option>
+              {stations.map((station) => <option key={station.id} value={station.id}>{station.name}</option>)}
+            </Select>
+          </div>
         }
       />
 
-      {overview.error ? (
+      {overview.error && !overview.data ? (
         <Card>
           <ErrorState message={overview.error.message} onRetry={() => void overview.refetch()} />
         </Card>
       ) : (
         <div className="space-y-6">
+          {overview.error && <ErrorState message="Não foi possível atualizar o panorama da rede." onRetry={() => void overview.refetch()} />}
           <NetworkSummary overview={overview.data} />
 
           <Card>
             <CardHeader title="Condições agora" description="Média das estações que enviaram dados nos últimos 30 minutos" />
-            <div className="mt-4 overflow-hidden rounded-b-[var(--radius-card)] border-t border-line">
-            <section aria-label="Condições agora" className="-mb-px -ml-px flex flex-wrap">
-              {overview.isLoading &&
-                Array.from({ length: 5 }, (_, i) => (
-                  <div key={i} className="min-w-[170px] flex-1 border-b border-l border-line p-5">
-                    <Skeleton className="h-16" />
+            <CurrentReadingsState connection={current.connection} error={current.error} updatedAt={current.dataUpdatedAt}
+              now={current.now} onRetry={() => void current.refetch()} />
+            {current.error && !current.data ? <ErrorState message={current.error.message} onRetry={() => void current.refetch()} /> : (
+              <div className="mt-4 overflow-hidden rounded-b-[var(--radius-card)] border-t border-line">
+              <section aria-label="Condições agora" className="-mb-px -ml-px flex flex-wrap">
+                {current.isLoading &&
+                  Array.from({ length: 5 }, (_, i) => (
+                    <div key={i} className="min-w-[170px] flex-1 border-b border-l border-line p-5">
+                      <Skeleton className="h-16" />
+                    </div>
+                  ))}
+                {!current.isLoading && conditions.length === 0 && (
+                  <div className="flex-1 border-b border-l border-line">
+                    <EmptyState title="Nenhuma leitura nos últimos 30 minutos" description="As estações ativas aparecem aqui assim que enviarem dados." />
                   </div>
-                ))}
-              {!overview.isLoading && conditions.length === 0 && (
-                <div className="flex-1 border-b border-l border-line">
-                  <EmptyState title="Nenhuma leitura nos últimos 30 minutos" description="As estações ativas aparecem aqui assim que enviarem dados." />
-                </div>
-              )}
-              {conditions.map((c) => {
-                const visual = sensorVisual(c.type);
-                return (
-                  <div key={c.type} className="min-w-[170px] flex-1 border-b border-l border-line p-5">
-                    <p className="flex items-center gap-2 text-[13px] font-medium text-muted">
-                      <visual.icon className="size-4" style={{ color: visual.color }} aria-hidden />
-                      {c.type}
-                    </p>
-                    <p className="mt-2 text-[26px] leading-none font-semibold tracking-tight tabular-nums">
-                      {formatNumber(c.avg)}
-                      <span className="ml-1 text-sm font-medium text-muted">{c.unit}</span>
-                    </p>
-                    <p className="mt-2 text-xs text-faint">
-                      {formatNumber(c.min)} a {formatNumber(c.max)} · {c.stations} estações
-                    </p>
-                  </div>
-                );
-              })}
-            </section>
-            </div>
+                )}
+                {conditions.map((c) => {
+                  const visual = sensorVisual(c.type);
+                  return (
+                    <div key={c.type} className="min-w-[170px] flex-1 border-b border-l border-line p-5">
+                      <p className="flex items-center gap-2 text-[13px] font-medium text-muted">
+                        <visual.icon className="size-4" style={{ color: visual.color }} aria-hidden />
+                        {c.type}
+                      </p>
+                      <p className="mt-2 text-[26px] leading-none font-semibold tracking-tight tabular-nums">
+                        {formatNumber(c.avg)}
+                        <span className="ml-1 text-sm font-medium text-muted">{c.unit}</span>
+                      </p>
+                      <p className="mt-2 text-xs text-faint">
+                        {formatNumber(c.min)} a {formatNumber(c.max)} · {c.stations} estações
+                      </p>
+                    </div>
+                  );
+                })}
+              </section>
+              </div>
+            )}
           </Card>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 [&>*]:min-w-0">
@@ -153,7 +174,7 @@ export function DashboardPage() {
                 {overview.isLoading ? (
                   <Skeleton className="h-[420px] rounded-none" />
                 ) : (
-                  <StationsMapLazy stations={stations} height={420} zoom={12} />
+                  <StationsMapLazy stations={selectedStations} height={420} zoom={12} />
                 )}
               </div>
             </Card>
@@ -195,7 +216,7 @@ export function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 [&>*]:min-w-0">
-            <SeriesCard title="Clima na rede" propertyId={propertyId} className="lg:col-span-8" />
+            <SeriesCard title="Clima na rede" stationId={stationId} propertyId={propertyId} className="lg:col-span-8" />
             <PendingAlertsCard className="lg:col-span-4" />
           </div>
         </div>
