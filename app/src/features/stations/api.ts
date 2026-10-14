@@ -31,6 +31,26 @@ export type LatestReading = {
   unix_time: number;
 };
 
+export type CurrentReading = Omit<LatestReading, "value" | "unix_time"> & {
+  value: number | null;
+  unix_time: number | null;
+};
+export type CurrentStation = {
+  station_id: number;
+  name: string;
+  property_id: number;
+  property_name: string;
+  status: StationStatus;
+  last_update: string | null;
+  readings: CurrentReading[];
+};
+export type CurrentData = {
+  generated_at: string;
+  offline_threshold_minutes: number;
+  stations: CurrentStation[];
+};
+export type LiveReading = LatestReading & { type: "reading"; reading_id: number; station_id: number };
+
 export type StationStatus = "Online" | "Com alerta" | "Offline";
 
 export type StationOverview = {
@@ -73,6 +93,10 @@ export type ReadingSeries = {
 export type SeriesOptions = { hours: number; bucketMinutes: number; propertyId?: number | undefined };
 
 export const stationsApi = {
+  current: (propertyId?: number, stationId?: number) =>
+    request<CurrentData>(stationId
+      ? `/api/stations/${stationId}/current`
+      : `/api/stations/current${query({ property_id: propertyId })}`),
   list: () => requestAll<Station>("/api/stations"),
   get: (id: number) => request<Station>(`/api/stations/${id}`),
   properties: () => request<Property[]>("/api/stations/properties"),
