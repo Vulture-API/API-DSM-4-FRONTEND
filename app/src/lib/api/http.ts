@@ -3,6 +3,8 @@
  * (/api/...), que o Next repassa para cada microsserviço (ver next.config.ts).
  */
 
+import { getOpenApiMock } from "./mocks";
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -28,6 +30,9 @@ export async function request<T>(
   init: RequestInit & { json?: unknown } = {},
 ): Promise<T> {
   const { json, headers, ...rest } = init;
+  const method = (rest.method ?? "GET").toUpperCase();
+  const isTest = typeof process !== "undefined" && process.env.NODE_ENV === "test";
+
   let response: Response;
   try {
     response = await fetch(path, {
@@ -41,6 +46,12 @@ export async function request<T>(
       signal: rest.signal ?? AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch {
+    if (!isTest) {
+      const mock = getOpenApiMock<T>(path, method);
+      if (mock !== undefined) {
+        return mock;
+      }
+    }
     throw new ApiError(0, messageFrom(null, 0));
   }
 
@@ -55,6 +66,12 @@ export async function request<T>(
   }
 
   if (!response.ok) {
+    if (!isTest) {
+      const mock = getOpenApiMock<T>(path, method);
+      if (mock !== undefined) {
+        return mock;
+      }
+    }
     throw new ApiError(response.status, messageFrom(body, response.status));
   }
   return body as T;

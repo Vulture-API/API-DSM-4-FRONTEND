@@ -68,6 +68,8 @@ const nextConfig: NextConfig = {
       { source: "/api/sensors", destination: `${parametersApiUrl}/api/sensors` },
       { source: "/api/stations/:path*", destination: `${stationsApiUrl}/api/stations/:path*` },
       { source: "/api/stations", destination: `${stationsApiUrl}/api/stations` },
+      { source: "/api/readings/:path*", destination: `${stationsApiUrl}/api/readings/:path*` },
+      { source: "/api/readings", destination: `${stationsApiUrl}/api/readings` },
       { source: "/api/alerts/:path*", destination: `${alertsApiUrl}/api/alerts/:path*` },
     ];
   },

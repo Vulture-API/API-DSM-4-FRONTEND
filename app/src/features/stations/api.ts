@@ -72,6 +72,87 @@ export type ReadingSeries = {
 
 export type SeriesOptions = { hours: number; bucketMinutes: number; propertyId?: number | undefined };
 
+export type SensorTypeStatistics = {
+  sensor_type_id: number;
+  sensor_type: string;
+  unit_of_measure: string;
+  count: number;
+  avg: number;
+  min: number;
+  max: number;
+  stddev: number | null;
+  first_reading_at: string;
+  last_reading_at: string;
+};
+
+export type Statistics = {
+  from: string;
+  to: string;
+  station_id: number | null;
+  property_id: number | null;
+  readings_total: number;
+  sensor_types: SensorTypeStatistics[];
+};
+
+export type StatisticsQuery = {
+  from?: string | undefined;
+  to?: string | undefined;
+  property_id?: number | undefined;
+};
+
+export type ForecastDay = {
+  date: string;
+  temperature_max: number | null;
+  temperature_min: number | null;
+  precipitation_mm: number | null;
+  precipitation_probability: number | null;
+  wind_speed_max_kmh: number | null;
+  weather_code: number | null;
+};
+
+export type StationForecast = {
+  station_id: number;
+  latitude: number;
+  longitude: number;
+  source: string;
+  generated_at: string;
+  days: ForecastDay[];
+};
+
+export type CurrentReading = {
+  sensor_id: number;
+  local_identifier: string;
+  sensor_type_id: number;
+  sensor_type: string;
+  unit_of_measure: string;
+  value: number | null;
+  unix_time: number | null;
+};
+
+export type StationCurrentData = {
+  station_id: number;
+  name: string;
+  property_id: number;
+  property_name: string;
+  status: StationStatus;
+  last_update: string | null;
+  readings: CurrentReading[];
+};
+
+export type CurrentData = {
+  generated_at: string;
+  offline_threshold_minutes: number;
+  stations: StationCurrentData[];
+};
+
+export type StationStatusResponse = {
+  station_id: number;
+  status: "Online" | "Offline";
+  last_communication_at: string | null;
+  checked_at: string;
+  offline_threshold_minutes: number;
+};
+
 export const stationsApi = {
   list: () => requestAll<Station>("/api/stations"),
   get: (id: number) => request<Station>(`/api/stations/${id}`),
@@ -86,6 +167,18 @@ export const stationsApi = {
     request<ReadingSeries>(
       `/api/stations/${id}/readings/series${query({ hours, bucket_minutes: bucketMinutes })}`,
     ),
+  statistics: (options: StatisticsQuery = {}) =>
+    request<Statistics>(`/api/stations/statistics${query(options)}`),
+  stationStatistics: (id: number, options: { from?: string; to?: string } = {}) =>
+    request<Statistics>(`/api/stations/${id}/statistics${query(options)}`),
+  forecast: (id: number, days = 7) =>
+    request<StationForecast>(`/api/stations/${id}/forecast${query({ days })}`),
+  current: (options: { station_id?: number; property_id?: number } = {}) =>
+    request<CurrentData>(`/api/stations/current${query(options)}`),
+  stationCurrent: (id: number) =>
+    request<CurrentData>(`/api/stations/${id}/current`),
+  status: (id: number) =>
+    request<StationStatusResponse>(`/api/stations/${id}/status`),
   create: (input: StationInput) => request<Station>("/api/stations", { method: "POST", json: input }),
   update: (id: number, input: StationInput) =>
     request<Station>(`/api/stations/${id}`, { method: "PUT", json: input }),

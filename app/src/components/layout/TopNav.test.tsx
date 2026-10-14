@@ -110,7 +110,7 @@ describe("TopNav", () => {
     expect(toggle).toHaveAttribute("aria-controls", "menu-mobile");
     await user.click(toggle);
     const mobile = screen.getByRole("navigation", { name: "Menu" });
-    expect(within(mobile).getAllByRole("link")).toHaveLength(6);
+    expect(within(mobile).getAllByRole("link")).toHaveLength(7);
     await user.click(within(mobile).getByRole("link", { name: "Usuários" }));
     expect(screen.queryByRole("navigation", { name: "Menu" })).not.toBeInTheDocument();
   });
