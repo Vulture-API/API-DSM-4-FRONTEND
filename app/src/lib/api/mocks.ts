@@ -71,14 +71,25 @@ export const mockSensorTypes: SensorType[] = [
 ];
 
 export const mockSensors: Sensor[] = [
+  // Estação 1: Sede (Fazenda Santa Rita)
   { id: 10, station_id: 1, sensor_type_id: 1, local_identifier: "temp_ar", operational_status: true, created_at: minutesAgo(43200) },
   { id: 11, station_id: 1, sensor_type_id: 2, local_identifier: "umid_ar", operational_status: true, created_at: minutesAgo(43200) },
   { id: 12, station_id: 1, sensor_type_id: 3, local_identifier: "vento_dir", operational_status: true, created_at: minutesAgo(43200) },
   { id: 13, station_id: 1, sensor_type_id: 4, local_identifier: "pluv_calha", operational_status: true, created_at: minutesAgo(43200) },
   { id: 14, station_id: 1, sensor_type_id: 5, local_identifier: "temp_solo_10cm", operational_status: true, created_at: minutesAgo(43200) },
   { id: 15, station_id: 1, sensor_type_id: 6, local_identifier: "umid_solo_10cm", operational_status: true, created_at: minutesAgo(43200) },
+
+  // Estação 2: Pivô Central (Fazenda Santa Rita)
   { id: 20, station_id: 2, sensor_type_id: 1, local_identifier: "temp_pivo", operational_status: true, created_at: minutesAgo(43200) },
   { id: 21, station_id: 2, sensor_type_id: 2, local_identifier: "umid_pivo", operational_status: true, created_at: minutesAgo(43200) },
+  { id: 22, station_id: 2, sensor_type_id: 3, local_identifier: "vento_pivo", operational_status: true, created_at: minutesAgo(43200) },
+  { id: 23, station_id: 2, sensor_type_id: 4, local_identifier: "pluv_pivo", operational_status: true, created_at: minutesAgo(43200) },
+  { id: 24, station_id: 2, sensor_type_id: 5, local_identifier: "temp_solo_pivo", operational_status: true, created_at: minutesAgo(43200) },
+  { id: 25, station_id: 2, sensor_type_id: 6, local_identifier: "umid_solo_pivo", operational_status: true, created_at: minutesAgo(43200) },
+
+  // Estação 3: Brejo (Sítio Água Limpa)
+  { id: 30, station_id: 3, sensor_type_id: 1, local_identifier: "temp_brejo", operational_status: false, created_at: minutesAgo(43200) },
+  { id: 31, station_id: 3, sensor_type_id: 2, local_identifier: "umid_brejo", operational_status: false, created_at: minutesAgo(43200) },
 ];
 
 /** Gera leituras históricas mockadas seguindo o schema OpenAPI Reading */
@@ -87,60 +98,54 @@ export function generateMockReadings(): Reading[] {
   const baseNow = nowSeconds();
   let idCounter = 1;
 
-  // 120 leituras recentes ao longo dos últimos 7 dias (a cada 1 a 2 horas)
+  // Leituras históricas ao longo dos últimos 7 dias a cada 2 horas
   for (let i = 0; i < 60; i++) {
     const t = baseNow - i * 3600 * 2;
     const hour = new Date(t * 1000).getHours();
 
-    // Variação diurna realista
-    const tempVal = Number((22 + 9 * Math.sin(((hour - 7) / 24) * Math.PI * 2) + (i % 5 === 0 ? 5.2 : 0)).toFixed(1));
-    const humVal = Number(Math.max(20, Math.min(95, 70 - 30 * Math.sin(((hour - 7) / 24) * Math.PI * 2))).toFixed(1));
-    const windVal = Number((12 + (i % 7) * 2.5).toFixed(1));
-    const rainVal = (i % 6 === 0 ? 4.5 : i % 11 === 0 ? 12.0 : 0);
-    const soilHumVal = Number((45 - (i * 0.2)).toFixed(1));
+    // Variação diurna realista para Estação 1 (Sede)
+    const tempVal1 = Number((22 + 9 * Math.sin(((hour - 7) / 24) * Math.PI * 2) + (i % 7 === 0 ? 5.2 : 0)).toFixed(1));
+    const humVal1 = Number(Math.max(20, Math.min(95, 70 - 30 * Math.sin(((hour - 7) / 24) * Math.PI * 2))).toFixed(1));
+    const windVal1 = Number((12 + (i % 7) * 2.5).toFixed(1));
+    const rainVal1 = (i % 6 === 0 ? 4.5 : i % 11 === 0 ? 12.0 : 0);
+    const soilTempVal1 = Number((21.5 + 3 * Math.sin(((hour - 10) / 24) * Math.PI * 2)).toFixed(1));
+    const soilHumVal1 = Number((45 - (i * 0.2)).toFixed(1));
 
+    // Estação 2 (Pivô Central) - mais quente, pivô com picos ocasionais
+    const tempVal2 = Number((tempVal1 + 2.8).toFixed(1));
+    const humVal2 = Number(Math.max(18, humVal1 - 8).toFixed(1));
+    const windVal2 = Number((windVal1 + 3.0).toFixed(1));
+    const rainVal2 = rainVal1;
+    const soilTempVal2 = Number((soilTempVal1 + 1.2).toFixed(1));
+    const soilHumVal2 = Number(Math.max(25, 42 - (i * 0.35)).toFixed(1));
+
+    // Inserção da Estação 1
     readings.push(
-      {
-        id: idCounter++,
-        sensor_id: 10,
-        value: tempVal,
-        unix_time: t,
-        data_consistent: true,
-        created_at: new Date(t * 1000).toISOString(),
-      },
-      {
-        id: idCounter++,
-        sensor_id: 11,
-        value: humVal,
-        unix_time: t,
-        data_consistent: true,
-        created_at: new Date(t * 1000).toISOString(),
-      },
-      {
-        id: idCounter++,
-        sensor_id: 12,
-        value: windVal,
-        unix_time: t,
-        data_consistent: true,
-        created_at: new Date(t * 1000).toISOString(),
-      },
-      {
-        id: idCounter++,
-        sensor_id: 13,
-        value: rainVal,
-        unix_time: t,
-        data_consistent: true,
-        created_at: new Date(t * 1000).toISOString(),
-      },
-      {
-        id: idCounter++,
-        sensor_id: 15,
-        value: soilHumVal,
-        unix_time: t,
-        data_consistent: true,
-        created_at: new Date(t * 1000).toISOString(),
-      },
+      { id: idCounter++, sensor_id: 10, value: tempVal1, unix_time: t, data_consistent: i !== 14, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 11, value: humVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 12, value: windVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 13, value: rainVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 14, value: soilTempVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 15, value: soilHumVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
     );
+
+    // Inserção da Estação 2
+    readings.push(
+      { id: idCounter++, sensor_id: 20, value: tempVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 21, value: humVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 22, value: windVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 23, value: rainVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 24, value: soilTempVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      { id: idCounter++, sensor_id: 25, value: soilHumVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+    );
+
+    // Inserção da Estação 3 (apenas registros anteriores a 6 horas atrás)
+    if (i >= 3) {
+      readings.push(
+        { id: idCounter++, sensor_id: 30, value: Number((tempVal1 - 1.5).toFixed(1)), unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+        { id: idCounter++, sensor_id: 31, value: Number((humVal1 + 10).toFixed(1)), unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      );
+    }
   }
 
   // Ordenar do mais recente para o mais antigo
@@ -506,9 +511,30 @@ export const mockUsers: User[] = [
   { id: 3, role_id: 3, name: "Paulo Dias", email: "paulo@agritech.dev", active: true, created_at: minutesAgo(43200) },
 ];
 
+function paginateList<T>(
+  list: T[],
+  searchParams: URLSearchParams,
+  defaultLimit = 20,
+): { data: T[]; meta: { total_records: number; total_pages: number; current_page: number } } {
+  const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+  const limit = Math.max(1, Math.min(100, Number(searchParams.get("limit") ?? defaultLimit)));
+  const total_records = list.length;
+  const total_pages = Math.max(1, Math.ceil(total_records / limit));
+  const start = (page - 1) * limit;
+  const data = list.slice(start, start + limit);
+  return {
+    data,
+    meta: {
+      total_records,
+      total_pages,
+      current_page: page,
+    },
+  };
+}
+
 /**
- * Roteador de mocks OpenAPI 1.5.0: responde qualquer endpoint para permitir
- * desenvolvimento/testes locais imediatos antes das rotas finais do backend.
+ * Roteador de mocks OpenAPI 1.5.0: responde endpoints do contrato oficial para permitir
+ * desenvolvimento/testes locais imediatos com total fidelidade ao backend.
  */
 export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefined {
   if (method !== "GET") return undefined;
@@ -517,14 +543,12 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
   const path = url.pathname;
   const search = url.searchParams;
 
-  // GET /api/readings
+  // GET /api/readings (ReadingsPaginated)
   if (path === "/api/readings" || path === "/readings") {
     let list = [...mockReadings];
     const sensorId = search.get("sensor_id");
     const startUnix = search.get("start_unix_time");
     const endUnix = search.get("end_unix_time");
-    const page = Math.max(1, Number(search.get("page") ?? 1));
-    const limit = Math.max(1, Math.min(100, Number(search.get("limit") ?? 20)));
 
     if (sensorId) {
       list = list.filter((r) => r.sensor_id === Number(sensorId));
@@ -536,46 +560,62 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
       list = list.filter((r) => r.unix_time <= Number(endUnix));
     }
 
-    const totalRecords = list.length;
-    const totalPages = Math.max(1, Math.ceil(totalRecords / limit));
-    const start = (page - 1) * limit;
-    const data = list.slice(start, start + limit);
+    return paginateList(list, search, 20) as unknown as T;
+  }
 
+  // GET /api/stations/statistics ou /api/stations/:id/statistics (Statistics)
+  if (path === "/api/stations/statistics" || path.endsWith("/statistics")) {
+    const match = path.match(/\/api\/stations\/(\d+)\/statistics/);
+    const stationId = match ? Number(match[1]) : 1;
     return {
-      data,
-      meta: {
-        total_records: totalRecords,
-        total_pages: totalPages,
-        current_page: page,
-      },
+      ...mockStatistics,
+      station_id: stationId,
     } as unknown as T;
   }
 
-  // GET /api/stations/statistics ou /api/stations/:id/statistics
-  if (path === "/api/stations/statistics" || path.endsWith("/statistics")) {
-    return mockStatistics as unknown as T;
-  }
-
-  // GET /api/stations/:id/forecast
+  // GET /api/stations/:id/forecast (StationForecast)
   if (path.includes("/forecast")) {
+    const match = path.match(/\/api\/stations\/(\d+)\/forecast/);
+    const stationId = match ? Number(match[1]) : 1;
+    const station = mockStations.find((s) => s.id === stationId) ?? mockStations[0]!;
     const days = Math.min(7, Math.max(1, Number(search.get("days") ?? 7)));
     return {
-      ...mockForecast,
+      station_id: station.id,
+      latitude: station.latitude ?? -23.1896,
+      longitude: station.longitude ?? -45.8841,
+      source: "open-meteo",
+      generated_at: BASE_MOCK_ISO,
       days: mockForecastDays.slice(0, days),
     } as unknown as T;
   }
 
-  // GET /api/stations/current ou /api/stations/:id/current
+  // GET /api/stations/current ou /api/stations/:id/current (CurrentData / StationCurrentData)
   if (path === "/api/stations/current" || path.endsWith("/current")) {
+    const match = path.match(/\/api\/stations\/(\d+)\/current/);
+    if (match) {
+      const id = Number(match[1]);
+      const stationCurrent = mockCurrentData.stations.find((s) => s.station_id === id);
+      return stationCurrent as unknown as T;
+    }
     return mockCurrentData as unknown as T;
   }
 
-  // GET /api/stations/:id/status
+  // GET /api/stations/:id/status (StationStatusResponse)
   if (path.endsWith("/status")) {
-    return mockStationStatus as unknown as T;
+    const match = path.match(/\/api\/stations\/(\d+)\/status/);
+    const id = match ? Number(match[1]) : 1;
+    const station = mockStations.find((s) => s.id === id);
+    const isOffline = station?.id === 3;
+    return {
+      station_id: id,
+      status: isOffline ? "Offline" : "Online",
+      last_communication_at: station?.last_communication_at ?? minutesAgo(2),
+      checked_at: BASE_MOCK_ISO,
+      offline_threshold_minutes: 10,
+    } as unknown as T;
   }
 
-  // GET /api/stations/overview
+  // GET /api/stations/overview (Overview)
   if (path === "/api/stations/overview") {
     return mockOverview as unknown as T;
   }
@@ -585,43 +625,101 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
     return mockSeries as unknown as T;
   }
 
-  // GET /api/stations/properties ou /api/properties
-  if (path === "/api/stations/properties" || path === "/api/properties") {
+  // GET /api/stations/properties ou /api/properties (PropertiesPaginated ou Property[])
+  if (path === "/api/stations/properties" || path === "/api/properties" || path === "/properties") {
+    if (search.has("page") || search.has("limit")) {
+      return paginateList(mockProperties, search, 100) as unknown as T;
+    }
     return mockProperties as unknown as T;
   }
 
-  // GET /api/stations
-  if (path === "/api/stations") {
-    return mockStations as unknown as T;
+  // GET /api/stations (StationsPaginated ou Station[])
+  if (path === "/api/stations" || path === "/stations") {
+    let list = [...mockStations];
+    const propertyId = search.get("property_id");
+    if (propertyId) {
+      list = list.filter((s) => s.property_id === Number(propertyId));
+    }
+    if (search.has("page") || search.has("limit")) {
+      return paginateList(list, search, 100) as unknown as T;
+    }
+    return list as unknown as T;
   }
 
-  // GET /api/sensors
-  if (path === "/api/sensors") {
-    return mockSensors as unknown as T;
+  const stationMatch = path.match(/^\/api\/stations\/(\d+)$/);
+  if (stationMatch) {
+    const id = Number(stationMatch[1]);
+    return mockStations.find((s) => s.id === id) as unknown as T;
+  }
+
+  // GET /api/sensors (SensorsPaginated ou Sensor[])
+  if (path === "/api/sensors" || path === "/sensors") {
+    let list = [...mockSensors];
+    const stationId = search.get("station_id");
+    if (stationId) {
+      list = list.filter((s) => s.station_id === Number(stationId));
+    }
+    if (search.has("page") || search.has("limit")) {
+      return paginateList(list, search, 100) as unknown as T;
+    }
+    return list as unknown as T;
+  }
+
+  const sensorMatch = path.match(/^\/api\/sensors\/(\d+)$/);
+  if (sensorMatch) {
+    const id = Number(sensorMatch[1]);
+    return mockSensors.find((s) => s.id === id) as unknown as T;
   }
 
   // GET /api/sensor-types
-  if (path === "/api/sensor-types") {
+  if (path === "/api/sensor-types" || path === "/sensor-types") {
     return mockSensorTypes as unknown as T;
   }
 
-  // GET /api/alerts/config
-  if (path === "/api/alerts/config") {
+  const sensorTypeMatch = path.match(/^\/api\/sensor-types\/(\d+)$/);
+  if (sensorTypeMatch) {
+    const id = Number(sensorTypeMatch[1]);
+    return mockSensorTypes.find((t) => t.id === id) as unknown as T;
+  }
+
+  // GET /api/alerts/config (AlertConfigsPaginated ou AlertConfig[])
+  if (path === "/api/alerts/config" || path === "/alerts/config") {
+    if (search.has("page") || search.has("limit")) {
+      return paginateList(mockAlertRules, search, 100) as unknown as T;
+    }
     return mockAlertRules as unknown as T;
   }
 
-  // GET /api/alerts/triggered
-  if (path === "/api/alerts/triggered") {
-    return mockTriggeredAlerts as unknown as T;
+  // GET /api/alerts/triggered (TriggeredAlertsPaginated ou TriggeredAlert[])
+  if (path === "/api/alerts/triggered" || path === "/alerts/triggered") {
+    let list = [...mockTriggeredAlerts];
+    const ack = search.get("acknowledged");
+    if (ack !== null) {
+      const isAck = ack === "true";
+      list = list.filter((a) => (a.acknowledged_at !== null) === isAck);
+    }
+    if (search.has("page") || search.has("limit")) {
+      return paginateList(list, search, 15) as unknown as T;
+    }
+    return list as unknown as T;
   }
 
-  // GET /api/users
-  if (path === "/api/users") {
+  // GET /api/users (UsersPaginated ou User[])
+  if (path === "/api/users" || path === "/users") {
+    if (search.has("page") || search.has("limit")) {
+      return paginateList(mockUsers, search, 100) as unknown as T;
+    }
     return mockUsers as unknown as T;
   }
 
+  const userMatch = path.match(/^\/api\/users\/(\d+)$/);
+  if (userMatch) {
+    const id = Number(userMatch[1]);
+    return mockUsers.find((u) => u.id === id) as unknown as T;
+  }
+
   // GET /api/roles
-  if (path === "/api/roles") {
+  if (path === "/api/roles" || path === "/roles") {
     return mockRoles as unknown as T;
   }
 

@@ -19,7 +19,7 @@ import { ForecastCalendarCard } from "@/features/stations/ForecastCalendarCard";
 import { useForecast, useOverview, useSeries } from "@/features/stations/hooks";
 import { cn } from "@/lib/cn";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import { mockOverview, mockReadings, mockSeries } from "@/lib/api/mocks";
+import { mockOverview, mockReadings, mockSensors, mockSeries } from "@/lib/api/mocks";
 
 export type TelemetryRow = {
   id: string;
@@ -203,33 +203,87 @@ export function HistoryPage() {
 
     // 1. Usar leituras da API OpenAPI /readings se disponíveis
     if (rawReadings && rawReadings.length > 0) {
-      const byTime = new Map<number, { temp?: number; hum?: number; wind?: number; rain?: number; soilHum?: number }>();
+      const sensorMap = new Map(mockSensors.map((s) => [s.id, s]));
+      const byKey = new Map<
+        string,
+        {
+          stationId: number;
+          temp?: number;
+          hum?: number;
+          wind?: number;
+          rain?: number;
+          soilTemp?: number;
+          soilHum?: number;
+          inconsistent?: boolean;
+        }
+      >();
+
       for (const r of rawReadings) {
-        const item = byTime.get(r.unix_time) ?? {};
-        if (r.sensor_id === 10) item.temp = r.value;
-        else if (r.sensor_id === 11) item.hum = r.value;
-        else if (r.sensor_id === 12) item.wind = r.value;
-        else if (r.sensor_id === 13) item.rain = r.value;
-        else if (r.sensor_id === 15) item.soilHum = r.value;
-        byTime.set(r.unix_time, item);
+        const sensor = sensorMap.get(r.sensor_id);
+        const rowStationId = sensor?.station_id ?? stationTarget.id;
+
+        // Filtro por estação se uma estação específica for selecionada
+        if (stationId && rowStationId !== stationId) {
+          continue;
+        }
+
+        const key = `${rowStationId}-${r.unix_time}`;
+        const item = byKey.get(key) ?? { stationId: rowStationId };
+
+        if (r.data_consistent === false) {
+          item.inconsistent = true;
+        }
+
+        const typeId = sensor?.sensor_type_id;
+        if (typeId === 1 || r.sensor_id === 10 || r.sensor_id === 20 || r.sensor_id === 30) {
+          item.temp = r.value;
+        } else if (typeId === 2 || r.sensor_id === 11 || r.sensor_id === 21 || r.sensor_id === 31) {
+          item.hum = r.value;
+        } else if (typeId === 3 || r.sensor_id === 12 || r.sensor_id === 22) {
+          item.wind = r.value;
+        } else if (typeId === 4 || r.sensor_id === 13 || r.sensor_id === 23) {
+          item.rain = r.value;
+        } else if (typeId === 5 || r.sensor_id === 14 || r.sensor_id === 24) {
+          item.soilTemp = r.value;
+        } else if (typeId === 6 || r.sensor_id === 15 || r.sensor_id === 25) {
+          item.soilHum = r.value;
+        }
+
+        byKey.set(key, item);
       }
-      for (const [t, dVal] of byTime.entries()) {
-        const d = new Date(t * 1000);
+
+      for (const [key, dVal] of byKey.entries()) {
+        const unixTime = Number(key.split("-")[1]);
+        const d = new Date(unixTime * 1000);
+        const st = stations.find((s) => s.id === dVal.stationId) ?? stationTarget;
+
         const tempVal = dVal.temp ?? 23.5;
         const humVal = dVal.hum ?? 60.0;
         const windVal = dVal.wind ?? 14.0;
         const rainVal = dVal.rain ?? 0.0;
+        const soilTempVal = dVal.soilTemp ?? 22.8;
         const soilHumVal = dVal.soilHum ?? 44.0;
+
         const isHot = tempVal >= 35;
         const isDry = humVal <= 30;
         const isSoilDry = soilHumVal < 38;
+        const hasDiscrepancy = Boolean(dVal.inconsistent);
+
+        let alertMsg: string | null = null;
+        if (hasDiscrepancy) {
+          alertMsg = "Discrepância / Sensor inconsistente";
+        } else if (isHot) {
+          alertMsg = "Temp. acima de 35 °C";
+        } else if (isSoilDry) {
+          alertMsg = "Solo seco (< 38%)";
+        }
 
         rows.push({
-          id: `rd-${t}`,
-          stationId: stationTarget.id,
-          stationName: stationTarget.name,
-          propertyName: stationTarget.property_name,
-          unixTime: t,
+          id: `rd-${dVal.stationId}-${unixTime}`,
+          stationId: dVal.stationId,
+          stationName: st.name,
+          propertyName: st.property_name,
+          unixTime,
           dateTime: formatDateTime(d),
           temp: tempVal,
           tempAlert: isHot,
@@ -239,10 +293,10 @@ export function HistoryPage() {
           windDir: "SE",
           windAlert: windVal > 25,
           rain: rainVal,
-          soilTemp: 22.8,
+          soilTemp: soilTempVal,
           soilHum: soilHumVal,
           soilAlert: isSoilDry,
-          alertMessage: isHot ? "Temp. acima de 35 °C" : isSoilDry ? "Solo seco (< 38%)" : null,
+          alertMessage: alertMsg,
           warnMessage: isDry ? "Umidade relativa baixa" : null,
         });
       }
@@ -334,7 +388,7 @@ export function HistoryPage() {
     rows.sort((a, b) => b.unixTime - a.unixTime);
 
     return rows;
-  }, [stations, selectedStation, availableSeries, aggregation, range, generatedAt, rawReadings]);
+  }, [stations, selectedStation, stationId, availableSeries, aggregation, range, generatedAt, rawReadings]);
 
   // Filtro de alertas e paginação
   const filteredRows = useMemo(() => {
