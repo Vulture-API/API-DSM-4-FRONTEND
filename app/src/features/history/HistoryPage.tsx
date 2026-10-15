@@ -194,6 +194,7 @@ export function HistoryPage() {
   // Gera as leituras consolidadas de telemetria correspondentes ao período
   const telemetryRows = useMemo<TelemetryRow[]>(() => {
     if (!stations.length) return [];
+    if (stationId && !selectedStation) return [];
 
     const rows: TelemetryRow[] = [];
     const now = generatedAt
@@ -390,13 +391,37 @@ export function HistoryPage() {
     return rows;
   }, [stations, selectedStation, stationId, availableSeries, aggregation, range, generatedAt, rawReadings]);
 
-  // Filtro de alertas e paginação
+  // Filtro de alertas, período customizado e paginação
   const filteredRows = useMemo(() => {
+    let startTimestamp: number | null = null;
+    let endTimestamp: number | null = null;
+
+    if (range === "custom" && startDate && endDate) {
+      const parseDatePart = (str: string) => {
+        const parts = str.split("/").map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        const [day, month, year] = parts;
+        const d = new Date(year, (month ?? 1) - 1, day ?? 1);
+        return isNaN(d.getTime()) ? null : d;
+      };
+      const s = parseDatePart(startDate);
+      const e = parseDatePart(endDate);
+      if (s && e) {
+        s.setHours(0, 0, 0, 0);
+        e.setHours(23, 59, 59, 999);
+        startTimestamp = Math.floor(s.getTime() / 1000);
+        endTimestamp = Math.floor(e.getTime() / 1000);
+      }
+    }
+
     return telemetryRows.filter((r) => {
       if (onlyAlerts && !r.alertMessage && !r.warnMessage) return false;
+      if (startTimestamp !== null && endTimestamp !== null) {
+        if (r.unixTime < startTimestamp || r.unixTime > endTimestamp) return false;
+      }
       return true;
     });
-  }, [telemetryRows, onlyAlerts]);
+  }, [telemetryRows, onlyAlerts, range, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const pageRows = useMemo(() => {
@@ -427,6 +452,21 @@ export function HistoryPage() {
   }
 
   function handleApplyFilters() {
+    if (range === "custom") {
+      const parseDatePart = (str: string) => {
+        const parts = str.split("/").map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        const [day, month, year] = parts;
+        const d = new Date(year, (month ?? 1) - 1, day ?? 1);
+        return isNaN(d.getTime()) ? null : d;
+      };
+      const s = parseDatePart(startDate);
+      const e = parseDatePart(endDate);
+      if (!s || !e || s > e) {
+        toast.error("Intervalo de datas inválido. A data inicial deve ser anterior ou igual à data final.");
+        return;
+      }
+    }
     setPage(1);
     toast.success("Filtros aplicados ao histórico de telemetria.");
   }

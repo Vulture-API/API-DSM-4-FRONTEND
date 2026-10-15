@@ -8,6 +8,7 @@
     "start": "next start -p 3010",
     "lint": "eslint",
     "test": "vitest run --coverage",
+    "test:history": "vitest run src/features/history src/features/readings --coverage --coverage.include=\"src/features/history/**\" --coverage.include=\"src/features/readings/**\"",
     "test:watch": "vitest"
   },
   "dependencies": {
