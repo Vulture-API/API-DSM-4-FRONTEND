@@ -31,6 +31,26 @@ export type LatestReading = {
   unix_time: number;
 };
 
+export type CurrentReading = Omit<LatestReading, "value" | "unix_time"> & {
+  value: number | null;
+  unix_time: number | null;
+};
+export type CurrentStation = {
+  station_id: number;
+  name: string;
+  property_id: number;
+  property_name: string;
+  status: StationStatus;
+  last_update: string | null;
+  readings: CurrentReading[];
+};
+export type CurrentData = {
+  generated_at: string;
+  offline_threshold_minutes: number;
+  stations: CurrentStation[];
+};
+export type LiveReading = LatestReading & { type: "reading"; reading_id: number; station_id: number };
+
 export type StationStatus = "Online" | "Com alerta" | "Offline";
 
 export type StationOverview = {
@@ -119,31 +139,7 @@ export type StationForecast = {
   days: ForecastDay[];
 };
 
-export type CurrentReading = {
-  sensor_id: number;
-  local_identifier: string;
-  sensor_type_id: number;
-  sensor_type: string;
-  unit_of_measure: string;
-  value: number | null;
-  unix_time: number | null;
-};
-
-export type StationCurrentData = {
-  station_id: number;
-  name: string;
-  property_id: number;
-  property_name: string;
-  status: StationStatus;
-  last_update: string | null;
-  readings: CurrentReading[];
-};
-
-export type CurrentData = {
-  generated_at: string;
-  offline_threshold_minutes: number;
-  stations: StationCurrentData[];
-};
+export type StationCurrentData = CurrentStation;
 
 export type StationStatusResponse = {
   station_id: number;
@@ -154,6 +150,23 @@ export type StationStatusResponse = {
 };
 
 export const stationsApi = {
+  current: (
+    arg1?: number | { station_id?: number; property_id?: number },
+    arg2?: number,
+  ) => {
+    if (typeof arg1 === "object" && arg1 !== null) {
+      return request<CurrentData>(`/api/stations/current${query(arg1)}`);
+    }
+    const propertyId = typeof arg1 === "number" ? arg1 : undefined;
+    const stationId = arg2;
+    return request<CurrentData>(
+      stationId
+        ? `/api/stations/${stationId}/current`
+        : `/api/stations/current${query({ property_id: propertyId })}`,
+    );
+  },
+  stationCurrent: (id: number) =>
+    request<CurrentData>(`/api/stations/${id}/current`),
   list: () => requestAll<Station>("/api/stations"),
   get: (id: number) => request<Station>(`/api/stations/${id}`),
   properties: () => request<Property[]>("/api/stations/properties"),
@@ -173,10 +186,6 @@ export const stationsApi = {
     request<Statistics>(`/api/stations/${id}/statistics${query(options)}`),
   forecast: (id: number, days = 7) =>
     request<StationForecast>(`/api/stations/${id}/forecast${query({ days })}`),
-  current: (options: { station_id?: number; property_id?: number } = {}) =>
-    request<CurrentData>(`/api/stations/current${query(options)}`),
-  stationCurrent: (id: number) =>
-    request<CurrentData>(`/api/stations/${id}/current`),
   status: (id: number) =>
     request<StationStatusResponse>(`/api/stations/${id}/status`),
   create: (input: StationInput) => request<Station>("/api/stations", { method: "POST", json: input }),

@@ -17,7 +17,9 @@ import { useDeleteSensor, useSaveSensor, useSensors, useSensorTypes } from "@/fe
 import { sensorOrder, sensorVisual } from "@/features/sensor-visual";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/format";
 
-import type { LatestReading, StationOverview } from "./api";
+import type { CurrentReading, StationOverview } from "./api";
+import { CurrentReadingsState } from "./CurrentReadingsState";
+import { useCurrentReadings } from "./useCurrentReadings";
 import { useOverview } from "./hooks";
 import { SeriesCard } from "./SeriesCard";
 import { StationFormModal } from "./StationFormModal";
@@ -27,6 +29,7 @@ import { StationStatusBadge } from "./StationStatusBadge";
 
 export function StationDetailPage({ id }: { id: number }) {
   const overview = useOverview();
+  const current = useCurrentReadings(undefined, id);
   const station = overview.data?.stations.find((s) => s.id === id);
   const [editing, setEditing] = useState(false);
 
@@ -47,7 +50,7 @@ export function StationDetailPage({ id }: { id: number }) {
       </>
     );
   }
-  if (overview.error) {
+  if (overview.error && !overview.data) {
     return (
       <>
         <PageHeader title="Estação" back={back} />
@@ -76,7 +79,8 @@ export function StationDetailPage({ id }: { id: number }) {
     );
   }
 
-  const readings = [...station.latest_readings].sort((a, b) => sensorOrder(a.sensor_type) - sensorOrder(b.sensor_type));
+  const currentStation = current.data?.stations.find((s) => s.station_id === id);
+  const readings = [...(currentStation?.readings ?? [])].sort((a, b) => sensorOrder(a.sensor_type) - sensorOrder(b.sensor_type));
 
   return (
     <>
@@ -105,16 +109,21 @@ export function StationDetailPage({ id }: { id: number }) {
 
       <div className="space-y-6">
         <Card className="overflow-hidden shadow-[var(--shadow-lift)]">
-          <section aria-label="Leituras atuais" className="-mb-px -ml-px flex flex-wrap">
-            {readings.length === 0 && (
-              <div className="flex-1">
-                <EmptyState title="Sem leituras ainda" description="A estação ainda não enviou dados." />
-              </div>
-            )}
-            {readings.map((reading) => (
-              <ReadingTile key={reading.sensor_id} reading={reading} />
-            ))}
-          </section>
+          <CurrentReadingsState connection={current.connection} error={current.error} updatedAt={current.dataUpdatedAt}
+            now={current.now} onRetry={() => void current.refetch()} />
+          {current.error && !current.data ? <ErrorState message={current.error.message} onRetry={() => void current.refetch()} /> : (
+            <section aria-label="Leituras atuais" className="-mb-px -ml-px flex flex-wrap">
+              {current.isLoading && <Skeleton className="m-5 h-24 w-full" />}
+              {!current.isLoading && readings.length === 0 && (
+                <div className="flex-1">
+                  <EmptyState title="Sem leituras ainda" description="A estação ainda não enviou dados." />
+                </div>
+              )}
+              {readings.map((reading) => (
+                <ReadingTile key={reading.sensor_id} reading={reading} now={current.now} />
+              ))}
+            </section>
+          )}
         </Card>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 [&>*]:min-w-0">
@@ -122,7 +131,7 @@ export function StationDetailPage({ id }: { id: number }) {
           <LocationCard station={station} />
         </div>
 
-        <SensorsCard station={station} />
+        <SensorsCard station={station} readings={readings} />
       </div>
 
       {editing && <StationFormModal open station={toStation(station)} onClose={() => setEditing(false)} />}
@@ -130,7 +139,7 @@ export function StationDetailPage({ id }: { id: number }) {
   );
 }
 
-function ReadingTile({ reading }: { reading: LatestReading }) {
+function ReadingTile({ reading, now }: { reading: CurrentReading; now: number }) {
   const visual = sensorVisual(reading.sensor_type);
   return (
     <div className="flex min-w-[150px] flex-1 flex-col border-b border-l border-line p-5">
@@ -139,8 +148,16 @@ function ReadingTile({ reading }: { reading: LatestReading }) {
         {reading.sensor_type}
       </p>
       <p className="mt-auto pt-2 text-[26px] leading-none font-semibold tracking-tight tabular-nums">
-        {formatNumber(reading.value)}
-        <span className="ml-1 text-sm font-medium text-muted">{reading.unit_of_measure}</span>
+        {reading.value === null ? "Sem leitura" : formatNumber(reading.value)}
+        <span className="ml-1 text-sm font-medium text-muted">{reading.value !== null && reading.unit_of_measure}</span>
+      </p>
+      <p className="mt-2 text-xs text-faint">
+        {reading.unix_time === null ? "Aguardando medição" : (
+          <span title={formatDateTime(new Date(reading.unix_time * 1000))}>
+            {formatRelative(new Date(reading.unix_time * 1000), new Date(now))}
+            {now / 1000 - reading.unix_time > 30 * 60 && " · Leitura antiga"}
+          </span>
+        )}
       </p>
       <p className="mt-2 font-mono text-[11px] text-faint">{reading.local_identifier}</p>
     </div>
@@ -179,7 +196,7 @@ function LocationCard({ station }: { station: StationOverview }) {
   );
 }
 
-function SensorsCard({ station }: { station: StationOverview }) {
+function SensorsCard({ station, readings }: { station: StationOverview; readings: CurrentReading[] }) {
   const sensors = useSensors(station.id);
   const types = useSensorTypes();
   const save = useSaveSensor();
@@ -188,8 +205,8 @@ function SensorsCard({ station }: { station: StationOverview }) {
   const [adding, setAdding] = useState(false);
   const typeById = useMemo(() => new Map(types.data?.map((t) => [t.id, t])), [types.data]);
   const readingBySensor = useMemo(
-    () => new Map(station.latest_readings.map((r) => [r.sensor_id, r])),
-    [station.latest_readings],
+    () => new Map(readings.map((r) => [r.sensor_id, r])),
+    [readings],
   );
 
   async function toggle(sensor: Sensor) {
@@ -285,7 +302,7 @@ function SensorsCard({ station }: { station: StationOverview }) {
                         <span className="rounded-md bg-subtle px-1.5 py-0.5 font-mono text-[13px]">{sensor.local_identifier}</span>
                       </Td>
                       <Td className="whitespace-nowrap text-right tabular-nums">
-                        {reading ? (
+                        {reading && reading.value !== null && reading.unix_time !== null ? (
                           <>
                             <span className="font-medium">
                               {formatNumber(reading.value)} {reading.unit_of_measure}

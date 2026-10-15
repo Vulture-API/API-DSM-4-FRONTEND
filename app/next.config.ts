@@ -59,6 +59,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      { source: "/api/stations/current/ws", destination: `${stationsApiUrl}/api/stations/current/ws` },
       { source: "/api/users/:path*", destination: `${usersApiUrl}/api/users/:path*` },
       { source: "/api/users", destination: `${usersApiUrl}/api/users` },
       { source: "/api/roles", destination: `${usersApiUrl}/api/roles` },

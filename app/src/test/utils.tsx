@@ -64,6 +64,14 @@ export const page = <T,>(data: T[]) => ({
 /** Todas as leituras (GET) que as telas fazem, respondidas pelos fixtures. */
 export function defaultRoutes(): Routes {
   return {
+    "/api/stations/current": ({ url }: { url: URL }) => ({
+      ...fx.current,
+      stations: fx.current.stations.filter((s) => !url.searchParams.get("property_id") ||
+        s.property_id === Number(url.searchParams.get("property_id"))),
+    }),
+    ...Object.fromEntries(fx.current.stations.map((s) => [
+      `/api/stations/${s.station_id}/current`, { ...fx.current, stations: [s] },
+    ])),
     "/api/stations/overview": fx.overview,
     "/api/stations/properties": fx.properties,
     "/api/stations": page(fx.stations),
@@ -80,8 +88,6 @@ export function defaultRoutes(): Routes {
     "/api/stations/statistics": fx.statistics,
     "/api/stations/1/statistics": fx.statistics,
     "/api/stations/1/forecast": fx.forecast,
-    "/api/stations/current": fx.currentData,
-    "/api/stations/1/current": fx.currentData,
     "/api/stations/1/status": fx.stationStatus,
     "/api/alerts/config": page(fx.rules),
     "/api/alerts/triggered": ({ url }: { url: URL }) => {
