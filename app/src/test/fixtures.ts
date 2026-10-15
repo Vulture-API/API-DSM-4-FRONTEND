@@ -1,6 +1,6 @@
 import type { AlertRule, TriggeredAlert } from "@/features/alerts/api";
 import type { Sensor, SensorType } from "@/features/parameters/api";
-import type { Overview, Property, Station, StationOverview } from "@/features/stations/api";
+import type { CurrentData, Overview, Property, Station, StationOverview } from "@/features/stations/api";
 import type { Role, User } from "@/features/users/api";
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
@@ -71,6 +71,16 @@ export const overview: Overview = {
     overviewStation(stations[1]!, "Com alerta", 2, [[20, "Temperatura", "°C", 30]]),
     overviewStation(stations[2]!, "Offline", 0, []),
   ],
+};
+
+export const current: CurrentData = {
+  generated_at: overview.generated_at,
+  offline_threshold_minutes: overview.offline_threshold_minutes,
+  stations: overview.stations.map((s) => ({
+    station_id: s.id, name: s.name, property_id: s.property_id,
+    property_name: s.property_name, status: s.status,
+    last_update: s.last_communication_at, readings: s.latest_readings,
+  })),
 };
 
 export const series = {
