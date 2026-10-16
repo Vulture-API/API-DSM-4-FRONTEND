@@ -117,3 +117,17 @@ export const triggered: TriggeredAlert[] = [
 export const acknowledgedAlerts: TriggeredAlert[] = [
   { id: 90, alert_config_id: 1, reading_id: 4, acknowledged_by: 1, triggered_at: minutesAgo(600), acknowledged_at: minutesAgo(570), reading_value: 29, reading_unix_time: nowSeconds() - 36000 },
 ];
+
+export {
+  mockCurrentData as currentData,
+  mockForecast as forecast,
+  mockReadings as readings,
+  mockStationStatus as stationStatus,
+  mockStatistics as statistics,
+} from "@/lib/api/mocks";
+import { mockReadings } from "@/lib/api/mocks";
+
+export const readingsPaginated = {
+  data: mockReadings.slice(0, 20),
+  meta: { total_records: mockReadings.length, total_pages: Math.ceil(mockReadings.length / 20), current_page: 1 },
+};

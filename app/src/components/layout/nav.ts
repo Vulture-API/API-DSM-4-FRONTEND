@@ -1,6 +1,7 @@
 import {
   BellRing,
   Gauge,
+  History,
   LayoutDashboard,
   type LucideIcon,
   RadioTower,
@@ -33,6 +34,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Estações",
         description: "Cadastro, sensores e última comunicação",
         icon: RadioTower,
+      },
+      {
+        href: "/historico",
+        label: "Histórico",
+        description: "Consulta contínua de leituras e telemetria",
+        icon: History,
       },
     ],
   },

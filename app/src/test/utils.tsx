@@ -84,6 +84,11 @@ export function defaultRoutes(): Routes {
     "/api/sensor-types": fx.sensorTypes,
     "/api/users": page(fx.users),
     "/api/roles": fx.roles,
+    "/api/readings": fx.readingsPaginated,
+    "/api/stations/statistics": fx.statistics,
+    "/api/stations/1/statistics": fx.statistics,
+    "/api/stations/1/forecast": fx.forecast,
+    "/api/stations/1/status": fx.stationStatus,
     "/api/alerts/config": page(fx.rules),
     "/api/alerts/triggered": ({ url }: { url: URL }) => {
       const acknowledged = url.searchParams.get("acknowledged") === "true";

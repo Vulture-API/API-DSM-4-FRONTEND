@@ -2,7 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { type SeriesOptions, type StationInput, stationsApi } from "./api";
+import {
+  type SeriesOptions,
+  type StationInput,
+  type StatisticsQuery,
+  stationsApi,
+} from "./api";
 
 export const stationKeys = {
   all: ["stations"] as const,
@@ -12,6 +17,13 @@ export const stationKeys = {
   overview: (propertyId?: number) => [...stationKeys.all, "overview", propertyId ?? "all"] as const,
   networkSeries: (options: SeriesOptions) => [...stationKeys.all, "series", options] as const,
   stationSeries: (id: number, options: SeriesOptions) => [...stationKeys.all, "series", id, options] as const,
+  statistics: (options: StatisticsQuery) => [...stationKeys.all, "statistics", options] as const,
+  stationStatistics: (id: number, options: { from?: string; to?: string }) =>
+    [...stationKeys.all, "statistics", id, options] as const,
+  forecast: (id: number, days: number) => [...stationKeys.all, "forecast", id, days] as const,
+  current: (options: { station_id?: number; property_id?: number }) =>
+    [...stationKeys.all, "current", options] as const,
+  status: (id: number) => [...stationKeys.all, "status", id] as const,
 };
 
 /** Status muda na escala de minutos: polling a cada 30 s (ADR-003). */
@@ -57,5 +69,42 @@ export function useDeleteStation() {
   return useMutation({
     mutationFn: stationsApi.remove,
     onSuccess: () => client.invalidateQueries({ queryKey: stationKeys.all }),
+  });
+}
+
+export function useStatistics(options: StatisticsQuery = {}) {
+  return useQuery({
+    queryKey: stationKeys.statistics(options),
+    queryFn: () => stationsApi.statistics(options),
+  });
+}
+
+export function useStationStatistics(id: number, options: { from?: string; to?: string } = {}) {
+  return useQuery({
+    queryKey: stationKeys.stationStatistics(id, options),
+    queryFn: () => stationsApi.stationStatistics(id, options),
+  });
+}
+
+export function useForecast(id: number, days = 7) {
+  return useQuery({
+    queryKey: stationKeys.forecast(id, days),
+    queryFn: () => stationsApi.forecast(id, days),
+  });
+}
+
+export function useCurrentData(options: { station_id?: number; property_id?: number } = {}) {
+  return useQuery({
+    queryKey: stationKeys.current(options),
+    queryFn: () => stationsApi.current(options),
+    refetchInterval: LIVE,
+  });
+}
+
+export function useStationStatus(id: number) {
+  return useQuery({
+    queryKey: stationKeys.status(id),
+    queryFn: () => stationsApi.status(id),
+    refetchInterval: LIVE,
   });
 }
