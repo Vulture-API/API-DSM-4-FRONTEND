@@ -116,7 +116,7 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
 
   it("Cenário 5: utilização simultânea dos filtros de período e estação", async () => {
     const user = userEvent.setup();
-    mockApi(defaultRoutes());
+    const { calls } = mockApi(defaultRoutes());
     renderWithProviders(<HistoryPage />);
 
     await screen.findByText("DATA / HORA (REGISTRO)");
@@ -143,6 +143,15 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     await user.click(screen.getByRole("button", { name: "Filtrar leituras" }));
     expect(await screen.findByText("Filtros aplicados ao histórico de telemetria.")).toBeInTheDocument();
     expect(screen.getByText(/Estação ativa:/)).toBeInTheDocument();
+
+    // Valida que os filtros foram enviados para o endpoint /api/readings
+    const readingCalls = calls.filter((c) => c.path.startsWith("/api/readings"));
+    expect(readingCalls.some((c) =>
+      c.path.includes("station_id=1") &&
+      c.path.includes("sensor_id=10") &&
+      c.path.includes("start_unix_time=") &&
+      c.path.includes("end_unix_time=")
+    )).toBe(true);
   });
 
   it("Cenário 6: período inválido (data inicial maior que data final)", async () => {
