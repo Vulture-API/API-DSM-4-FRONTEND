@@ -84,11 +84,14 @@ export function HistoryPage() {
     return formatShortDate(d);
   });
   const [endDate, setEndDate] = useState(() => formatShortDate(new Date(1791936000 * 1000)));
+  const [clientNow] = useState(() => Math.floor(Date.now() / 1000));
 
   const isTest = typeof process !== "undefined" && process.env.NODE_ENV === "test";
 
   // Consultas de dados
   const overview = useOverview();
+  const generatedAt = overview.data?.generated_at ?? (isTest ? undefined : mockOverview.generated_at);
+
   const stations = useMemo(() => {
     if (overview.data?.stations && overview.data.stations.length > 0) {
       return overview.data.stations;
@@ -116,9 +119,83 @@ export function HistoryPage() {
     bucketMinutes: bucketQuery,
   });
 
+  const allSensors = useMemo(() => {
+    const list: Array<{ id: number; station_id: number; sensor_type: string; sensor_type_id: number }> = [];
+    for (const st of stations) {
+      for (const lr of st.latest_readings ?? []) {
+        list.push({
+          id: lr.sensor_id,
+          station_id: st.id,
+          sensor_type: lr.sensor_type,
+          sensor_type_id: lr.sensor_type_id,
+        });
+      }
+    }
+    if (list.length > 0) return list;
+    return mockSensors.map((s) => ({
+      id: s.id,
+      station_id: s.station_id,
+      sensor_type_id: s.sensor_type_id,
+      sensor_type:
+        s.sensor_type_id === 1 ? "Temperatura" :
+        s.sensor_type_id === 2 ? "Umidade" :
+        s.sensor_type_id === 3 ? "Velocidade do Vento" :
+        s.sensor_type_id === 4 ? "Índice Pluviométrico" :
+        s.sensor_type_id === 5 ? "Temperatura do Solo" :
+        s.sensor_type_id === 6 ? "Umidade do Solo" : "Outro",
+    }));
+  }, [stations]);
+
+  const timestamps = useMemo(() => {
+    const now = generatedAt
+      ? Math.floor(new Date(generatedAt).getTime() / 1000)
+      : clientNow;
+
+    if (range === "24") {
+      return { start: now - 24 * 3600, end: now };
+    }
+    if (range === "720") {
+      return { start: now - 30 * 86400, end: now };
+    }
+    if (range === "custom" && startDate && endDate) {
+      const parseDatePart = (str: string) => {
+        const parts = str.split("/").map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        const [day, month, year] = parts;
+        const d = new Date(year, (month ?? 1) - 1, day ?? 1);
+        return isNaN(d.getTime()) ? null : d;
+      };
+      const s = parseDatePart(startDate);
+      const e = parseDatePart(endDate);
+      if (s && e && s <= e) {
+        s.setHours(0, 0, 0, 0);
+        e.setHours(23, 59, 59, 999);
+        return {
+          start: Math.floor(s.getTime() / 1000),
+          end: Math.floor(e.getTime() / 1000),
+        };
+      }
+    }
+    return { start: now - 7 * 86400, end: now };
+  }, [range, startDate, endDate, generatedAt, clientNow]);
+
+  const selectedSensorId = useMemo(() => {
+    if (sensorFilter === "all") return undefined;
+    const found = allSensors.find(
+      (s) =>
+        (!stationId || s.station_id === stationId) &&
+        s.sensor_type.toLowerCase() === sensorFilter.toLowerCase(),
+    );
+    return found?.id;
+  }, [allSensors, sensorFilter, stationId]);
+
   const readings = useReadings({
     page: 1,
     limit: 100,
+    station_id: selectedStation ? stationId : undefined,
+    sensor_id: selectedSensorId,
+    start_unix_time: timestamps.start,
+    end_unix_time: timestamps.end,
   });
 
   const availableSeries = useMemo(() => {
@@ -142,16 +219,15 @@ export function HistoryPage() {
     return availableSeries.find((s) => s.sensor_type === "Temperatura") ?? availableSeries[0];
   }, [availableSeries, sensorFilter]);
 
-  const generatedAt = overview.data?.generated_at ?? (isTest ? undefined : mockOverview.generated_at);
   const rawReadings = useMemo(() => {
-    if (readings.data?.data && readings.data.data.length > 0) {
+    if (readings.data?.data) {
       return readings.data.data;
     }
     if (isTest) {
       return readings.data?.data;
     }
-    return mockReadings;
-  }, [readings.data, isTest]);
+    return readings.isLoading ? [] : mockReadings;
+  }, [readings.data, readings.isLoading, isTest]);
 
   // Opções formatadas para o ReactSelect
   const stationOptions = useMemo<ReactSelectOption<string>[]>(() => {
@@ -202,9 +278,9 @@ export function HistoryPage() {
       : 1776000000;
     const stationTarget = selectedStation ?? stations[0]!;
 
-    // 1. Usar leituras da API OpenAPI /readings se disponíveis
+    // 1. Usar leituras da API /api/readings se disponíveis
     if (rawReadings && rawReadings.length > 0) {
-      const sensorMap = new Map(mockSensors.map((s) => [s.id, s]));
+      const sensorMap = new Map(allSensors.map((s) => [s.id, s]));
       const byKey = new Map<
         string,
         {
@@ -221,7 +297,7 @@ export function HistoryPage() {
 
       for (const r of rawReadings) {
         const sensor = sensorMap.get(r.sensor_id);
-        const rowStationId = sensor?.station_id ?? stationTarget.id;
+        const rowStationId = sensor?.station_id ?? (stationId || stationTarget.id);
 
         // Filtro por estação se uma estação específica for selecionada
         if (stationId && rowStationId !== stationId) {
@@ -235,8 +311,21 @@ export function HistoryPage() {
           item.inconsistent = true;
         }
 
+        const typeName = sensor?.sensor_type?.toLowerCase() ?? "";
         const typeId = sensor?.sensor_type_id;
-        if (typeId === 1 || r.sensor_id === 10 || r.sensor_id === 20 || r.sensor_id === 30) {
+        if (typeName.includes("temp") && !typeName.includes("solo")) {
+          item.temp = r.value;
+        } else if (typeName.includes("umid") && !typeName.includes("solo")) {
+          item.hum = r.value;
+        } else if (typeName.includes("vento")) {
+          item.wind = r.value;
+        } else if (typeName.includes("pluvio") || typeName.includes("chuva")) {
+          item.rain = r.value;
+        } else if (typeName.includes("temp") && typeName.includes("solo")) {
+          item.soilTemp = r.value;
+        } else if (typeName.includes("umid") && typeName.includes("solo")) {
+          item.soilHum = r.value;
+        } else if (typeId === 1 || r.sensor_id === 10 || r.sensor_id === 20 || r.sensor_id === 30) {
           item.temp = r.value;
         } else if (typeId === 2 || r.sensor_id === 11 || r.sensor_id === 21 || r.sensor_id === 31) {
           item.hum = r.value;
@@ -301,6 +390,11 @@ export function HistoryPage() {
           warnMessage: isDry ? "Umidade relativa baixa" : null,
         });
       }
+      return rows.sort((a, b) => b.unixTime - a.unixTime);
+    }
+
+    if (rawReadings && rawReadings.length === 0) {
+      return [];
     }
 
     // Usar pontos das séries quando disponíveis para máxima consistência
@@ -389,7 +483,7 @@ export function HistoryPage() {
     rows.sort((a, b) => b.unixTime - a.unixTime);
 
     return rows;
-  }, [stations, selectedStation, stationId, availableSeries, aggregation, range, generatedAt, rawReadings]);
+  }, [stations, selectedStation, stationId, availableSeries, aggregation, range, generatedAt, rawReadings, allSensors]);
 
   // Filtro de alertas, período customizado e paginação
   const filteredRows = useMemo(() => {
@@ -759,15 +853,15 @@ export function HistoryPage() {
             </div>
           </div>
 
-          {overview.isLoading && isTest ? (
+          {overview.isLoading || readings.isLoading ? (
             <div className="space-y-3 p-5">
               {Array.from({ length: 6 }, (_, i) => (
                 <Skeleton key={i} className="h-10 rounded-lg" />
               ))}
             </div>
-          ) : overview.error && isTest ? (
+          ) : overview.error || readings.error ? (
             <ErrorState
-              message={overview.error.message}
+              message={overview.error?.message ?? readings.error?.message ?? "Falha de comunicação com a API meteorológica"}
               onRetry={() => {
                 void overview.refetch();
                 void series.refetch();
