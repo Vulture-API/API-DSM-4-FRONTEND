@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Field";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { OccurrencesSummary } from "@/features/occurrences/OccurrencesSummary";
 import { sensorVisual } from "@/features/sensor-visual";
 import type { CurrentStation, Overview, StationOverview, StationStatus } from "@/features/stations/api";
 import { useOverview, useProperties } from "@/features/stations/hooks";
@@ -120,7 +121,7 @@ export function DashboardPage() {
       ) : (
         <div className="space-y-6">
           {overview.error && <ErrorState message="Não foi possível atualizar o panorama da rede." onRetry={() => void overview.refetch()} />}
-          <NetworkSummary overview={overview.data} />
+          <NetworkSummary overview={overview.data} stationId={stationId} propertyId={propertyId} />
 
           <Card>
             <CardHeader title="Condições agora" description="Média das estações que enviaram dados nos últimos 30 minutos" />
@@ -225,7 +226,11 @@ export function DashboardPage() {
   );
 }
 
-function NetworkSummary({ overview }: { overview: Overview | undefined }) {
+function NetworkSummary({ overview, stationId, propertyId }: {
+  overview: Overview | undefined;
+  stationId?: number;
+  propertyId?: number;
+}) {
   const summary = overview?.summary;
   const pending = overview?.stations.reduce((total, s) => total + s.active_alerts, 0) ?? 0;
   const communicating = summary ? summary.online + summary.with_alert : 0;
@@ -239,9 +244,9 @@ function NetworkSummary({ overview }: { overview: Overview | undefined }) {
 
   return (
     <Card className="shadow-[var(--shadow-lift)]">
-      <section aria-label="Resumo" className="grid divide-y divide-line md:grid-cols-[1.4fr_1fr_1fr_1fr] md:divide-x md:divide-y-0">
+      <section aria-label="Resumo" className="grid divide-y divide-line sm:grid-cols-2 sm:divide-x xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] xl:divide-y-0">
         {!summary ? (
-          Array.from({ length: 4 }, (_, i) => (
+          Array.from({ length: 5 }, (_, i) => (
             <div key={i} className="p-5">
               <Skeleton className="h-16" />
             </div>
@@ -278,6 +283,12 @@ function NetworkSummary({ overview }: { overview: Overview | undefined }) {
                 <p className="mt-1 text-xs text-faint">Aguardando reconhecimento</p>
               </div>
             </Link>
+            <OccurrencesSummary
+              key={`${propertyId ?? "all"}:${stationId ?? "all"}`}
+              stationId={stationId}
+              propertyId={propertyId}
+              stations={overview?.stations ?? []}
+            />
           </>
         )}
       </section>
