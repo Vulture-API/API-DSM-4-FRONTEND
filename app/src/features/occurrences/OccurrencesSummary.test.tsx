@@ -123,6 +123,37 @@ describe("Falhas em aberto no dashboard", () => {
     expect(trigger).toHaveTextContent("0");
   });
 
+  it("CT08 — uma consulta bem-sucedida sem ocorrências mostra zero e estado vazio", async () => {
+    const user = userEvent.setup();
+    mockApi({ "/api/occurrences": page([]) });
+    renderWithProviders(<OccurrencesSummary stations={overview.stations} />);
+    const trigger = screen.getByRole("button", { name: "Falhas em aberto" });
+    await waitFor(() => expect(trigger).toHaveTextContent("0"));
+    await user.click(trigger);
+    expect(screen.getByText("Nenhuma falha em aberto")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("CT09 — falha de rede é exibida e a recuperação mantém os vínculos corretos", async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = mockApi({ "/api/occurrences": page(failures) });
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    renderWithProviders(<OccurrencesSummary stations={overview.stations} />);
+    const trigger = screen.getByRole("button", { name: "Falhas em aberto" });
+    await waitFor(() => expect(trigger).toHaveTextContent("—"));
+    await user.click(trigger);
+    const modal = screen.getByRole("dialog");
+    expect(within(modal).getByRole("alert")).toHaveTextContent("Serviço indisponível");
+    expect(within(modal).queryByText("Nenhuma falha em aberto")).not.toBeInTheDocument();
+    await user.click(within(modal).getByRole("button", { name: "Tentar de novo" }));
+    expect(await within(modal).findByText(failures[1]!.description)).toBeInTheDocument();
+    const row = within(modal).getByText(failures[1]!.description).closest("li")!;
+    expect(within(row).getByRole("link", { name: "Estação Sede" })).toHaveAttribute("href", "/estacoes/1");
+    expect(within(row).getByText(/TEMP-SEDE · #10 · Temperatura/)).toBeInTheDocument();
+    expect(within(row).getByText("#99")).toBeInTheDocument();
+    expect(trigger).toHaveTextContent("3");
+  });
+
   it("mostra carregamento no contador e no modal enquanto a consulta está pendente", async () => {
     const user = userEvent.setup();
     let resolve!: (result: unknown) => void;
