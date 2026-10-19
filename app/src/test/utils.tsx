@@ -72,6 +72,7 @@ export function defaultRoutes(): Routes {
     ...Object.fromEntries(fx.current.stations.map((s) => [
       `/api/stations/${s.station_id}/current`, { ...fx.current, stations: [s] },
     ])),
+    "/api/occurrences": page([]),
     "/api/stations/overview": fx.overview,
     "/api/stations/properties": fx.properties,
     "/api/stations": page(fx.stations),
