@@ -90,6 +90,9 @@ export function defaultRoutes(): Routes {
     ...Object.fromEntries(fx.overview.stations.map((s) => [
       `/api/stations/${s.id}/statistics`, { ...fx.statistics, station_id: s.id },
     ])),
+    ...Object.fromEntries(fx.overview.stations.map((s) => [
+      `/api/stations/${s.id}/readings/series`, fx.series,
+    ])),
     "/api/stations/1/forecast": fx.forecast,
     "/api/stations/1/status": fx.stationStatus,
     "/api/alerts/config": page(fx.rules),

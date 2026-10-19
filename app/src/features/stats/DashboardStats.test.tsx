@@ -31,7 +31,7 @@ describe("DashboardStats", () => {
     expect(screen.getAllByText("Umid. Solo").length).toBeGreaterThan(0);
   });
 
-  it("renderiza os 2 gráficos distintos (barras por estação e linha por horário)", async () => {
+  it("renderiza os 2 gráficos distintos (barras por estação e evolução semanal)", async () => {
     mockApi(defaultRoutes());
     renderWithProviders(<DashboardStats />);
 
@@ -39,7 +39,7 @@ describe("DashboardStats", () => {
       await screen.findByText("Comparativo por estação"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Variação por horário"),
+      screen.getByText("Evolução semanal"),
     ).toBeInTheDocument();
   });
 
@@ -63,7 +63,8 @@ describe("DashboardStats", () => {
     mockApi(defaultRoutes());
     renderWithProviders(<DashboardStats />);
 
-    const button24h = screen.getByRole("radio", { name: "24 h" });
+    const buttons24h = screen.getAllByRole("radio", { name: "24 h" });
+    const button24h = buttons24h[0]!;
     await user.click(button24h);
     expect(button24h).toHaveAttribute("aria-checked", "true");
   });

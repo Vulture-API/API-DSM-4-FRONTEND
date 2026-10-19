@@ -34,8 +34,8 @@ import {
 } from "@/features/stations/hooks";
 import { formatNumber } from "@/lib/format";
 
-import { buildHourlyComparison, SafeZoneChart, type ThresholdRule } from "./SafeZoneChart";
 import { StationExtremesChart, type StationSensorStat } from "./StationExtremesChart";
+import { WeeklyTrendChart } from "./WeeklyTrendChart";
 
 const PERIOD_OPTIONS = [
   { value: "6", label: "6 h", hours: 6 },
@@ -165,104 +165,67 @@ export function DashboardStats() {
         )
       : undefined);
 
-  // 3. Dados do Gráfico 2 (Linha): Curva 24h vs Média 7 dias por Hora do Dia + Limite de Alerta
-  const series24h = useSeries({
-    stationId: lineStationId,
-    propertyId,
-    hours: 24,
-    bucketMinutes: 60,
-  });
-
+  // 3. Dados do Gráfico 2 (Linha): Evolução Semanal Diária (Mínimo, Média e Máximo)
   const series7d = useSeries({
     stationId: lineStationId,
     propertyId,
     hours: 168,
-    bucketMinutes: 60,
+    bucketMinutes: 1440,
   });
 
-  const lineSeries24 = useMemo(() => {
-    const list = series24h.data?.series ?? [];
-    return list.find((s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase()) ?? list[0];
-  }, [series24h.data, lineSensor]);
-
-  const lineSeries7d = useMemo(() => {
+  const selectedLineSeries = useMemo(() => {
     const list = series7d.data?.series ?? [];
-    return list.find((s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase()) ?? list[0];
+    return (
+      list.find((s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase()) ??
+      list[0]
+    );
   }, [series7d.data, lineSensor]);
+
+  const linePoints = useMemo(() => {
+    return selectedLineSeries?.points ?? [];
+  }, [selectedLineSeries]);
 
   const lineVisual = sensorVisual(lineSensor);
   const lineUnit =
-    lineSeries24?.unit_of_measure ??
-    lineSeries7d?.unit_of_measure ??
+    selectedLineSeries?.unit_of_measure ??
     SENSOR_CATALOG.find((c) => c.name.toLowerCase() === lineSensor.toLowerCase())?.unit ??
     "";
 
   // Regra de alerta ativa no banco (alert_configs) para o sensor do Gráfico 2
-  const matchedRule: ThresholdRule | null = useMemo(() => {
+  const matchedRule = useMemo(() => {
     const rules = alertRules.data ?? [];
     const sensors = sensorsQuery.data ?? [];
     const types = sensorTypesQuery.data ?? [];
 
     const sensorById = new Map(sensors.map((s) => [s.id, s]));
     const typeById = new Map(types.map((t) => [t.id, t]));
-    const stationById = new Map(stations.map((st) => [st.id, st]));
 
-    const matchingRules = rules.filter((r) => {
+    const matching = rules.find((r) => {
       if (!r.active) return false;
       const sensor = sensorById.get(r.sensor_id);
       if (!sensor) return false;
       const sType = typeById.get(sensor.sensor_type_id);
-      if (!sType) return false;
-      if (sType.name.toLowerCase() !== lineSensor.toLowerCase()) return false;
-      if (lineStationId && sensor.station_id !== lineStationId) return false;
-      if (propertyId) {
-        const st = stationById.get(sensor.station_id);
-        if (st && st.property_id !== propertyId) return false;
-      }
-      return true;
+      return sType?.name.toLowerCase() === lineSensor.toLowerCase();
     });
 
-    const chosen =
-      matchingRules[0] ??
-      rules.find((r) => {
-        if (!r.active) return false;
-        const sensor = sensorById.get(r.sensor_id);
-        const sType = sensor ? typeById.get(sensor.sensor_type_id) : undefined;
-        return sType?.name.toLowerCase() === lineSensor.toLowerCase();
-      });
+    return matching
+      ? {
+          referenceValue: Number(matching.reference_value),
+          operator: matching.comparison_operator,
+        }
+      : null;
+  }, [alertRules.data, sensorsQuery.data, sensorTypesQuery.data, lineSensor]);
 
-    if (chosen) {
-      const sensor = sensorById.get(chosen.sensor_id);
-      const st = sensor ? stationById.get(sensor.station_id) : undefined;
-      return {
-        id: chosen.id,
-        referenceValue: Number(chosen.reference_value),
-        operator: chosen.comparison_operator,
-        message: chosen.message,
-        stationName: st?.name,
-      };
-    }
-
-    return null;
-  }, [alertRules.data, sensorsQuery.data, sensorTypesQuery.data, stations, lineSensor, lineStationId, propertyId]);
-
-  // Métricas exclusivas do Gráfico 2 (Horário mais baixo, Horário de pico e Limite de Alerta)
-  const hourlyStats = useMemo(() => {
-    const rows = buildHourlyComparison(lineSeries24?.points ?? [], lineSeries7d?.points ?? []);
-    const valid = rows.filter((r) => (r.recent24h ?? r.avg7d) !== null);
-    if (!valid.length) return null;
-
-    const valOf = (r: (typeof valid)[number]) => (r.recent24h ?? r.avg7d)!;
-    const minHour = valid.reduce((prev, curr) => (valOf(curr) < valOf(prev) ? curr : prev));
-    const maxHour = valid.reduce((prev, curr) => (valOf(curr) > valOf(prev) ? curr : prev));
-
-    return {
-      minHourLabel: minHour.label,
-      minHourVal: valOf(minHour),
-      maxHourLabel: maxHour.label,
-      maxHourVal: valOf(maxHour),
-    };
-  }, [lineSeries24, lineSeries7d]);
+  // Indicadores consolidados da semana (Mínimo absoluto, Média e Máximo absoluto)
+  const lineWeeklyStats = useMemo(() => {
+    if (!linePoints.length) return null;
+    const minVal = Math.min(...linePoints.map((p) => p.min));
+    const maxVal = Math.max(...linePoints.map((p) => p.max));
+    const avgVal = Number(
+      (linePoints.reduce((acc, p) => acc + p.avg, 0) / linePoints.length).toFixed(2),
+    );
+    return { minVal, maxVal, avgVal };
+  }, [linePoints]);
 
   function handleExportCsv() {
     const rows: string[] = [
@@ -495,12 +458,12 @@ export function DashboardStats() {
       </Card>
 
       {/* ===================================================================
-          GRÁFICO 2 (LINHA): VARIAÇÃO POR HORÁRIO
+          GRÁFICO 2 (LINHA): EVOLUÇÃO SEMANAL
           =================================================================== */}
       <Card className="flex flex-col shadow-[var(--shadow-card)]">
         <CardHeader
-          title="Variação por horário"
-          description="Últimas 24 h comparadas à média de 7 dias e ao limite de alerta"
+          title="Evolução semanal"
+          description="Mínimo, média e máximo dia a dia nos últimos 7 dias"
         />
 
         <div className="flex flex-wrap items-end justify-between gap-4 px-5 pt-4">
@@ -551,55 +514,62 @@ export function DashboardStats() {
             </div>
           </div>
 
-          {hourlyStats && (
+          {lineWeeklyStats && (
             <dl className="flex gap-6 text-right">
               <div>
-                <dt className="text-xs text-faint">Menor horário</dt>
+                <dt className="text-xs text-faint">Mínimo</dt>
                 <dd className="text-lg font-semibold tabular-nums text-info">
-                  {hourlyStats.minHourLabel}{" "}
-                  <span className="text-xs font-medium text-muted">
-                    ({formatNumber(hourlyStats.minHourVal)} {lineUnit})
-                  </span>
+                  {formatNumber(lineWeeklyStats.minVal)}{" "}
+                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-faint">Horário de pico</dt>
+                <dt className="text-xs text-faint">Média</dt>
                 <dd className="text-lg font-semibold tabular-nums text-ok">
-                  {hourlyStats.maxHourLabel}{" "}
-                  <span className="text-xs font-medium text-muted">
-                    ({formatNumber(hourlyStats.maxHourVal)} {lineUnit})
-                  </span>
+                  {formatNumber(lineWeeklyStats.avgVal)}{" "}
+                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-faint">Limite de alerta</dt>
+                <dt className="text-xs text-faint">Máximo</dt>
                 <dd className="text-lg font-semibold tabular-nums text-danger">
-                  {matchedRule
-                    ? `${matchedRule.operator} ${formatNumber(matchedRule.referenceValue)} ${lineUnit}`
-                    : "Sem limite"}
+                  {formatNumber(lineWeeklyStats.maxVal)}{" "}
+                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
                 </dd>
               </div>
+              {matchedRule && (
+                <div>
+                  <dt className="text-xs text-faint">Alerta</dt>
+                  <dd className="text-lg font-semibold tabular-nums text-danger">
+                    {matchedRule.operator} {formatNumber(matchedRule.referenceValue)}{" "}
+                    <span className="text-xs font-medium text-muted">{lineUnit}</span>
+                  </dd>
+                </div>
+              )}
             </dl>
           )}
         </div>
 
         <div className="flex-1 px-3 pt-3 pb-4">
-          {series24h.isLoading || series7d.isLoading ? (
+          {series7d.isLoading ? (
             <Skeleton className="mx-2 h-64 rounded-xl" />
-          ) : series24h.error ? (
-            <ErrorState message={series24h.error.message} onRetry={() => void series24h.refetch()} />
-          ) : lineSeries24?.points?.length || lineSeries7d?.points?.length ? (
-            <SafeZoneChart
-              points24h={lineSeries24?.points ?? []}
-              points7d={lineSeries7d?.points ?? []}
+          ) : series7d.error ? (
+            <ErrorState
+              message={series7d.error.message}
+              onRetry={() => void series7d.refetch()}
+            />
+          ) : linePoints.length ? (
+            <WeeklyTrendChart
+              points={linePoints}
               unit={lineUnit}
-              rule={matchedRule}
+              alertValue={matchedRule?.referenceValue}
+              alertOperator={matchedRule?.operator}
               height={290}
             />
           ) : (
             <EmptyState
               title="Sem dados de telemetria"
-              description="Nenhuma leitura disponível para traçar o comportamento horário."
+              description="Nenhuma leitura disponível nos últimos 7 dias."
             />
           )}
         </div>
