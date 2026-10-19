@@ -35,7 +35,7 @@ import {
 import { formatNumber } from "@/lib/format";
 
 import { StationExtremesChart, type StationSensorStat } from "./StationExtremesChart";
-import { WeeklyTrendChart } from "./WeeklyTrendChart";
+import { TempHumidityChart, type TempHumidityPoint } from "./TempHumidityChart";
 
 const PERIOD_OPTIONS = [
   { value: "6", label: "6 h", hours: 6 },
@@ -165,67 +165,53 @@ export function DashboardStats() {
         )
       : undefined);
 
-  // 3. Dados do Gráfico 2 (Linha): Evolução Semanal Diária (Mínimo, Média e Máximo)
-  const series7d = useSeries({
+  // 3. Dados do Gráfico 2 (Linha): Relação Temperatura vs. Umidade do Ar
+  const [linePeriod, setLinePeriod] = useState<string>("24");
+  const currentLineOption =
+    PERIOD_OPTIONS.find((p) => p.value === linePeriod) ?? PERIOD_OPTIONS[1]!;
+
+  const series24h = useSeries({
     stationId: lineStationId,
     propertyId,
-    hours: 168,
-    bucketMinutes: 1440,
+    hours: currentLineOption.hours,
+    bucketMinutes: currentLineOption.hours <= 24 ? 60 : 180,
   });
 
-  const selectedLineSeries = useMemo(() => {
-    const list = series7d.data?.series ?? [];
-    return (
-      list.find((s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase()) ??
-      list[0]
-    );
-  }, [series7d.data, lineSensor]);
+  const { tempHumidityPoints, latestTemp, latestHum, minHum } = useMemo(() => {
+    const list = series24h.data?.series ?? [];
+    const tempSeries = list.find((s) => s.sensor_type.toLowerCase() === "temperatura");
+    const humSeries = list.find((s) => s.sensor_type.toLowerCase() === "umidade");
 
-  const linePoints = useMemo(() => {
-    return selectedLineSeries?.points ?? [];
-  }, [selectedLineSeries]);
+    const tempMap = new Map<number, number>();
+    for (const p of tempSeries?.points ?? []) {
+      tempMap.set(p.t, p.avg);
+    }
 
-  const lineVisual = sensorVisual(lineSensor);
-  const lineUnit =
-    selectedLineSeries?.unit_of_measure ??
-    SENSOR_CATALOG.find((c) => c.name.toLowerCase() === lineSensor.toLowerCase())?.unit ??
-    "";
+    const humMap = new Map<number, number>();
+    for (const p of humSeries?.points ?? []) {
+      humMap.set(p.t, p.avg);
+    }
 
-  // Regra de alerta ativa no banco (alert_configs) para o sensor do Gráfico 2
-  const matchedRule = useMemo(() => {
-    const rules = alertRules.data ?? [];
-    const sensors = sensorsQuery.data ?? [];
-    const types = sensorTypesQuery.data ?? [];
+    const allTimestamps = Array.from(
+      new Set([...tempMap.keys(), ...humMap.keys()]),
+    ).sort((a, b) => a - b);
 
-    const sensorById = new Map(sensors.map((s) => [s.id, s]));
-    const typeById = new Map(types.map((t) => [t.id, t]));
+    const points: TempHumidityPoint[] = allTimestamps.map((t) => ({
+      t,
+      temp: tempMap.get(t) ?? null,
+      humidity: humMap.get(t) ?? null,
+    }));
 
-    const matching = rules.find((r) => {
-      if (!r.active) return false;
-      const sensor = sensorById.get(r.sensor_id);
-      if (!sensor) return false;
-      const sType = typeById.get(sensor.sensor_type_id);
-      return sType?.name.toLowerCase() === lineSensor.toLowerCase();
-    });
+    const validTemps = points.map((p) => p.temp).filter((v): v is number => v !== null);
+    const validHums = points.map((p) => p.humidity).filter((v): v is number => v !== null);
 
-    return matching
-      ? {
-          referenceValue: Number(matching.reference_value),
-          operator: matching.comparison_operator,
-        }
-      : null;
-  }, [alertRules.data, sensorsQuery.data, sensorTypesQuery.data, lineSensor]);
-
-  // Indicadores consolidados da semana (Mínimo absoluto, Média e Máximo absoluto)
-  const lineWeeklyStats = useMemo(() => {
-    if (!linePoints.length) return null;
-    const minVal = Math.min(...linePoints.map((p) => p.min));
-    const maxVal = Math.max(...linePoints.map((p) => p.max));
-    const avgVal = Number(
-      (linePoints.reduce((acc, p) => acc + p.avg, 0) / linePoints.length).toFixed(2),
-    );
-    return { minVal, maxVal, avgVal };
-  }, [linePoints]);
+    return {
+      tempHumidityPoints: points,
+      latestTemp: validTemps.at(-1),
+      latestHum: validHums.at(-1),
+      minHum: validHums.length ? Math.min(...validHums) : undefined,
+    };
+  }, [series24h.data]);
 
   function handleExportCsv() {
     const rows: string[] = [
@@ -458,53 +444,46 @@ export function DashboardStats() {
       </Card>
 
       {/* ===================================================================
-          GRÁFICO 2 (LINHA): EVOLUÇÃO SEMANAL
+          GRÁFICO 2 (LINHA): CORRELAÇÃO TEMPERATURA VS. UMIDADE DO AR
           =================================================================== */}
       <Card className="flex flex-col shadow-[var(--shadow-card)]">
         <CardHeader
-          title="Evolução semanal"
-          description="Mínimo, média e máximo dia a dia nos últimos 7 dias"
+          title="Temperatura vs. Umidade"
+          description={`Comportamento térmico e hídrico no período (${currentLineOption.label})`}
+          action={
+            <Segmented
+              label="Período do gráfico de temperatura e umidade"
+              value={linePeriod}
+              onChange={setLinePeriod}
+              options={PERIOD_OPTIONS.map((p) => ({
+                value: p.value,
+                label: p.label,
+              }))}
+            />
+          }
         />
 
         <div className="flex flex-wrap items-end justify-between gap-4 px-5 pt-4">
           <div className="flex flex-wrap items-center gap-3">
             <span
-              className="inline-flex size-10 items-center justify-center rounded-xl"
-              style={{ background: lineVisual.soft, color: lineVisual.color }}
+              className="inline-flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700"
               aria-hidden
             >
-              <lineVisual.icon className="size-5" />
+              <Thermometer className="size-5" />
             </span>
             <div>
-              <label htmlFor={lineSensorSelectId} className="sr-only">
-                Medição exibida no gráfico de linha
-              </label>
-              <Select
-                id={lineSensorSelectId}
-                className="h-9 w-56 font-medium"
-                value={lineSensor}
-                onChange={(e) => setLineSensor(e.target.value)}
-              >
-                {SENSOR_CATALOG.map((t) => (
-                  <option key={t.name} value={t.name}>
-                    {t.name} ({t.unit})
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
               <label htmlFor={lineStationSelectId} className="sr-only">
-                Estação exibida no gráfico de linha
+                Estação exibida no gráfico
               </label>
               <Select
                 id={lineStationSelectId}
-                className="h-9 w-56"
+                className="h-9 w-60"
                 value={lineStationId ?? ""}
                 onChange={(e) =>
                   setLineStationId(e.target.value ? Number(e.target.value) : undefined)
                 }
               >
-                <option value="">Todas as estações</option>
+                <option value="">Todas as estações (Média da rede)</option>
                 {stations.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -514,62 +493,59 @@ export function DashboardStats() {
             </div>
           </div>
 
-          {lineWeeklyStats && (
-            <dl className="flex gap-6 text-right">
+          <dl className="flex gap-6 text-right">
+            {latestTemp !== undefined && (
               <div>
-                <dt className="text-xs text-faint">Mínimo</dt>
+                <dt className="text-xs text-faint">Última temp.</dt>
+                <dd className="text-lg font-semibold tabular-nums text-amber-700">
+                  {formatNumber(latestTemp)}{" "}
+                  <span className="text-xs font-medium text-muted">°C</span>
+                </dd>
+              </div>
+            )}
+            {latestHum !== undefined && (
+              <div>
+                <dt className="text-xs text-faint">Última umid.</dt>
                 <dd className="text-lg font-semibold tabular-nums text-info">
-                  {formatNumber(lineWeeklyStats.minVal)}{" "}
-                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
+                  {formatNumber(latestHum)}{" "}
+                  <span className="text-xs font-medium text-muted">%</span>
                 </dd>
               </div>
+            )}
+            {minHum !== undefined && (
               <div>
-                <dt className="text-xs text-faint">Média</dt>
-                <dd className="text-lg font-semibold tabular-nums text-ok">
-                  {formatNumber(lineWeeklyStats.avgVal)}{" "}
-                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
+                <dt className="text-xs text-faint">Menor umidade</dt>
+                <dd
+                  className={`text-lg font-semibold tabular-nums ${
+                    minHum <= 30 ? "text-danger" : "text-ok"
+                  }`}
+                >
+                  {formatNumber(minHum)}{" "}
+                  <span className="text-xs font-medium text-muted">%</span>
                 </dd>
               </div>
-              <div>
-                <dt className="text-xs text-faint">Máximo</dt>
-                <dd className="text-lg font-semibold tabular-nums text-danger">
-                  {formatNumber(lineWeeklyStats.maxVal)}{" "}
-                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
-                </dd>
-              </div>
-              {matchedRule && (
-                <div>
-                  <dt className="text-xs text-faint">Alerta</dt>
-                  <dd className="text-lg font-semibold tabular-nums text-danger">
-                    {matchedRule.operator} {formatNumber(matchedRule.referenceValue)}{" "}
-                    <span className="text-xs font-medium text-muted">{lineUnit}</span>
-                  </dd>
-                </div>
-              )}
-            </dl>
-          )}
+            )}
+          </dl>
         </div>
 
         <div className="flex-1 px-3 pt-3 pb-4">
-          {series7d.isLoading ? (
+          {series24h.isLoading ? (
             <Skeleton className="mx-2 h-64 rounded-xl" />
-          ) : series7d.error ? (
+          ) : series24h.error ? (
             <ErrorState
-              message={series7d.error.message}
-              onRetry={() => void series7d.refetch()}
+              message={series24h.error.message}
+              onRetry={() => void series24h.refetch()}
             />
-          ) : linePoints.length ? (
-            <WeeklyTrendChart
-              points={linePoints}
-              unit={lineUnit}
-              alertValue={matchedRule?.referenceValue}
-              alertOperator={matchedRule?.operator}
+          ) : tempHumidityPoints.length ? (
+            <TempHumidityChart
+              points={tempHumidityPoints}
+              hours={currentLineOption.hours}
               height={290}
             />
           ) : (
             <EmptyState
               title="Sem dados de telemetria"
-              description="Nenhuma leitura disponível nos últimos 7 dias."
+              description="Nenhuma leitura disponível para temperatura e umidade."
             />
           )}
         </div>
