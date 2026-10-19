@@ -21,6 +21,7 @@ export type ReadingsPaginated = {
 export type ReadingsQuery = {
   page?: number | undefined;
   limit?: number | undefined;
+  station_id?: number | undefined;
   sensor_id?: number | undefined;
   start_unix_time?: number | undefined;
   end_unix_time?: number | undefined;
