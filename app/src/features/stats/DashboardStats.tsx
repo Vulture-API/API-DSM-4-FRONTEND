@@ -34,8 +34,12 @@ import {
 } from "@/features/stations/hooks";
 import { formatNumber } from "@/lib/format";
 
+import {
+  AlertThresholdChart,
+  isThresholdViolated,
+  type ThresholdRule,
+} from "./AlertThresholdChart";
 import { StationExtremesChart, type StationSensorStat } from "./StationExtremesChart";
-import { TempHumidityChart, type TempHumidityPoint } from "./TempHumidityChart";
 
 const PERIOD_OPTIONS = [
   { value: "6", label: "6 h", hours: 6 },
@@ -68,9 +72,10 @@ export function DashboardStats() {
   const [barSensor, setBarSensor] = useState<string>("Temperatura");
   const [barPeriod, setBarPeriod] = useState<string>("168");
 
-  // Estados do Gráfico 2 (Linha: Comportamento por Horário do Dia 00h-23h vs Alerta)
+  // Estados do Gráfico 2 (Linha: Monitoramento de Limite de Alerta)
   const [lineSensor, setLineSensor] = useState<string>("Temperatura");
   const [lineStationId, setLineStationId] = useState<number | undefined>();
+  const [linePeriod, setLinePeriod] = useState<string>("24");
 
   // 1. Dados gerais do banco
   const properties = useProperties();
@@ -165,53 +170,92 @@ export function DashboardStats() {
         )
       : undefined);
 
-  // 3. Dados do Gráfico 2 (Linha): Relação Temperatura vs. Umidade do Ar
-  const [linePeriod, setLinePeriod] = useState<string>("24");
+  // 3. Dados do Gráfico 2 (Linha): Monitoramento de Limite de Alerta (Leitura vs alert_configs)
   const currentLineOption =
     PERIOD_OPTIONS.find((p) => p.value === linePeriod) ?? PERIOD_OPTIONS[1]!;
 
-  const series24h = useSeries({
+  const lineSeriesQuery = useSeries({
     stationId: lineStationId,
     propertyId,
     hours: currentLineOption.hours,
     bucketMinutes: currentLineOption.hours <= 24 ? 60 : 180,
   });
 
-  const { tempHumidityPoints, latestTemp, latestHum, minHum } = useMemo(() => {
-    const list = series24h.data?.series ?? [];
-    const tempSeries = list.find((s) => s.sensor_type.toLowerCase() === "temperatura");
-    const humSeries = list.find((s) => s.sensor_type.toLowerCase() === "umidade");
+  const selectedLineSeries = useMemo(() => {
+    const list = lineSeriesQuery.data?.series ?? [];
+    return (
+      list.find((s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase()) ??
+      list[0]
+    );
+  }, [lineSeriesQuery.data, lineSensor]);
 
-    const tempMap = new Map<number, number>();
-    for (const p of tempSeries?.points ?? []) {
-      tempMap.set(p.t, p.avg);
+  const linePoints = useMemo(() => selectedLineSeries?.points ?? [], [selectedLineSeries]);
+  const lineVisual = sensorVisual(lineSensor);
+  const lineUnit =
+    selectedLineSeries?.unit_of_measure ??
+    SENSOR_CATALOG.find((c) => c.name.toLowerCase() === lineSensor.toLowerCase())?.unit ??
+    "";
+
+  // Regra de alerta ativa no banco (alert_configs) para o sensor do Gráfico 2
+  const matchedRule: ThresholdRule | null = useMemo(() => {
+    const rules = alertRules.data ?? [];
+    const sensors = sensorsQuery.data ?? [];
+    const types = sensorTypesQuery.data ?? [];
+
+    const sensorById = new Map(sensors.map((s) => [s.id, s]));
+    const typeById = new Map(types.map((t) => [t.id, t]));
+    const stationById = new Map(stations.map((st) => [st.id, st]));
+
+    const matchingRules = rules.filter((r) => {
+      if (!r.active) return false;
+      const sensor = sensorById.get(r.sensor_id);
+      if (!sensor) return false;
+      const sType = typeById.get(sensor.sensor_type_id);
+      if (!sType) return false;
+      if (sType.name.toLowerCase() !== lineSensor.toLowerCase()) return false;
+      if (lineStationId && sensor.station_id !== lineStationId) return false;
+      if (propertyId) {
+        const st = stationById.get(sensor.station_id);
+        if (st && st.property_id !== propertyId) return false;
+      }
+      return true;
+    });
+
+    const chosen =
+      matchingRules[0] ??
+      rules.find((r) => {
+        if (!r.active) return false;
+        const sensor = sensorById.get(r.sensor_id);
+        const sType = sensor ? typeById.get(sensor.sensor_type_id) : undefined;
+        return sType?.name.toLowerCase() === lineSensor.toLowerCase();
+      });
+
+    if (chosen) {
+      const sensor = sensorById.get(chosen.sensor_id);
+      const st = sensor ? stationById.get(sensor.station_id) : undefined;
+      return {
+        id: chosen.id,
+        referenceValue: Number(chosen.reference_value),
+        operator: chosen.comparison_operator,
+        message: chosen.message,
+        stationName: st?.name,
+      };
     }
 
-    const humMap = new Map<number, number>();
-    for (const p of humSeries?.points ?? []) {
-      humMap.set(p.t, p.avg);
-    }
+    return null;
+  }, [alertRules.data, sensorsQuery.data, sensorTypesQuery.data, stations, lineSensor, lineStationId, propertyId]);
 
-    const allTimestamps = Array.from(
-      new Set([...tempMap.keys(), ...humMap.keys()]),
-    ).sort((a, b) => a - b);
+  const linePeriodAvg = useMemo(() => {
+    if (!linePoints.length) return undefined;
+    return Number(
+      (linePoints.reduce((acc, p) => acc + p.avg, 0) / linePoints.length).toFixed(2),
+    );
+  }, [linePoints]);
 
-    const points: TempHumidityPoint[] = allTimestamps.map((t) => ({
-      t,
-      temp: tempMap.get(t) ?? null,
-      humidity: humMap.get(t) ?? null,
-    }));
-
-    const validTemps = points.map((p) => p.temp).filter((v): v is number => v !== null);
-    const validHums = points.map((p) => p.humidity).filter((v): v is number => v !== null);
-
-    return {
-      tempHumidityPoints: points,
-      latestTemp: validTemps.at(-1),
-      latestHum: validHums.at(-1),
-      minHum: validHums.length ? Math.min(...validHums) : undefined,
-    };
-  }, [series24h.data]);
+  const violationsCount = useMemo(() => {
+    if (!matchedRule || !linePoints.length) return 0;
+    return linePoints.filter((p) => isThresholdViolated(p.avg, matchedRule)).length;
+  }, [linePoints, matchedRule]);
 
   function handleExportCsv() {
     const rows: string[] = [
@@ -444,15 +488,15 @@ export function DashboardStats() {
       </Card>
 
       {/* ===================================================================
-          GRÁFICO 2 (LINHA): CORRELAÇÃO TEMPERATURA VS. UMIDADE DO AR
+          GRÁFICO 2 (LINHA): MONITORAMENTO DE LIMITE DE ALERTA
           =================================================================== */}
       <Card className="flex flex-col shadow-[var(--shadow-card)]">
         <CardHeader
-          title="Temperatura vs. Umidade"
-          description={`Comportamento térmico e hídrico no período (${currentLineOption.label})`}
+          title="Monitoramento de limite de alerta"
+          description="Leitura contínua comparada ao limite de alerta cadastrado no banco"
           action={
             <Segmented
-              label="Período do gráfico de temperatura e umidade"
+              label="Período do gráfico de linha"
               value={linePeriod}
               onChange={setLinePeriod}
               options={PERIOD_OPTIONS.map((p) => ({
@@ -466,24 +510,42 @@ export function DashboardStats() {
         <div className="flex flex-wrap items-end justify-between gap-4 px-5 pt-4">
           <div className="flex flex-wrap items-center gap-3">
             <span
-              className="inline-flex size-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700"
+              className="inline-flex size-10 items-center justify-center rounded-xl"
+              style={{ background: lineVisual.soft, color: lineVisual.color }}
               aria-hidden
             >
-              <Thermometer className="size-5" />
+              <lineVisual.icon className="size-5" />
             </span>
             <div>
+              <label htmlFor={lineSensorSelectId} className="sr-only">
+                Medição exibida no gráfico de linha
+              </label>
+              <Select
+                id={lineSensorSelectId}
+                className="h-9 w-56 font-medium"
+                value={lineSensor}
+                onChange={(e) => setLineSensor(e.target.value)}
+              >
+                {SENSOR_CATALOG.map((t) => (
+                  <option key={t.name} value={t.name}>
+                    {t.name} ({t.unit})
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
               <label htmlFor={lineStationSelectId} className="sr-only">
-                Estação exibida no gráfico
+                Estação exibida no gráfico de linha
               </label>
               <Select
                 id={lineStationSelectId}
-                className="h-9 w-60"
+                className="h-9 w-56"
                 value={lineStationId ?? ""}
                 onChange={(e) =>
                   setLineStationId(e.target.value ? Number(e.target.value) : undefined)
                 }
               >
-                <option value="">Todas as estações (Média da rede)</option>
+                <option value="">Todas as estações</option>
                 {stations.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -494,58 +556,60 @@ export function DashboardStats() {
           </div>
 
           <dl className="flex gap-6 text-right">
-            {latestTemp !== undefined && (
+            {linePeriodAvg !== undefined && (
               <div>
-                <dt className="text-xs text-faint">Última temp.</dt>
-                <dd className="text-lg font-semibold tabular-nums text-amber-700">
-                  {formatNumber(latestTemp)}{" "}
-                  <span className="text-xs font-medium text-muted">°C</span>
+                <dt className="text-xs text-faint">Média</dt>
+                <dd className="text-lg font-semibold tabular-nums text-ok">
+                  {formatNumber(linePeriodAvg)}{" "}
+                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
                 </dd>
               </div>
             )}
-            {latestHum !== undefined && (
-              <div>
-                <dt className="text-xs text-faint">Última umid.</dt>
-                <dd className="text-lg font-semibold tabular-nums text-info">
-                  {formatNumber(latestHum)}{" "}
-                  <span className="text-xs font-medium text-muted">%</span>
-                </dd>
-              </div>
-            )}
-            {minHum !== undefined && (
-              <div>
-                <dt className="text-xs text-faint">Menor umidade</dt>
-                <dd
-                  className={`text-lg font-semibold tabular-nums ${
-                    minHum <= 30 ? "text-danger" : "text-ok"
-                  }`}
-                >
-                  {formatNumber(minHum)}{" "}
-                  <span className="text-xs font-medium text-muted">%</span>
-                </dd>
-              </div>
-            )}
+            <div>
+              <dt className="text-xs text-faint">Limite de alerta</dt>
+              <dd className="text-lg font-semibold tabular-nums text-danger">
+                {matchedRule
+                  ? `${matchedRule.operator} ${formatNumber(matchedRule.referenceValue)} ${lineUnit}`
+                  : "Sem limite"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-faint">Acima do limite</dt>
+              <dd
+                className={`text-lg font-semibold tabular-nums ${
+                  violationsCount > 0 ? "text-danger" : "text-ok"
+                }`}
+              >
+                {violationsCount}{" "}
+                <span className="text-xs font-medium text-muted">
+                  {violationsCount === 1 ? "horário" : "horários"}
+                </span>
+              </dd>
+            </div>
           </dl>
         </div>
 
         <div className="flex-1 px-3 pt-3 pb-4">
-          {series24h.isLoading ? (
+          {lineSeriesQuery.isLoading ? (
             <Skeleton className="mx-2 h-64 rounded-xl" />
-          ) : series24h.error ? (
+          ) : lineSeriesQuery.error ? (
             <ErrorState
-              message={series24h.error.message}
-              onRetry={() => void series24h.refetch()}
+              message={lineSeriesQuery.error.message}
+              onRetry={() => void lineSeriesQuery.refetch()}
             />
-          ) : tempHumidityPoints.length ? (
-            <TempHumidityChart
-              points={tempHumidityPoints}
+          ) : linePoints.length ? (
+            <AlertThresholdChart
+              points={linePoints}
+              unit={lineUnit}
               hours={currentLineOption.hours}
+              periodAvg={linePeriodAvg}
+              rule={matchedRule}
               height={290}
             />
           ) : (
             <EmptyState
               title="Sem dados de telemetria"
-              description="Nenhuma leitura disponível para temperatura e umidade."
+              description="Nenhuma leitura disponível para este sensor no período."
             />
           )}
         </div>

@@ -31,7 +31,7 @@ describe("DashboardStats", () => {
     expect(screen.getAllByText("Umid. Solo").length).toBeGreaterThan(0);
   });
 
-  it("renderiza os 2 gráficos distintos (barras por estação e temperatura vs. umidade)", async () => {
+  it("renderiza os 2 gráficos distintos (barras por estação e monitoramento de limite de alerta)", async () => {
     mockApi(defaultRoutes());
     renderWithProviders(<DashboardStats />);
 
@@ -39,11 +39,11 @@ describe("DashboardStats", () => {
       await screen.findByText("Comparativo por estação"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Temperatura vs. Umidade"),
+      screen.getByText("Monitoramento de limite de alerta"),
     ).toBeInTheDocument();
   });
 
-  it("permite filtrar as estações exibidas no gráfico de temperatura e umidade", async () => {
+  it("permite filtrar os gráficos por tipo de medição pelos seletores", async () => {
     const user = userEvent.setup();
     mockApi(defaultRoutes());
     renderWithProviders(<DashboardStats />);
@@ -51,10 +51,11 @@ describe("DashboardStats", () => {
     const barSelect = await screen.findByLabelText("Medição exibida no gráfico de barras");
     await user.selectOptions(barSelect, "Velocidade do Vento");
 
-    const stationSelect = screen.getByLabelText("Estação exibida no gráfico");
-    expect(stationSelect).toBeInTheDocument();
+    const lineSelect = screen.getByLabelText("Medição exibida no gráfico de linha");
+    await user.selectOptions(lineSelect, "Velocidade do Vento");
 
     expect(barSelect).toHaveValue("Velocidade do Vento");
+    expect(lineSelect).toHaveValue("Velocidade do Vento");
   });
 
   it("permite alternar período rápido pelos botões segmentados", async () => {
