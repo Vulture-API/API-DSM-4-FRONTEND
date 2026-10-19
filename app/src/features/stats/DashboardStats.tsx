@@ -360,6 +360,13 @@ export function DashboardStats() {
               <Skeleton key={i} className="m-2 h-24 rounded-lg" />
             ))}
           </div>
+        ) : networkStats.error ? (
+          <div className="p-4">
+            <ErrorState
+              message={networkStats.error.message}
+              onRetry={() => void networkStats.refetch()}
+            />
+          </div>
         ) : (
           <div className="grid grid-cols-2 divide-x divide-y divide-line sm:grid-cols-4 lg:grid-cols-7 lg:divide-y-0">
             {SENSOR_CATALOG.map((item) => {
@@ -471,6 +478,11 @@ export function DashboardStats() {
         <div className="flex-1 px-3 pt-3 pb-4">
           {overview.isLoading || stationStatsQueries.some((q) => q.isLoading) ? (
             <Skeleton className="mx-2 h-64 rounded-xl" />
+          ) : overview.error ? (
+            <ErrorState
+              message={overview.error.message}
+              onRetry={() => void overview.refetch()}
+            />
           ) : stationExtremesList.length ? (
             <StationExtremesChart
               data={stationExtremesList}
