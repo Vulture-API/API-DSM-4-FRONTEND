@@ -87,7 +87,9 @@ export function defaultRoutes(): Routes {
     "/api/roles": fx.roles,
     "/api/readings": fx.readingsPaginated,
     "/api/stations/statistics": fx.statistics,
-    "/api/stations/1/statistics": fx.statistics,
+    ...Object.fromEntries(fx.overview.stations.map((s) => [
+      `/api/stations/${s.id}/statistics`, { ...fx.statistics, station_id: s.id },
+    ])),
     "/api/stations/1/forecast": fx.forecast,
     "/api/stations/1/status": fx.stationStatus,
     "/api/alerts/config": page(fx.rules),

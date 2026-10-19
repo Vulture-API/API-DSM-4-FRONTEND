@@ -110,7 +110,7 @@ describe("TopNav", () => {
     expect(toggle).toHaveAttribute("aria-controls", "menu-mobile");
     await user.click(toggle);
     const mobile = screen.getByRole("navigation", { name: "Menu" });
-    expect(within(mobile).getAllByRole("link")).toHaveLength(7);
+    expect(within(mobile).getAllByRole("link")).toHaveLength(8);
     await user.click(within(mobile).getByRole("link", { name: "Usuários" }));
     expect(screen.queryByRole("navigation", { name: "Menu" })).not.toBeInTheDocument();
   });
@@ -120,6 +120,7 @@ describe("activeItem", () => {
   it("escolhe a rota mais específica", () => {
     expect(activeItem("/alertas/regras")?.label).toBe("Regras de alerta");
     expect(activeItem("/alertas")?.label).toBe("Alertas disparados");
+    expect(activeItem("/dashboard/stats")?.label).toBe("Estatísticas");
     expect(activeItem("/estacoes/12")?.label).toBe("Estações");
     expect(activeItem("/nada")).toBeUndefined();
   });
