@@ -7,7 +7,7 @@ import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
 import { isThresholdViolated } from "./AlertThresholdChart";
 import { DashboardStats } from "./DashboardStats";
 
-describe("DashboardStats - [QA] Validar cálculos estatísticos, filtros e gráficos da tela /dashboard/stats", () => {
+describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estatísticas com API", () => {
   beforeEach(() => {
     window.URL.createObjectURL = vi.fn(() => "blob:mock-stats-csv-url");
     window.URL.revokeObjectURL = vi.fn();
@@ -192,5 +192,35 @@ describe("DashboardStats - [QA] Validar cálculos estatísticos, filtros e gráf
     await user.click(exportBtn);
 
     expect(window.URL.createObjectURL).toHaveBeenCalled();
+  });
+
+  it("Cenário 8: integração com o serviço de previsão meteorológica de 7 dias", async () => {
+    mockApi(defaultRoutes());
+    renderWithProviders(<DashboardStats />);
+
+    expect(await screen.findByText("Previsão Meteorológica")).toBeInTheDocument();
+    expect(screen.getByTestId("forecast-day-0")).toBeInTheDocument();
+    expect(screen.getByTestId("forecast-day-6")).toBeInTheDocument();
+    expect(screen.getByText("Janela de Pulverização (24h)")).toBeInTheDocument();
+  });
+
+  it("Cenário 9: indisponibilidade do serviço de previsão meteorológica (HTTP 503)", async () => {
+    const user = userEvent.setup();
+    mockApi({
+      ...defaultRoutes(),
+      "/api/stations/1/forecast": {
+        status: 503,
+        body: { message: "Serviço de previsão meteorológica indisponível" },
+      },
+    });
+    renderWithProviders(<DashboardStats />);
+
+    expect(await screen.findByText("Comparativo por estação")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Serviço de previsão meteorológica indisponível"),
+    ).toBeInTheDocument();
+
+    const retryBtn = screen.getByRole("button", { name: "Tentar de novo" });
+    await user.click(retryBtn);
   });
 });
