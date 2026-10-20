@@ -3,6 +3,7 @@ import {
   Gauge,
   History,
   LayoutDashboard,
+  LineChart,
   type LucideIcon,
   RadioTower,
   SlidersHorizontal,
@@ -28,6 +29,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Dashboard",
         description: "Status da rede e condições climáticas em tempo real",
         icon: LayoutDashboard,
+      },
+      {
+        href: "/dashboard/stats",
+        label: "Estatísticas",
+        description: "Indicadores consolidados e gráficos de tendência",
+        icon: LineChart,
       },
       {
         href: "/estacoes",
