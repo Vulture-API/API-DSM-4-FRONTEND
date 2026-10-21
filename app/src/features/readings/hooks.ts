@@ -1,5 +1,7 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+
 import { useQuery } from "@tanstack/react-query";
 
 import { type ReadingsQuery, readingsApi } from "./api";
@@ -11,6 +13,7 @@ export const readingKeys = {
 
 export function useReadings(params: ReadingsQuery = {}) {
   return useQuery({
+    enabled: useCan("monitoring.read"),
     queryKey: readingKeys.list(params),
     queryFn: () => readingsApi.list(params),
   });

@@ -1,5 +1,7 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { stationKeys } from "@/features/stations/hooks";
@@ -12,10 +14,10 @@ export const parameterKeys = {
 };
 
 export const useSensorTypes = () =>
-  useQuery({ queryKey: parameterKeys.sensorTypes, queryFn: parametersApi.sensorTypes, staleTime: 5 * 60_000 });
+  useQuery({ enabled: useCan("sensor-types.read"), queryKey: parameterKeys.sensorTypes, queryFn: parametersApi.sensorTypes, staleTime: 5 * 60_000 });
 
 export const useSensors = (stationId?: number) =>
-  useQuery({ queryKey: parameterKeys.sensors(stationId), queryFn: () => parametersApi.sensors(stationId) });
+  useQuery({ enabled: useCan("sensors.read"), queryKey: parameterKeys.sensors(stationId), queryFn: () => parametersApi.sensors(stationId) });
 
 export function useSaveSensorType() {
   const client = useQueryClient();

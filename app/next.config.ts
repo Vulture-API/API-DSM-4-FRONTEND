@@ -1,32 +1,8 @@
 import type { NextConfig } from "next";
 
-// Destinos dos rewrites (proxy do Next para os microsserviços).
-//
-// São variáveis de SERVIDOR, sem NEXT_PUBLIC_: o navegador sempre chama
-// caminhos relativos (/api/stations, /api/alerts...) e o Next repassa. Assim
-// não depende de CORS nos serviços.
-//
-// ATENÇÃO: o Next grava os rewrites no build (.next/routes-manifest.json).
-// Mudar estas variáveis exige rodar `next build` de novo — no Docker, elas
-// entram como build args.
-//
-// API_SERVER_URL (nome antigo do destino de usuários) continua aceito.
-const url = (value: string | undefined, fallback: string) =>
-  (value || fallback).replace(/\/$/, "");
-
-const usersApiUrl = url(
-  process.env.USERS_API_URL ?? process.env.API_SERVER_URL,
-  "http://localhost:3000",
-);
-const parametersApiUrl = url(
-  process.env.PARAMETERS_API_URL,
-  "http://localhost:3001",
-);
-const alertsApiUrl = url(process.env.ALERTS_API_URL, "http://localhost:3002");
-const stationsApiUrl = url(
-  process.env.STATIONS_API_URL,
-  "http://localhost:3005",
-);
+// REST é encaminhado por /api/backend com sessão HttpOnly e Bearer no servidor.
+// O upgrade WebSocket usa o cookie agritech_ws_token aceito pelo backend.
+const stationsApiUrl = (process.env.STATIONS_API_URL || "http://localhost:3005").replace(/\/$/, "");
 
 // Política de conteúdo: tudo do próprio portal, exceto os tiles do mapa
 // (OpenStreetMap). O Next injeta scripts inline de hidratação, por isso
@@ -38,7 +14,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://tile.openstreetmap.org",
   "font-src 'self' data:",
-  `connect-src 'self'${isDev ? " ws:" : ""}`,
+  `connect-src 'self'${isDev ? " ws:" : " wss:"}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -60,20 +36,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/api/stations/current/ws", destination: `${stationsApiUrl}/api/stations/current/ws` },
-      { source: "/api/users/:path*", destination: `${usersApiUrl}/api/users/:path*` },
-      { source: "/api/users", destination: `${usersApiUrl}/api/users` },
-      { source: "/api/roles", destination: `${usersApiUrl}/api/roles` },
-      { source: "/api/sensor-types/:path*", destination: `${parametersApiUrl}/api/sensor-types/:path*` },
-      { source: "/api/sensor-types", destination: `${parametersApiUrl}/api/sensor-types` },
-      { source: "/api/sensors/:path*", destination: `${parametersApiUrl}/api/sensors/:path*` },
-      { source: "/api/sensors", destination: `${parametersApiUrl}/api/sensors` },
-      { source: "/api/stations/:path*", destination: `${stationsApiUrl}/api/stations/:path*` },
-      { source: "/api/stations", destination: `${stationsApiUrl}/api/stations` },
-      { source: "/api/occurrences/:path*", destination: `${stationsApiUrl}/api/occurrences/:path*` },
-      { source: "/api/occurrences", destination: `${stationsApiUrl}/api/occurrences` },
-      { source: "/api/readings/:path*", destination: `${stationsApiUrl}/api/readings/:path*` },
-      { source: "/api/readings", destination: `${stationsApiUrl}/api/readings` },
-      { source: "/api/alerts/:path*", destination: `${alertsApiUrl}/api/alerts/:path*` },
     ];
   },
 };
