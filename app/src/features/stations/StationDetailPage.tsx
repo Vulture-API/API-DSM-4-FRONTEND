@@ -1,5 +1,8 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+import { Can } from "@/features/auth/Can";
+
 import { ArrowLeft, Clock, Cpu, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
@@ -101,9 +104,9 @@ export function StationDetailPage({ id }: { id: number }) {
           </span>
         }
         actions={
-          <Button variant="glass" icon={<Pencil className="size-4" />} onClick={() => setEditing(true)}>
+          <Can permission="stations.update"><Button variant="glass" icon={<Pencil className="size-4" />} onClick={() => setEditing(true)}>
             Editar
-          </Button>
+          </Button></Can>
         }
       />
 
@@ -134,7 +137,7 @@ export function StationDetailPage({ id }: { id: number }) {
         <SensorsCard station={station} readings={readings} />
       </div>
 
-      {editing && <StationFormModal open station={toStation(station)} onClose={() => setEditing(false)} />}
+      {editing && <Can permission="stations.update"><StationFormModal open station={toStation(station)} onClose={() => setEditing(false)} /></Can>}
     </>
   );
 }
@@ -197,6 +200,7 @@ function LocationCard({ station }: { station: StationOverview }) {
 }
 
 function SensorsCard({ station, readings }: { station: StationOverview; readings: CurrentReading[] }) {
+  const canUpdate = useCan("sensors.update");
   const sensors = useSensors(station.id);
   const types = useSensorTypes();
   const save = useSaveSensor();
@@ -242,9 +246,9 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
         description="O identificador é a chave que o datalogger usa no payload (ex.: temp, umid)."
         icon={<Cpu className="size-4" />}
         action={
-          <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
+          <Can permission="sensors.create"><Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
             Adicionar sensor
-          </Button>
+          </Button></Can>
         }
       />
       <div className="mt-4 border-t border-line">
@@ -314,7 +318,7 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                         )}
                       </Td>
                       <Td>
-                        <Switch
+                        <Switch disabled={!canUpdate}
                           label={`Sensor ${sensor.local_identifier} operacional`}
                           checked={sensor.operational_status}
                           onChange={() => void toggle(sensor)}
@@ -322,13 +326,13 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                       </Td>
                       <Td>
                         <RowActions>
-                          <IconButton
+                          <Can permission="sensors.delete"><IconButton
                             label={`Remover sensor ${sensor.local_identifier}`}
                             onClick={() => void removeSensor(sensor)}
                             className="hover:text-danger"
                           >
                             <Trash2 className="size-4" />
-                          </IconButton>
+                          </IconButton></Can>
                         </RowActions>
                       </Td>
                     </Tr>
@@ -338,7 +342,7 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
           </Table>
         )}
       </div>
-      {adding && <AddSensorModal stationId={station.id} onClose={() => setAdding(false)} />}
+      {adding && <Can permission="sensors.create"><AddSensorModal stationId={station.id} onClose={() => setAdding(false)} /></Can>}
     </Card>
   );
 }

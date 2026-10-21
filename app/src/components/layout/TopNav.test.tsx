@@ -7,7 +7,7 @@ import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
 import { activeItem } from "./nav";
 import { TopNav } from "./TopNav";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/alertas/regras" }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/alertas/regras", useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }) }));
 
 describe("TopNav", () => {
   beforeEach(() => {

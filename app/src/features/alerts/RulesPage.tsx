@@ -1,5 +1,8 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+import { Can } from "@/features/auth/Can";
+
 import { Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -27,6 +30,7 @@ import { RuleFormModal } from "./RuleFormModal";
 type ActiveFilter = "all" | "active" | "inactive";
 
 export function RulesPage() {
+  const canUpdate = useCan("alert-configs.update");
   const rules = useAlertRules();
   const catalog = useSensorCatalog();
   const users = useUsers();
@@ -93,9 +97,9 @@ export function RulesPage() {
         title="Regras de alerta"
         description="Condições que disparam um aviso quando uma leitura passa do limite."
         actions={
-          <Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
+          <Can permission="alert-configs.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
             Nova regra
-          </Button>
+          </Button></Can>
         }
       />
 
@@ -142,7 +146,7 @@ export function RulesPage() {
           <EmptyState
             icon={<SlidersHorizontal className="size-5" />}
             title={all.length ? "Nenhuma regra com esses filtros" : "Nenhuma regra cadastrada"}
-            action={!all.length && <Button onClick={() => setEditing("new")}>Criar a primeira regra</Button>}
+            action={!all.length && <Can permission="alert-configs.create"><Button onClick={() => setEditing("new")}>Criar a primeira regra</Button></Can>}
           />
         ) : (
           <Table>
@@ -217,16 +221,16 @@ export function RulesPage() {
                       )}
                     </Td>
                     <Td>
-                      <Switch label={`Regra ${rule.id} ativa`} checked={rule.active} onChange={() => void toggle(rule)} />
+                      <Switch disabled={!canUpdate} label={`Regra ${rule.id} ativa`} checked={rule.active} onChange={() => void toggle(rule)} />
                     </Td>
                     <Td>
                       <RowActions>
-                        <IconButton label={`Editar regra ${rule.id}`} onClick={() => setEditing(rule)}>
+                        <Can permission="alert-configs.update"><IconButton label={`Editar regra ${rule.id}`} onClick={() => setEditing(rule)}>
                           <Pencil className="size-4" />
-                        </IconButton>
-                        <IconButton label={`Excluir regra ${rule.id}`} onClick={() => setDeleting(rule)} className="hover:text-danger">
+                        </IconButton></Can>
+                        <Can permission="alert-configs.delete"><IconButton label={`Excluir regra ${rule.id}`} onClick={() => setDeleting(rule)} className="hover:text-danger">
                           <Trash2 className="size-4" />
-                        </IconButton>
+                        </IconButton></Can>
                       </RowActions>
                     </Td>
                   </Tr>
@@ -237,15 +241,15 @@ export function RulesPage() {
         )}
       </Card>
 
-      {editing && <RuleFormModal rule={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
-      <ConfirmDialog
+      {editing && <Can permission={editing === "new" ? "alert-configs.create" : "alert-configs.update"}><RuleFormModal rule={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} /></Can>}
+      <Can permission="alert-configs.delete"><ConfirmDialog
         open={Boolean(deleting)}
         title="Excluir regra"
         message="A regra e o histórico de alertas disparados por ela serão apagados."
         loading={remove.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
-      />
+      /></Can>
     </>
   );
 }
