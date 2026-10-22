@@ -1,5 +1,6 @@
 import {
   BellRing,
+  Building2,
   Gauge,
   History,
   LayoutDashboard,
@@ -35,6 +36,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Estatísticas",
         description: "Indicadores consolidados e gráficos de tendência",
         icon: LineChart,
+      },
+      {
+        href: "/propriedades",
+        label: "Propriedades",
+        description: "Gestão, localização e estações vinculadas",
+        icon: Building2,
       },
       {
         href: "/estacoes",

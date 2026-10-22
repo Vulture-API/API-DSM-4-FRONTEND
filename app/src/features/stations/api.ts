@@ -19,7 +19,12 @@ export type StationInput = {
   longitude: number | null;
 };
 
-export type Property = { id: number; name: string; location: string | null };
+export type Property = {
+  id: number;
+  name: string;
+  location: string | null;
+  owner?: string | null;
+};
 
 export type LatestReading = {
   sensor_id: number;
