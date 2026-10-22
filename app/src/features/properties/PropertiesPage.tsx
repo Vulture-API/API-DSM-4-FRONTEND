@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  AlertTriangle,
   Building2,
-  Check,
   Edit2,
   Link as LinkIcon,
   MapPin,
@@ -13,6 +11,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { Badge } from "@/components/ui/Badge";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -88,7 +87,7 @@ export function PropertiesPage() {
     return properties.filter((p) => {
       const pStations = stationsByProperty.get(p.id) ?? [];
       const hasStations = pStations.length > 0;
-      const hasAlerts = pStations.some((s) => s.status === "Com alerta");
+      const hasAlerts = pStations.some((s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0);
 
       if (onlyWithStations && !hasStations) return false;
       if (coverageFilter === "with_stations" && !hasStations) return false;
@@ -157,9 +156,10 @@ export function PropertiesPage() {
   );
   const countWithAlerts = useMemo(
     () =>
-      properties.filter((p) =>
-        (stationsByProperty.get(p.id) ?? []).some((s) => s.status === "Com alerta"),
-      ).length,
+      properties.filter((p) => {
+        const pStations = stationsByProperty.get(p.id) ?? [];
+        return pStations.some((s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0);
+      }).length,
     [properties, stationsByProperty],
   );
   const countWithoutStations = totalProperties - countWithStations;
@@ -406,16 +406,18 @@ export function PropertiesPage() {
               <tbody className="divide-y divide-line text-xs">
                 {filteredProperties.map((p) => {
                   const pStations = stationsByProperty.get(p.id) ?? [];
-                  const alerts = pStations.filter((s) => s.status === "Com alerta");
-                  const offline = pStations.filter((s) => s.status === "Offline");
                   const isSelected = activeProperty?.id === p.id;
-
+                  const offlineCount = pStations.filter((s) => s.status === "Offline").length;
+                  const activeAlertsCount = pStations.reduce(
+                    (acc, s) => acc + (s.active_alerts ?? (s.status === "Com alerta" ? 1 : 0)),
+                    0,
+                  );
                   const statusColor =
                     pStations.length === 0
                       ? "bg-control"
-                      : alerts.length > 0
+                      : activeAlertsCount > 0
                         ? "bg-warn"
-                        : offline.length > 0
+                        : offlineCount > 0
                           ? "bg-danger"
                           : "bg-ok";
 
@@ -456,27 +458,25 @@ export function PropertiesPage() {
 
                       <Td className="px-3 py-3">
                         {pStations.length === 0 ? (
-                          <span className="text-faint">— Sem estações</span>
-                        ) : offline.length > 0 ? (
-                          <span className="inline-flex items-center gap-1 font-medium text-warn">
-                            <AlertTriangle className="size-3.5" />
-                            {offline.length} offline / {pStations.length} total
-                          </span>
+                          <Badge tone="neutral">Sem estações</Badge>
+                        ) : offlineCount > 0 ? (
+                          <Badge tone="warn" dot>
+                            {offlineCount} {offlineCount === 1 ? "offline" : "offlines"}
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1 font-medium text-ok">
-                            <Check className="size-3.5" />
+                          <Badge tone="ok" dot pulse>
                             Todas comunicando
-                          </span>
+                          </Badge>
                         )}
                       </Td>
 
                       <Td className="px-3 py-3">
-                        {alerts.length > 0 ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-danger-soft px-2 py-0.5 text-[11px] font-medium text-danger">
-                            ● {alerts.length} {alerts.length === 1 ? "alerta ativo" : "alertas ativos"}
-                          </span>
+                        {activeAlertsCount > 0 ? (
+                          <Badge tone="danger" dot pulse>
+                            {activeAlertsCount} {activeAlertsCount === 1 ? "alerta ativo" : "alertas ativos"}
+                          </Badge>
                         ) : (
-                          <span className="text-faint">—</span>
+                          <span className="text-xs text-muted/60">—</span>
                         )}
                       </Td>
 
