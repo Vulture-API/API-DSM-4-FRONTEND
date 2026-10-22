@@ -7,6 +7,7 @@ import { type FormEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
+import { isValidLoginEmail } from "@/lib/auth/validation";
 
 export type LoginCredentials = { email: string; password: string };
 
@@ -30,7 +31,7 @@ export function LoginPage({ onLogin = loginUnavailable }: {
     event.preventDefault();
     if (submitting.current) return;
     const next: typeof errors = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = "Informe um e-mail válido.";
+    if (!isValidLoginEmail(email)) next.email = "Informe um e-mail válido.";
     if (!password) next.password = "Informe sua senha.";
     setErrors(next);
     setError("");
