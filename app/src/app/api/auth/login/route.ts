@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { isValidLoginEmail } from "@/lib/auth/validation";
+
 import { apiDestination, errorResponse, fetchIdentity, isAuthUser, sameOrigin, setSession } from "@/lib/auth/session.server";
 
 export async function POST(request: Request) {
@@ -7,7 +9,7 @@ export async function POST(request: Request) {
   let credentials: { email?: unknown; password?: unknown };
   try { credentials = await request.json(); } catch { return errorResponse(400, "Dados de login inválidos."); }
   if (!credentials || typeof credentials.email !== "string" || typeof credentials.password !== "string" ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email.trim()) ||
+    !isValidLoginEmail(credentials.email) ||
     credentials.email.length > 150 || !credentials.password || credentials.password.length > 1024) {
     return errorResponse(400, "Informe um e-mail e uma senha válidos.");
   }
