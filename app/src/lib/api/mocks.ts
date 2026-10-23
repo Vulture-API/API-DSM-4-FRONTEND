@@ -24,8 +24,13 @@ const nowSeconds = () => BASE_MOCK_TIME_SEC;
 const minutesAgo = (m: number) => new Date(BASE_MOCK_TIME_MS - m * 60_000).toISOString();
 
 export const mockProperties: Property[] = [
-  { id: 1, name: "Fazenda Santa Rita", location: "São José dos Campos - SP" },
-  { id: 2, name: "Sítio Água Limpa", location: "Pindamonhangaba - SP" },
+  { id: 1, name: "Fazenda Santa Rita", location: "São José dos Campos - SP", owner: "Mariana Albuquerque" },
+  { id: 2, name: "Fazenda Boa Vista", location: "Taubaté - SP", owner: "Juliana Prado" },
+  { id: 3, name: "Fazenda Esperança", location: "Jacareí - SP", owner: "Tiago Ribeiro" },
+  { id: 4, name: "Sítio Água Limpa", location: "Pindamonhangaba - SP", owner: "Aline Camargo" },
+  { id: 5, name: "Fazenda Três Irmãos", location: "Caçapava - SP", owner: "Aline Camargo" },
+  { id: 6, name: "Sítio Recanto Verde", location: "Lorena - SP", owner: "Carlos Mendes" },
+  { id: 7, name: "Fazenda Santa Clara", location: "Piracicaba - SP", owner: "Carlos Mendes" },
 ];
 
 export const mockStations: Station[] = [
@@ -703,6 +708,16 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
       return paginateList(mockProperties, search, 100) as unknown as T;
     }
     return mockProperties as unknown as T;
+  }
+
+  const propertyMatch = path.match(/^\/api\/properties\/(\d+)$/);
+  if (propertyMatch) {
+    const id = Number(propertyMatch[1]);
+    if ((method as string) === "DELETE") {
+      return { ok: true } as unknown as T;
+    }
+    const found = mockProperties.find((p) => p.id === id) ?? mockProperties[0];
+    return found as unknown as T;
   }
 
   // GET /api/stations (StationsPaginated ou Station[])
