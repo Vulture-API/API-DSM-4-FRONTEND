@@ -79,7 +79,7 @@ export function PropertiesPage() {
   const uniqueOwners = useMemo(() => {
     const set = new Set<string>();
     properties.forEach((p) => {
-      const owner = p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined) ?? "Mariana Albuquerque";
+      const owner = p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
       if (owner) set.add(owner);
     });
     return Array.from(set).sort();
@@ -543,7 +543,7 @@ export function PropertiesPage() {
               </div>
               <p className="mt-1 text-xs text-muted">
                 Localização: <strong className="font-medium text-ink">{activeProperty.location ?? "Não informada"}</strong>{" "}
-                · Responsável: <strong className="font-medium text-ink">{activeProperty.owner ?? (activeProperty.owner_user_id ? usersMap.get(activeProperty.owner_user_id) : undefined) ?? "Mariana Albuquerque"}</strong>
+                · Responsável: <strong className="font-medium text-ink">{activeProperty.owner ?? (activeProperty.owner_user_id ? usersMap.get(activeProperty.owner_user_id) : undefined) ?? "Não definido"}</strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
