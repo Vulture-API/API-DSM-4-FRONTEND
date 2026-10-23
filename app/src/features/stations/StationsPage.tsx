@@ -1,5 +1,7 @@
 "use client";
 
+import { Can } from "@/features/auth/Can";
+
 import { ChevronRight, Pencil, Plus, RadioTower, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -76,9 +78,9 @@ export function StationsPage() {
         title="Estações"
         description="Estações meteorológicas instaladas, seus sensores e a última comunicação."
         actions={
-          <Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
+          <Can permission="stations.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
             Nova estação
-          </Button>
+          </Button></Can>
         }
       />
 
@@ -177,12 +179,12 @@ export function StationsPage() {
                   </Td>
                   <Td>
                     <RowActions>
-                      <IconButton label={`Editar ${station.name}`} onClick={() => setEditing(toStation(station))}>
+                      <Can permission="stations.update"><IconButton label={`Editar ${station.name}`} onClick={() => setEditing(toStation(station))}>
                         <Pencil className="size-4" />
-                      </IconButton>
-                      <IconButton label={`Excluir ${station.name}`} onClick={() => setDeleting(station)} className="hover:text-danger">
+                      </IconButton></Can>
+                      <Can permission="stations.delete"><IconButton label={`Excluir ${station.name}`} onClick={() => setDeleting(station)} className="hover:text-danger">
                         <Trash2 className="size-4" />
-                      </IconButton>
+                      </IconButton></Can>
                       <Link
                         href={`/estacoes/${station.id}`}
                         aria-label={`Abrir ${station.name}`}
@@ -200,20 +202,20 @@ export function StationsPage() {
       </Card>
 
       {editing && (
-        <StationFormModal
+        <Can permission={editing === "new" ? "stations.create" : "stations.update"}><StationFormModal
           open
           station={editing === "new" ? undefined : editing}
           onClose={() => setEditing(null)}
-        />
+        /></Can>
       )}
-      <ConfirmDialog
+      <Can permission="stations.delete"><ConfirmDialog
         open={Boolean(deleting)}
         title="Excluir estação"
         message={`${deleting?.name ?? ""} e todos os sensores e leituras dela serão apagados. Essa ação não pode ser desfeita.`}
         loading={remove.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
-      />
+      /></Can>
     </>
   );
 }

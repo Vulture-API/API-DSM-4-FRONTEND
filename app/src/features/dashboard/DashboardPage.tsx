@@ -1,5 +1,8 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+import { Can } from "@/features/auth/Can";
+
 import { ChevronRight, MapPinned, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -218,7 +221,7 @@ export function DashboardPage() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 [&>*]:min-w-0">
             <SeriesCard title="Clima na rede" stationId={stationId} propertyId={propertyId} className="lg:col-span-8" />
-            <PendingAlertsCard className="lg:col-span-4" />
+            <Can permission="triggered-alerts.read"><PendingAlertsCard className="lg:col-span-4" /></Can>
           </div>
         </div>
       )}
@@ -231,6 +234,9 @@ function NetworkSummary({ overview, stationId, propertyId }: {
   stationId?: number;
   propertyId?: number;
 }) {
+  const canReadAlerts = useCan("triggered-alerts.read");
+  const canReadOccurrences = useCan("occurrences.read");
+  const columns = 3 + Number(canReadAlerts) + Number(canReadOccurrences);
   const summary = overview?.summary;
   const pending = overview?.stations.reduce((total, s) => total + s.active_alerts, 0) ?? 0;
   const communicating = summary ? summary.online + summary.with_alert : 0;
@@ -244,9 +250,9 @@ function NetworkSummary({ overview, stationId, propertyId }: {
 
   return (
     <Card className="shadow-[var(--shadow-lift)]">
-      <section aria-label="Resumo" className="grid divide-y divide-line sm:grid-cols-2 sm:divide-x xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] xl:divide-y-0">
+      <section aria-label="Resumo" className={`grid divide-y divide-line sm:grid-cols-2 sm:divide-x xl:divide-y-0 ${columns === 5 ? "xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]" : columns === 4 ? "xl:grid-cols-[1.4fr_1fr_1fr_1fr]" : "xl:grid-cols-[1.4fr_1fr_1fr]"}`}>
         {!summary ? (
-          Array.from({ length: 5 }, (_, i) => (
+          Array.from({ length: columns }, (_, i) => (
             <div key={i} className="p-5">
               <Skeleton className="h-16" />
             </div>
@@ -273,7 +279,7 @@ function NetworkSummary({ overview, stationId, propertyId }: {
             </div>
             <Metric label="Com alerta" value={summary.with_alert} hint="Online, com alerta pendente" status="Com alerta" />
             <Metric label="Offline" value={summary.offline} hint="Sem comunicação recente" status="Offline" />
-            <Link href="/alertas" className="group p-5 transition-colors hover:bg-canvas/70">
+            <Can permission="triggered-alerts.read"><Link href="/alertas" className="group p-5 transition-colors hover:bg-canvas/70">
               <div>
                 <p className="flex items-center justify-between text-[13px] font-medium text-muted">
                   Alertas pendentes
@@ -282,13 +288,13 @@ function NetworkSummary({ overview, stationId, propertyId }: {
                 <p className="mt-1.5 text-3xl font-semibold tracking-tight tabular-nums">{pending}</p>
                 <p className="mt-1 text-xs text-faint">Aguardando reconhecimento</p>
               </div>
-            </Link>
-            <OccurrencesSummary
+            </Link></Can>
+            <Can permission="occurrences.read"><OccurrencesSummary
               key={`${propertyId ?? "all"}:${stationId ?? "all"}`}
               stationId={stationId}
               propertyId={propertyId}
               stations={overview?.stations ?? []}
-            />
+            /></Can>
           </>
         )}
       </section>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Can } from "@/features/auth/Can";
+
 import { Gauge, Pencil, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 
@@ -57,9 +59,9 @@ export function ParametersPage() {
         title="Parâmetros meteorológicos"
         description="Tipos de medição que os sensores podem registrar, com unidade e calibração."
         actions={
-          <Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
+          <Can permission="sensor-types.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
             Novo parâmetro
-          </Button>
+          </Button></Can>
         }
       />
       <Card className="shadow-[var(--shadow-lift)]">
@@ -109,12 +111,12 @@ export function ParametersPage() {
                       </span>
                     </span>
                     <RowActions>
-                      <IconButton label={`Editar ${type.name}`} onClick={() => setEditing(type)}>
+                      <Can permission="sensor-types.update"><IconButton label={`Editar ${type.name}`} onClick={() => setEditing(type)}>
                         <Pencil className="size-4" />
-                      </IconButton>
-                      <IconButton label={`Excluir ${type.name}`} onClick={() => setDeleting(type)} className="hover:text-danger">
+                      </IconButton></Can>
+                      <Can permission="sensor-types.delete"><IconButton label={`Excluir ${type.name}`} onClick={() => setDeleting(type)} className="hover:text-danger">
                         <Trash2 className="size-4" />
-                      </IconButton>
+                      </IconButton></Can>
                     </RowActions>
                   </div>
                   <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3 text-sm">
@@ -143,8 +145,8 @@ export function ParametersPage() {
           </ul>
         )}
       </Card>
-      {editing && <SensorTypeModal type={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
-      <ConfirmDialog
+      {editing && <Can permission={editing === "new" ? "sensor-types.create" : "sensor-types.update"}><SensorTypeModal type={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} /></Can>}
+      <Can permission="sensor-types.delete"><ConfirmDialog
         open={Boolean(deleting)}
         title="Excluir parâmetro"
         message={
@@ -155,7 +157,7 @@ export function ParametersPage() {
         loading={remove.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
-      />
+      /></Can>
     </>
   );
 }

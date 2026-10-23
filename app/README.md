@@ -35,9 +35,9 @@ src/
 
 - **Dados:** toda leitura passa pelo TanStack Query. Ao voltar para uma tela, o cache aparece na hora e a atualização acontece em segundo plano. Status e alertas fazem polling a cada 30 s (ADR-003).
 - **Sem mock escondido:** se um serviço falha, a tela mostra o erro com o botão "Tentar de novo". O front não troca dados reais por fictícios sem avisar.
-- **Proxy:** o navegador chama só caminhos relativos (`/api/...`). O `next.config.ts` repassa cada caminho para o microsserviço certo.
-  - Os destinos (`USERS_API_URL`, `PARAMETERS_API_URL`, `ALERTS_API_URL` e `STATIONS_API_URL`) são gravados no build.
-  - Se mudar algum destino, rode o build de novo.
+- **Login e autorização:** acesse `/login`. A sessão usa cookies HttpOnly, e páginas, menus e ações respeitam as permissões retornadas por `/api/auth/me`. Consulte [AUTHENTICATION.md](./AUTHENTICATION.md) para configurar o backend e validar os três perfis.
+- **Proxy:** o navegador chama `/api/auth/...` e `/api/backend/...`. Os Route Handlers validam a identidade e a permissão antes de encaminhar o JWT como Bearer para o backend. Os destinos `USERS_API_URL`, `PARAMETERS_API_URL`, `ALERTS_API_URL` e `STATIONS_API_URL` são variáveis de servidor; em produção também precisam estar disponíveis no runtime.
+  - O WebSocket usa `/api/stations/current/ws`, encaminhado por rewrite. Alterar seu destino exige novo build.
 - **Tokens de design:** ficam em `src/app/globals.css` (`@theme`). As cores, raios e sombras vêm dali. Os tons de texto (`muted`, `faint`) e de status passam contraste AA (4,5:1) nos fundos usados.
 - **Layout:** cada página começa com o `PageHeader`, desenhado sobre a faixa verde-escura do topo; o primeiro card sobe por cima dela. Na faixa, use os botões `variant="light"` (ação principal) ou `variant="glass"`, e o `Select variant="glass"`.
 - **Mapa:** `StationsMap` (Leaflet) carrega só no navegador, via `StationsMapLazy`. Os tiles vêm do OpenStreetMap (sem chave; o Referer vai só com a origem, como pede a política de uso do OSM), dessaturados no CSS. Sem internet, os pinos aparecem sobre um fundo neutro. Nas telas, os testes trocam o mapa por uma região vazia (`src/test/setup.ts`); o mapa tem teste próprio.

@@ -1,5 +1,7 @@
 "use client";
 
+import { Can } from "@/features/auth/Can";
+
 import { ChevronRight, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -199,9 +201,9 @@ function OccurrenceDetails({ occurrence: o, onResolve }: { occurrence: Occurrenc
         <div><dt className="text-[11px] font-semibold uppercase tracking-wide text-ink">Ocorrência</dt><dd className="mt-1 text-ink">#{o.id}</dd></div>
       </dl>
       <div className="mt-4 flex justify-end border-t border-line pt-3">
-        <Button variant="secondary" size="sm" aria-label={`Marcar como resolvida ocorrência #${o.id}`} onClick={onResolve}>
+        <Can permission="occurrences.resolve"><Button variant="secondary" size="sm" aria-label={`Marcar como resolvida ocorrência #${o.id}`} onClick={onResolve}>
           Marcar como resolvida
-        </Button>
+        </Button></Can>
       </div>
     </li>
   );
