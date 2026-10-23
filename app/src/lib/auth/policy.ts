@@ -7,6 +7,7 @@ export function pagePermission(path: string): string | null {
   if (path.startsWith("/alertas/regras") || path === "/regras") return "alert-configs.read";
   if (path.startsWith("/alertas")) return "triggered-alerts.read";
   if (path.startsWith("/estacoes")) return "stations.read";
+  if (path.startsWith("/propriedades")) return "properties.read";
   if (path.startsWith("/dashboard") || path.startsWith("/historico")) return "monitoring.read";
   return null;
 }
