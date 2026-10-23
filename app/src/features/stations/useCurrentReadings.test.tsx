@@ -3,8 +3,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { SESSION_EXPIRED } from "@/lib/auth/policy";
+
 import { current } from "@/test/fixtures";
-import { defaultRoutes, mockApi } from "@/test/utils";
+import { AuthProvider } from "@/features/auth/AuthProvider";
+
+import { testUser, defaultRoutes, mockApi } from "@/test/utils";
 
 import type { LiveReading } from "./api";
 import { mergeReading, parseLiveReading } from "./current";
@@ -35,7 +39,7 @@ function setup(propertyId?: number, stationId?: number) {
   vi.stubGlobal("WebSocket", Socket);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const wrapper = ({ children }: { children: ReactNode }) =>
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    <QueryClientProvider client={client}><AuthProvider initialUser={testUser} validateSession={false}>{children}</AuthProvider></QueryClientProvider>;
   return renderHook(({ property, station }) => useCurrentReadings(property, station), {
     wrapper, initialProps: { property: propertyId, station: stationId },
   });
@@ -44,6 +48,17 @@ function setup(propertyId?: number, stationId?: number) {
 afterEach(() => vi.useRealTimers());
 
 describe("leituras atuais", () => {
+  it("fecha WebSocket e suspende dados ao expirar a sessão", async () => {
+    mockApi(defaultRoutes());
+    const hook = setup();
+    await waitFor(() => expect(hook.result.current.data).toBeDefined());
+    const socket = Socket.instances[0]!;
+    await act(async () => window.dispatchEvent(new Event(SESSION_EXPIRED)));
+    await waitFor(() => expect(socket.close).toHaveBeenCalled());
+    expect(socket.onmessage).toBeNull();
+    hook.unmount();
+  });
+
   it("valida mensagens e ignora eventos antigos ou repetidos", () => {
     expect(parseLiveReading("invalid")).toBeNull();
     expect(parseLiveReading(JSON.stringify({ ...event(), value: null }))).toBeNull();

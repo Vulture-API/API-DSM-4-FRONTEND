@@ -19,7 +19,7 @@ describe("AlertsPage", () => {
     expect(screen.getByRole("radio", { name: /Pendentes/ })).toHaveTextContent("2");
     // Regressão: o contador (limit=1) e a tabela (limit=15) não podem dividir o cache.
     await waitFor(() => expect(screen.getAllByRole("row")).toHaveLength(3));
-    expect(screen.getByText(/Reconhecendo como/)).toHaveTextContent("Reconhecendo como Mariana Albuquerque");
+    expect(screen.getByText(/Reconhecendo como/)).toHaveTextContent("Reconhecendo como Administrador");
   });
 
   it("reconhece um alerta como o usuário atual", async () => {

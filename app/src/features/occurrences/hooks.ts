@@ -1,12 +1,14 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { type Occurrence, occurrencesApi } from "./api";
 
 export function useOpenOccurrences(stationId?: number) {
   return useQuery({
-    queryKey: ["occurrences", "open", stationId ?? "all"],
+    enabled: useCan("occurrences.read"), queryKey: ["occurrences", "open", stationId ?? "all"],
     queryFn: () => occurrencesApi.open(stationId),
     refetchInterval: 30_000,
   });

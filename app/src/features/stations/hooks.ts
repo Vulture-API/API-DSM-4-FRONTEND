@@ -1,5 +1,7 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -29,17 +31,17 @@ export const stationKeys = {
 /** Status muda na escala de minutos: polling a cada 30 s (ADR-003). */
 const LIVE = 30_000;
 
-export const useStations = () => useQuery({ queryKey: stationKeys.list(), queryFn: stationsApi.list });
+export const useStations = () => useQuery({ enabled: useCan("stations.read"), queryKey: stationKeys.list(), queryFn: stationsApi.list });
 
 export const useStation = (id: number) =>
-  useQuery({ queryKey: stationKeys.detail(id), queryFn: () => stationsApi.get(id) });
+  useQuery({ enabled: useCan("stations.read"), queryKey: stationKeys.detail(id), queryFn: () => stationsApi.get(id) });
 
 export const useProperties = () =>
-  useQuery({ queryKey: stationKeys.properties(), queryFn: stationsApi.properties, staleTime: 5 * 60_000 });
+  useQuery({ enabled: useCan("properties.read"), queryKey: stationKeys.properties(), queryFn: stationsApi.properties, staleTime: 5 * 60_000 });
 
 export const useOverview = (propertyId?: number) =>
   useQuery({
-    queryKey: stationKeys.overview(propertyId),
+    enabled: useCan("monitoring.read"), queryKey: stationKeys.overview(propertyId),
     queryFn: () => stationsApi.overview(propertyId),
     refetchInterval: LIVE,
   });
@@ -48,7 +50,7 @@ export const useOverview = (propertyId?: number) =>
 export const useSeries = (options: SeriesOptions & { stationId?: number | undefined }) => {
   const { stationId, ...rest } = options;
   return useQuery({
-    queryKey: stationId ? stationKeys.stationSeries(stationId, rest) : stationKeys.networkSeries(rest),
+    enabled: useCan("monitoring.read"), queryKey: stationId ? stationKeys.stationSeries(stationId, rest) : stationKeys.networkSeries(rest),
     queryFn: () => (stationId ? stationsApi.stationSeries(stationId, rest) : stationsApi.networkSeries(rest)),
     refetchInterval: LIVE * 2,
     placeholderData: (previous) => previous,
@@ -74,28 +76,28 @@ export function useDeleteStation() {
 
 export function useStatistics(options: StatisticsQuery = {}) {
   return useQuery({
-    queryKey: stationKeys.statistics(options),
+    enabled: useCan("monitoring.read"), queryKey: stationKeys.statistics(options),
     queryFn: () => stationsApi.statistics(options),
   });
 }
 
 export function useStationStatistics(id: number, options: { from?: string; to?: string } = {}) {
   return useQuery({
-    queryKey: stationKeys.stationStatistics(id, options),
+    enabled: useCan("monitoring.read"), queryKey: stationKeys.stationStatistics(id, options),
     queryFn: () => stationsApi.stationStatistics(id, options),
   });
 }
 
 export function useForecast(id: number, days = 7) {
   return useQuery({
-    queryKey: stationKeys.forecast(id, days),
+    enabled: useCan("monitoring.read"), queryKey: stationKeys.forecast(id, days),
     queryFn: () => stationsApi.forecast(id, days),
   });
 }
 
 export function useCurrentData(options: { station_id?: number; property_id?: number } = {}) {
   return useQuery({
-    queryKey: stationKeys.current(options),
+    enabled: useCan("monitoring.read"), queryKey: stationKeys.current(options),
     queryFn: () => stationsApi.current(options),
     refetchInterval: LIVE,
   });
@@ -103,7 +105,7 @@ export function useCurrentData(options: { station_id?: number; property_id?: num
 
 export function useStationStatus(id: number) {
   return useQuery({
-    queryKey: stationKeys.status(id),
+    enabled: useCan("monitoring.read"), queryKey: stationKeys.status(id),
     queryFn: () => stationsApi.status(id),
     refetchInterval: LIVE,
   });

@@ -1,5 +1,7 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { stationKeys } from "@/features/stations/hooks";
@@ -14,12 +16,12 @@ export const alertKeys = {
   pending: ["alerts", "pending-count"] as const,
 };
 
-export const useAlertRules = () => useQuery({ queryKey: alertKeys.rules, queryFn: alertsApi.rules });
+export const useAlertRules = () => useQuery({ enabled: useCan("alert-configs.read"), queryKey: alertKeys.rules, queryFn: alertsApi.rules });
 
 /** `poll: false` para consultas auxiliares (contadores) que não precisam de polling próprio. */
 export const useTriggeredAlerts = (acknowledged: boolean, page: number, limit = 15, { poll = true } = {}) =>
   useQuery({
-    queryKey: alertKeys.triggered(acknowledged, page, limit),
+    enabled: useCan("triggered-alerts.read"), queryKey: alertKeys.triggered(acknowledged, page, limit),
     queryFn: () => alertsApi.triggered(acknowledged, page, limit),
     placeholderData: keepPreviousData,
     refetchInterval: poll ? 30_000 : false,
@@ -28,7 +30,7 @@ export const useTriggeredAlerts = (acknowledged: boolean, page: number, limit = 
 /** Contador do sino no header. */
 export function usePendingAlertCount(): number {
   const { data } = useQuery({
-    queryKey: alertKeys.pending,
+    enabled: useCan("triggered-alerts.read"), queryKey: alertKeys.pending,
     queryFn: alertsApi.pendingCount,
     refetchInterval: 30_000,
   });

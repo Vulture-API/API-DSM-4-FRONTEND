@@ -19,7 +19,6 @@ import { ForecastCalendarCard } from "@/features/stations/ForecastCalendarCard";
 import { useForecast, useOverview, useSeries } from "@/features/stations/hooks";
 import { cn } from "@/lib/cn";
 import { formatDateTime, formatNumber } from "@/lib/format";
-import { mockOverview, mockReadings, mockSensors, mockSeries } from "@/lib/api/mocks";
 
 export type TelemetryRow = {
   id: string;
@@ -79,28 +78,19 @@ export function HistoryPage() {
 
   // Datas
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date(1791936000 * 1000);
+    const d = new Date();
     d.setDate(d.getDate() - 7);
     return formatShortDate(d);
   });
-  const [endDate, setEndDate] = useState(() => formatShortDate(new Date(1791936000 * 1000)));
+  const [endDate, setEndDate] = useState(() => formatShortDate(new Date()));
   const [clientNow] = useState(() => Math.floor(Date.now() / 1000));
 
-  const isTest = typeof process !== "undefined" && process.env.NODE_ENV === "test";
 
   // Consultas de dados
   const overview = useOverview();
-  const generatedAt = overview.data?.generated_at ?? (isTest ? undefined : mockOverview.generated_at);
+  const generatedAt = overview.data?.generated_at;
 
-  const stations = useMemo(() => {
-    if (overview.data?.stations && overview.data.stations.length > 0) {
-      return overview.data.stations;
-    }
-    if (isTest) {
-      return overview.data?.stations ?? [];
-    }
-    return mockOverview.stations;
-  }, [overview.data, isTest]);
+  const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
 
   const selectedStation = useMemo(
     () => stations.find((s) => s.id === stationId),
@@ -131,19 +121,7 @@ export function HistoryPage() {
         });
       }
     }
-    if (list.length > 0) return list;
-    return mockSensors.map((s) => ({
-      id: s.id,
-      station_id: s.station_id,
-      sensor_type_id: s.sensor_type_id,
-      sensor_type:
-        s.sensor_type_id === 1 ? "Temperatura" :
-        s.sensor_type_id === 2 ? "Umidade" :
-        s.sensor_type_id === 3 ? "Velocidade do Vento" :
-        s.sensor_type_id === 4 ? "Índice Pluviométrico" :
-        s.sensor_type_id === 5 ? "Temperatura do Solo" :
-        s.sensor_type_id === 6 ? "Umidade do Solo" : "Outro",
-    }));
+    return list;
   }, [stations]);
 
   const timestamps = useMemo(() => {
@@ -198,15 +176,7 @@ export function HistoryPage() {
     end_unix_time: timestamps.end,
   });
 
-  const availableSeries = useMemo(() => {
-    if (series.data?.series && series.data.series.length > 0) {
-      return series.data.series;
-    }
-    if (isTest) {
-      return series.data?.series ?? [];
-    }
-    return mockSeries.series;
-  }, [series.data, isTest]);
+  const availableSeries = useMemo(() => series.data?.series ?? [], [series.data]);
 
   // Medição selecionada para exibição no gráfico de tendência
   const activeSeries = useMemo(() => {
@@ -219,15 +189,7 @@ export function HistoryPage() {
     return availableSeries.find((s) => s.sensor_type === "Temperatura") ?? availableSeries[0];
   }, [availableSeries, sensorFilter]);
 
-  const rawReadings = useMemo(() => {
-    if (readings.data?.data) {
-      return readings.data.data;
-    }
-    if (isTest) {
-      return readings.data?.data;
-    }
-    return readings.isLoading ? [] : mockReadings;
-  }, [readings.data, readings.isLoading, isTest]);
+  const rawReadings = useMemo(() => readings.data?.data ?? [], [readings.data]);
 
   // Opções formatadas para o ReactSelect
   const stationOptions = useMemo<ReactSelectOption<string>[]>(() => {
@@ -670,7 +632,7 @@ export function HistoryPage() {
           latitude={activeStation?.latitude ?? forecastQuery.data?.latitude ?? -23.1896}
           longitude={activeStation?.longitude ?? forecastQuery.data?.longitude ?? -45.8841}
           forecast={forecastQuery.data}
-          isLoading={forecastQuery.isLoading && isTest}
+          isLoading={forecastQuery.isLoading}
         />
 
         {/* ===================================================================

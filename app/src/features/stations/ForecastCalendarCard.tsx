@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/States";
 import type { StationForecast } from "@/features/stations/api";
 import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
-import { mockForecast } from "@/lib/api/mocks";
 
 export type ForecastCalendarCardProps = {
   stationName?: string;
@@ -148,14 +147,7 @@ export function ForecastCalendarCard({
   isLoading = false,
   className,
 }: ForecastCalendarCardProps) {
-  const activeForecast = useMemo(() => {
-    if (forecast?.days && forecast.days.length > 0) {
-      return forecast;
-    }
-    return mockForecast;
-  }, [forecast]);
-
-  const days = activeForecast.days.slice(0, 7);
+  const days = useMemo(() => forecast?.days.slice(0, 7) ?? [], [forecast]);
 
   // Análise agroclimática e operacional baseada nas métricas dos 7 dias
   const insights = useMemo(() => {
@@ -264,6 +256,8 @@ export function ForecastCalendarCard({
       </div>
     );
   }
+
+  if (!days.length) return <div className={cn("rounded-2xl border border-line bg-surface p-6 text-sm text-muted", className)}>Previsão indisponível no momento.</div>;
 
   return (
     <div className={cn("pt-2", className)} data-testid="forecast-calendar-card">

@@ -3,7 +3,9 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 
-import { defaultRoutes, mockApi } from "@/test/utils";
+import { AuthProvider } from "@/features/auth/AuthProvider";
+
+import { testUser, defaultRoutes, mockApi } from "@/test/utils";
 
 import { stationsApi } from "./api";
 import {
@@ -18,7 +20,7 @@ function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return <QueryClientProvider client={client}><AuthProvider initialUser={testUser} validateSession={false}>{children}</AuthProvider></QueryClientProvider>;
 }
 
 describe("stationsApi - OpenAPI 1.5.0", () => {

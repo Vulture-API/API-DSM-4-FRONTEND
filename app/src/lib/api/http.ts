@@ -1,9 +1,9 @@
 /**
  * Cliente HTTP do portal. O navegador sempre chama caminhos relativos
- * (/api/...), que o Next repassa para cada microsserviço (ver next.config.ts).
+ * (/api/backend/...), autenticados pelo servidor do Next.
  */
 
-import { getOpenApiMock } from "./mocks";
+import { SESSION_EXPIRED } from "@/lib/auth/policy";
 
 export class ApiError extends Error {
   constructor(
@@ -15,7 +15,7 @@ export class ApiError extends Error {
   }
 }
 
-const TIMEOUT_MS = 10_000;
+const TIMEOUT_MS = 25_000;
 
 function messageFrom(body: unknown, status: number): string {
   if (body && typeof body === "object" && "message" in body) {
@@ -30,12 +30,13 @@ export async function request<T>(
   init: RequestInit & { json?: unknown } = {},
 ): Promise<T> {
   const { json, headers, ...rest } = init;
-  const method = (rest.method ?? "GET").toUpperCase();
-  const isTest = typeof process !== "undefined" && process.env.NODE_ENV === "test";
+  if (!path.startsWith("/api/")) throw new ApiError(400, "Caminho de API inválido.");
+  const destination = `/api/backend/${path.slice(5)}`;
 
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(destination, {
+      credentials: "same-origin",
       ...rest,
       headers: {
         Accept: "application/json",
@@ -46,12 +47,6 @@ export async function request<T>(
       signal: rest.signal ?? AbortSignal.timeout(TIMEOUT_MS),
     });
   } catch {
-    if (!isTest) {
-      const mock = getOpenApiMock<T>(path, method);
-      if (mock !== undefined) {
-        return mock;
-      }
-    }
     throw new ApiError(0, messageFrom(null, 0));
   }
 
@@ -66,12 +61,10 @@ export async function request<T>(
   }
 
   if (!response.ok) {
-    if (!isTest) {
-      const mock = getOpenApiMock<T>(path, method);
-      if (mock !== undefined) {
-        return mock;
-      }
+    if (response.status === 401 && typeof window !== "undefined") {
+      window.dispatchEvent(new Event(SESSION_EXPIRED));
     }
+    if (response.status === 403 && typeof window !== "undefined") window.dispatchEvent(new Event("agritech:permissions-changed"));
     throw new ApiError(response.status, messageFrom(body, response.status));
   }
   return body as T;
