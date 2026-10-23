@@ -21,12 +21,14 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { useAlertRules } from "@/features/alerts/hooks";
 import { useSensors, useSensorTypes } from "@/features/parameters/hooks";
 import { sensorVisual } from "@/features/sensor-visual";
+import { ForecastCalendarCard } from "@/features/stations/ForecastCalendarCard";
 import {
   type SensorTypeStatistics,
   stationsApi,
 } from "@/features/stations/api";
 import {
   stationKeys,
+  useForecast,
   useOverview,
   useProperties,
   useSeries,
@@ -85,6 +87,11 @@ export function DashboardStats() {
   const alertRules = useAlertRules();
 
   const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
+  const forecastStation = useMemo(
+    () => stations.find((s) => s.id === lineStationId) ?? stations[0],
+    [stations, lineStationId],
+  );
+  const forecastQuery = useForecast(forecastStation?.id ?? 1, 7);
 
   // Cálculo de intervalo [from, to] do Gráfico de Barras e KPIs
   const currentBarOption = PERIOD_OPTIONS.find((p) => p.value === barPeriod) ?? PERIOD_OPTIONS[2]!;
@@ -626,6 +633,30 @@ export function DashboardStats() {
           )}
         </div>
       </Card>
+
+      {/* ===================================================================
+          PREVISÃO METEOROLÓGICA (7 DIAS)
+          =================================================================== */}
+      {forecastQuery.error ? (
+        <Card className="p-5 shadow-[var(--shadow-card)]">
+          <ErrorState
+            message={
+              forecastQuery.error.message ||
+              "Serviço de previsão meteorológica indisponível"
+            }
+            onRetry={() => void forecastQuery.refetch()}
+          />
+        </Card>
+      ) : (
+        <ForecastCalendarCard
+          stationName={forecastStation?.name ?? "Estação Sede"}
+          propertyName={forecastStation?.property_name ?? "Fazenda Santa Rita"}
+          latitude={forecastStation?.latitude ?? forecastQuery.data?.latitude ?? -23.1896}
+          longitude={forecastStation?.longitude ?? forecastQuery.data?.longitude ?? -45.8841}
+          forecast={forecastQuery.data}
+          isLoading={forecastQuery.isLoading}
+        />
+      )}
     </div>
   );
 }
