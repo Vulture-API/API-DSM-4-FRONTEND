@@ -22,6 +22,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { useOverview } from "@/features/stations/hooks";
+import { useUsers } from "@/features/users/hooks";
 
 import type { Property } from "./api";
 import { useDeleteProperty, usePropertiesList } from "./hooks";
@@ -33,6 +34,7 @@ type CoverageFilter = "all" | "with_stations" | "with_alerts" | "without_station
 export function PropertiesPage() {
   const propertiesQuery = usePropertiesList();
   const overviewQuery = useOverview();
+  const usersQuery = useUsers();
   const deleteProperty = useDeleteProperty();
   const toast = useToast();
 
@@ -62,6 +64,9 @@ export function PropertiesPage() {
     return map;
   }, [stations]);
 
+  const users = useMemo(() => usersQuery.data ?? [], [usersQuery.data]);
+  const usersMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
+
   // Opções únicas de localização e proprietários para os Selects
   const uniqueLocations = useMemo(() => {
     const set = new Set<string>();
@@ -74,10 +79,11 @@ export function PropertiesPage() {
   const uniqueOwners = useMemo(() => {
     const set = new Set<string>();
     properties.forEach((p) => {
-      if (p.owner) set.add(p.owner);
+      const owner = p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
+      if (owner) set.add(owner);
     });
     return Array.from(set).sort();
-  }, [properties]);
+  }, [properties, usersMap]);
 
   // Lista filtrada de propriedades
   const filteredProperties = useMemo(() => {
@@ -88,6 +94,7 @@ export function PropertiesPage() {
       const pStations = stationsByProperty.get(p.id) ?? [];
       const hasStations = pStations.length > 0;
       const hasAlerts = pStations.some((s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0);
+      const owner = p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
 
       if (onlyWithStations && !hasStations) return false;
       if (coverageFilter === "with_stations" && !hasStations) return false;
@@ -95,12 +102,13 @@ export function PropertiesPage() {
       if (coverageFilter === "with_alerts" && !hasAlerts) return false;
 
       if (locationFilter && p.location !== locationFilter) return false;
-      if (ownerFilter && p.owner !== ownerFilter) return false;
+      if (ownerFilter && owner !== ownerFilter) return false;
 
       if (
         sTerm &&
         !p.name.toLowerCase().includes(sTerm) &&
-        !(p.location ?? "").toLowerCase().includes(sTerm)
+        !(p.location ?? "").toLowerCase().includes(sTerm) &&
+        !(owner ?? "").toLowerCase().includes(sTerm)
       ) {
         return false;
       }
@@ -127,6 +135,7 @@ export function PropertiesPage() {
     ownerFilter,
     onlyWithStations,
     coverageFilter,
+    usersMap,
   ]);
 
   // Propriedade selecionada para o painel de detalhamento
@@ -441,7 +450,9 @@ export function PropertiesPage() {
 
                       <Td className="px-3 py-3 text-muted">{p.location ?? "—"}</Td>
 
-                      <Td className="px-3 py-3 text-muted">{p.owner ?? "—"}</Td>
+                      <Td className="px-3 py-3 text-muted">
+                        {p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined) ?? "—"}
+                      </Td>
 
                       <Td className="px-3 py-3">
                         {pStations.length > 0 ? (
@@ -532,7 +543,7 @@ export function PropertiesPage() {
               </div>
               <p className="mt-1 text-xs text-muted">
                 Localização: <strong className="font-medium text-ink">{activeProperty.location ?? "Não informada"}</strong>{" "}
-                · Responsável: <strong className="font-medium text-ink">{activeProperty.owner ?? "Não definido"}</strong>
+                · Responsável: <strong className="font-medium text-ink">{activeProperty.owner ?? (activeProperty.owner_user_id ? usersMap.get(activeProperty.owner_user_id) : undefined) ?? "Não definido"}</strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
