@@ -87,6 +87,7 @@ export function defaultRoutes(): Routes {
     "/api/occurrences": page([]),
     "/api/stations/overview": fx.overview,
     "/api/stations/properties": fx.properties,
+    "/api/properties": fx.properties,
     "/api/stations": page(fx.stations),
     "/api/stations/readings/series": fx.series,
     "/api/stations/1/readings/series": fx.series,
