@@ -3,6 +3,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
+import { useAuth } from "@/features/auth/AuthProvider";
+
 import { query } from "@/lib/api/http";
 
 import { type CurrentData, type LiveReading, stationsApi } from "./api";
@@ -16,12 +18,17 @@ export type ConnectionStatus = "connecting" | "connected" | "reconnecting";
  */
 export function useCurrentReadings(propertyId?: number, stationId?: number) {
   const client = useQueryClient();
+  const auth = useAuth();
+  const allowed = auth.can("monitoring.read");
+  const userId = auth.user?.id;
+  const refreshSession = auth.refresh;
   const buffers = useRef(new Map<string, Map<number, LiveReading>>());
   const scope = `${propertyId ?? "all"}:${stationId ?? "all"}`;
   const [connection, setConnection] = useState<ConnectionStatus>("connecting");
   const [now, setNow] = useState(() => Date.now());
   const key = ["stations", "current", propertyId ?? "all", stationId ?? "all"] as const;
   const current = useQuery({
+    enabled: allowed,
     queryKey: key,
     queryFn: async () => {
       const events = buffers.current.get(scope) ?? new Map<number, LiveReading>();
@@ -43,6 +50,7 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
   });
 
   useEffect(() => {
+    if (!allowed || !userId) return;
     const events = buffers.current.get(scope) ?? new Map<number, LiveReading>();
     const bufferStore = buffers.current;
     bufferStore.set(scope, events);
@@ -81,7 +89,10 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
           setNow(Date.now());
         };
         ws.onerror = () => ws.close();
-        ws.onclose = retry;
+        ws.onclose = (event) => {
+          if (event?.code === 1008) { refreshSession(); return; }
+          retry();
+        };
       } catch {
         retry();
       }
@@ -118,7 +129,7 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
         socket.close();
       }
     };
-  }, [client, propertyId, stationId, scope]);
+  }, [client, propertyId, stationId, scope, allowed, userId, refreshSession]);
 
   return { ...current, connection, now };
 }
