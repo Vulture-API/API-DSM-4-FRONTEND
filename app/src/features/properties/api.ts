@@ -4,6 +4,7 @@ export type Property = {
   id: number;
   name: string;
   location: string | null;
+  owner_user_id?: number | null;
   owner?: string | null;
   owner_id?: number | null;
   created_at?: string;
@@ -12,6 +13,7 @@ export type Property = {
 export type PropertyInput = {
   name: string;
   location?: string | null;
+  owner_user_id?: number | null;
   owner?: string | null;
   owner_id?: number | null;
 };
@@ -35,20 +37,29 @@ export const propertiesApi = {
   create: (data: PropertyInput) =>
     request<Property>("/api/properties", {
       method: "POST",
-      json: data,
+      json: {
+        name: data.name,
+        location: data.location || null,
+        owner_user_id: data.owner_user_id ?? 1,
+      },
     }),
   update: (id: number, data: PropertyInput) =>
     request<Property>(`/api/properties/${id}`, {
       method: "PUT",
-      json: data,
+      json: {
+        name: data.name,
+        location: data.location || null,
+        ...(data.owner_user_id ? { owner_user_id: data.owner_user_id } : {}),
+      },
     }),
   delete: (id: number) =>
-    request<{ ok: boolean }>(`/api/properties/${id}`, {
+    request<void>(`/api/properties/${id}`, {
       method: "DELETE",
     }),
   associateStation: (stationId: number, propertyId: number) =>
-    request<{ ok: boolean }>(`/api/stations/${stationId}`, {
+    request<unknown>(`/api/properties/${propertyId}/stations/${stationId}`, {
       method: "PUT",
-      json: { property_id: propertyId },
     }),
+  listStations: (propertyId: number) =>
+    request<unknown[]>(`/api/properties/${propertyId}/stations`),
 };

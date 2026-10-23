@@ -15,7 +15,11 @@ export function apiDestination(resource: string): string | null {
     permissions: process.env.USERS_API_URL ?? process.env.API_SERVER_URL ?? "http://localhost:3000",
     auth: process.env.USERS_API_URL ?? process.env.API_SERVER_URL ?? "http://localhost:3000",
     stations: process.env.STATIONS_API_URL ?? "http://localhost:3005",
-    properties: process.env.STATIONS_API_URL ?? "http://localhost:3005",
+    properties:
+      process.env.PROPERTIES_API_URL ??
+      process.env.USERS_API_URL ??
+      process.env.API_SERVER_URL ??
+      "http://localhost:3000",
     readings: process.env.STATIONS_API_URL ?? "http://localhost:3005",
     occurrences: process.env.STATIONS_API_URL ?? "http://localhost:3005",
     alerts: process.env.ALERTS_API_URL ?? "http://localhost:3002",

@@ -7,13 +7,15 @@ import { Field, Input, Select } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 
+import { useUsers } from "@/features/users/hooks";
+
 import type { Property, PropertyInput } from "./api";
 import { useCreateProperty, useUpdateProperty } from "./hooks";
 
 type Values = {
   name: string;
   location: string;
-  owner: string;
+  owner_user_id: string;
 };
 
 type Errors = Partial<Record<keyof Values, string>>;
@@ -23,16 +25,11 @@ function validate(values: Values): Errors {
   if (!values.name.trim() || values.name.trim().length < 3) {
     errors.name = "Informe o nome da propriedade com pelo menos 3 caracteres.";
   }
+  if (!values.owner_user_id) {
+    errors.owner_user_id = "Selecione o responsável pela propriedade.";
+  }
   return errors;
 }
-
-const DEFAULT_OWNERS = [
-  "Mariana Albuquerque",
-  "Carlos Mendes",
-  "Juliana Prado",
-  "Tiago Ribeiro",
-  "Aline Camargo",
-];
 
 export function PropertyFormModal({
   open,
@@ -45,12 +42,15 @@ export function PropertyFormModal({
 }) {
   const create = useCreateProperty();
   const update = useUpdateProperty();
+  const usersQuery = useUsers();
   const toast = useToast();
+
+  const users = usersQuery.data ?? [];
 
   const [values, setValues] = useState<Values>(() => ({
     name: property?.name ?? "",
     location: property?.location ?? "",
-    owner: property?.owner ?? DEFAULT_OWNERS[0]!,
+    owner_user_id: String(property?.owner_user_id ?? property?.owner_id ?? 38),
   }));
 
   const [errors, setErrors] = useState<Errors>({});
@@ -68,7 +68,7 @@ export function PropertyFormModal({
     const input: PropertyInput = {
       name: values.name.trim(),
       location: values.location.trim() || null,
-      owner: values.owner,
+      owner_user_id: Number(values.owner_user_id) || 1,
     };
 
     try {
@@ -127,18 +127,24 @@ export function PropertyFormModal({
           )}
         </Field>
 
-        <Field label="Responsável *" error={errors.owner}>
+        <Field label="Responsável *" error={errors.owner_user_id}>
           {(p) => (
             <Select
               {...p}
-              value={values.owner}
-              onChange={(e) => set("owner")(e.target.value)}
+              value={values.owner_user_id}
+              onChange={(e) => set("owner_user_id")(e.target.value)}
             >
-              {DEFAULT_OWNERS.map((owner) => (
-                <option key={owner} value={owner}>
-                  {owner}
+              {users.length > 0 ? (
+                users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.email})
+                  </option>
+                ))
+              ) : (
+                <option value={values.owner_user_id || 1}>
+                  Carregando responsáveis...
                 </option>
-              ))}
+              )}
             </Select>
           )}
         </Field>

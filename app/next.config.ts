@@ -18,6 +18,10 @@ const usersApiUrl = url(
   process.env.USERS_API_URL ?? process.env.API_SERVER_URL,
   "http://localhost:3000",
 );
+const propertiesApiUrl = url(
+  process.env.PROPERTIES_API_URL ?? process.env.USERS_API_URL ?? process.env.API_SERVER_URL,
+  "http://localhost:3000",
+);
 const parametersApiUrl = url(
   process.env.PARAMETERS_API_URL,
   "http://localhost:3001",
@@ -73,6 +77,8 @@ const nextConfig: NextConfig = {
       { source: "/api/occurrences", destination: `${stationsApiUrl}/api/occurrences` },
       { source: "/api/readings/:path*", destination: `${stationsApiUrl}/api/readings/:path*` },
       { source: "/api/readings", destination: `${stationsApiUrl}/api/readings` },
+      { source: "/api/properties/:path*", destination: `${propertiesApiUrl}/api/properties/:path*` },
+      { source: "/api/properties", destination: `${propertiesApiUrl}/api/properties` },
       { source: "/api/alerts/:path*", destination: `${alertsApiUrl}/api/alerts/:path*` },
     ];
   },
