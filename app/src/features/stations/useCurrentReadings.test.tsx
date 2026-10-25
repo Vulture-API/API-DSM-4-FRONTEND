@@ -59,6 +59,17 @@ describe("leituras atuais", () => {
     hook.unmount();
   });
 
+  it("relógio acompanha os dados do REST ao trocar o filtro", async () => {
+    mockApi(defaultRoutes());
+    const hook = setup();
+    await waitFor(() => expect(hook.result.current.data).toBeDefined());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    hook.rerender({ property: 5, station: undefined });
+    await waitFor(() => expect(hook.result.current.isFetching).toBe(false));
+    expect(hook.result.current.now).toBeGreaterThanOrEqual(hook.result.current.dataUpdatedAt);
+    hook.unmount();
+  });
+
   it("valida mensagens e ignora eventos antigos ou repetidos", () => {
     expect(parseLiveReading("invalid")).toBeNull();
     expect(parseLiveReading(JSON.stringify({ ...event(), value: null }))).toBeNull();
