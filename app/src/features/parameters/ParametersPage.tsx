@@ -16,6 +16,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { RowActions } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { sensorVisual } from "@/features/sensor-visual";
+import { ApiError } from "@/lib/api/http";
 import { formatNumber } from "@/lib/format";
 
 import type { SensorType } from "./api";
@@ -48,7 +49,9 @@ export function ParametersPage() {
       toast.success("Parâmetro excluído.");
       setDeleting(null);
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error(error instanceof ApiError && error.status === 409
+        ? "O parâmetro está em uso por sensores. Remova os sensores antes."
+        : (error as Error).message);
     }
   }
 
@@ -155,6 +158,7 @@ export function ParametersPage() {
             : `${deleting?.name ?? ""} será excluído.`
         }
         loading={remove.isPending}
+        confirmDisabled={Boolean(deleting && usage.get(deleting.id))}
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
       /></Can>
