@@ -91,7 +91,7 @@ export function DashboardStats() {
     () => stations.find((s) => s.id === lineStationId) ?? stations[0],
     [stations, lineStationId],
   );
-  const forecastQuery = useForecast(forecastStation?.id ?? 1, 7);
+  const forecastQuery = useForecast(forecastStation?.id, 7);
 
   // Cálculo de intervalo [from, to] do Gráfico de Barras e KPIs
   const currentBarOption = PERIOD_OPTIONS.find((p) => p.value === barPeriod) ?? PERIOD_OPTIONS[2]!;

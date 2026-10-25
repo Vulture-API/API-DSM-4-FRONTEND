@@ -69,6 +69,8 @@ describe("TopNav", () => {
     await waitFor(() => expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus());
     await user.tab();
     expect(screen.getByRole("link", { name: /Parâmetros/ })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("link", { name: /Perfis e permissões/ })).toHaveFocus();
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     await user.tab();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -110,7 +112,7 @@ describe("TopNav", () => {
     expect(toggle).toHaveAttribute("aria-controls", "menu-mobile");
     await user.click(toggle);
     const mobile = screen.getByRole("navigation", { name: "Menu" });
-    expect(within(mobile).getAllByRole("link")).toHaveLength(8);
+    expect(within(mobile).getAllByRole("link")).toHaveLength(9);
     await user.click(within(mobile).getByRole("link", { name: "Usuários" }));
     expect(screen.queryByRole("navigation", { name: "Menu" })).not.toBeInTheDocument();
   });

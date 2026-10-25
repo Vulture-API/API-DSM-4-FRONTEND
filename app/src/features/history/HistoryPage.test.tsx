@@ -144,14 +144,10 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     expect(await screen.findByText("Filtros aplicados ao histórico de telemetria.")).toBeInTheDocument();
     expect(screen.getByText(/Estação ativa:/)).toBeInTheDocument();
 
-    // Valida que os filtros foram enviados para o endpoint /api/readings
-    const readingCalls = calls.filter((c) => c.path.startsWith("/api/readings"));
-    expect(readingCalls.some((c) =>
-      c.path.includes("station_id=1") &&
-      c.path.includes("sensor_id=10") &&
-      c.path.includes("start_unix_time=") &&
-      c.path.includes("end_unix_time=")
-    )).toBe(true);
+    // A tabela consulta a série agregada da estação, no período e intervalo escolhidos
+    const seriesCalls = calls.filter((c) => c.path.startsWith("/api/stations/1/readings/series"));
+    expect(seriesCalls.some((c) => c.path.includes("hours=24") && c.path.includes("bucket_minutes=60"))).toBe(true);
+    expect(calls.some((c) => c.path.startsWith("/api/readings"))).toBe(false);
   });
 
   it("Cenário 6: período inválido (data inicial maior que data final)", async () => {

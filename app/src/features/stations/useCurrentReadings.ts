@@ -131,5 +131,7 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
     };
   }, [client, propertyId, stationId, scope, allowed, userId, refreshSession]);
 
-  return { ...current, connection, now };
+  // Dados novos do REST (ex.: troca de filtro) não podem parecer "do futuro"
+  // para um relógio que só avança com eventos do WebSocket ou a cada 30 s.
+  return { ...current, connection, now: Math.max(now, current.dataUpdatedAt) };
 }

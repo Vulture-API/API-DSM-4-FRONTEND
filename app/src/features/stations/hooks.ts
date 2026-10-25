@@ -88,10 +88,11 @@ export function useStationStatistics(id: number, options: { from?: string; to?: 
   });
 }
 
-export function useForecast(id: number, days = 7) {
+export function useForecast(id: number | undefined, days = 7) {
+  const canRead = useCan("monitoring.read");
   return useQuery({
-    enabled: useCan("monitoring.read"), queryKey: stationKeys.forecast(id, days),
-    queryFn: () => stationsApi.forecast(id, days),
+    enabled: canRead && id !== undefined, queryKey: stationKeys.forecast(id ?? 0, days),
+    queryFn: () => stationsApi.forecast(id!, days),
   });
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Download } from "lucide-react";
+import { useQueries } from "@tanstack/react-query";
 import { useId, useMemo, useState } from "react";
 
 import { TrendChart } from "@/components/charts/TrendChart";
@@ -13,12 +14,15 @@ import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
-import { useReadings } from "@/features/readings/hooks";
 import { sensorVisual } from "@/features/sensor-visual";
 import { ForecastCalendarCard } from "@/features/stations/ForecastCalendarCard";
-import { useForecast, useOverview, useSeries } from "@/features/stations/hooks";
+import { stationsApi } from "@/features/stations/api";
+import { stationKeys, useForecast, useOverview, useSeries } from "@/features/stations/hooks";
+import { useCan } from "@/features/auth/AuthProvider";
 import { cn } from "@/lib/cn";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
+
+import { buildHistoryRows, seriesWindow } from "./historyRows";
 
 export type TelemetryRow = {
   id: string;
@@ -87,6 +91,7 @@ export function HistoryPage() {
 
 
   // Consultas de dados
+  const canRead = useCan("monitoring.read");
   const overview = useOverview();
   const generatedAt = overview.data?.generated_at;
 
@@ -98,7 +103,7 @@ export function HistoryPage() {
   );
 
   const activeStation = selectedStation ?? stations[0];
-  const forecastQuery = useForecast(activeStation?.id ?? 1, 7);
+  const forecastQuery = useForecast(activeStation?.id, 7);
 
   const hoursQuery = range === "24" ? 24 : range === "720" ? 720 : 168;
   const bucketQuery = range === "24" ? 30 : range === "720" ? 720 : 180;
@@ -108,21 +113,6 @@ export function HistoryPage() {
     hours: hoursQuery,
     bucketMinutes: bucketQuery,
   });
-
-  const allSensors = useMemo(() => {
-    const list: Array<{ id: number; station_id: number; sensor_type: string; sensor_type_id: number }> = [];
-    for (const st of stations) {
-      for (const lr of st.latest_readings ?? []) {
-        list.push({
-          id: lr.sensor_id,
-          station_id: st.id,
-          sensor_type: lr.sensor_type,
-          sensor_type_id: lr.sensor_type_id,
-        });
-      }
-    }
-    return list;
-  }, [stations]);
 
   const timestamps = useMemo(() => {
     const now = generatedAt
@@ -157,24 +147,31 @@ export function HistoryPage() {
     return { start: now - 7 * 86400, end: now };
   }, [range, startDate, endDate, generatedAt, clientNow]);
 
-  const selectedSensorId = useMemo(() => {
-    if (sensorFilter === "all") return undefined;
-    const found = allSensors.find(
-      (s) =>
-        (!stationId || s.station_id === stationId) &&
-        s.sensor_type.toLowerCase() === sensorFilter.toLowerCase(),
-    );
-    return found?.id;
-  }, [allSensors, sensorFilter, stationId]);
-
-  const readings = useReadings({
-    page: 1,
-    limit: 100,
-    station_id: selectedStation ? stationId : undefined,
-    sensor_id: selectedSensorId,
-    start_unix_time: timestamps.start,
-    end_unix_time: timestamps.end,
+  // Série agregada de cada estação: a tabela usa só dados reais do período.
+  const window = useMemo(
+    () => seriesWindow(timestamps.start, generatedAt ? Math.floor(new Date(generatedAt).getTime() / 1000) : clientNow, grouping),
+    [timestamps.start, generatedAt, clientNow, grouping],
+  );
+  const tableStations = useMemo(
+    () => (stationId ? stations.filter((s) => s.id === stationId) : stations),
+    [stations, stationId],
+  );
+  const stationSeries = useQueries({
+    queries: tableStations.map((st) => ({
+      enabled: canRead,
+      queryKey: stationKeys.stationSeries(st.id, window),
+      queryFn: () => stationsApi.stationSeries(st.id, window),
+    })),
+    combine: (results) => ({
+      data: results.map((q) => q.data),
+      loading: results.some((q) => q.isLoading),
+      error: results.find((q) => q.error)?.error ?? null,
+      refetch: () => results.forEach((q) => void q.refetch()),
+    }),
   });
+  const seriesLoading = stationSeries.loading;
+  const seriesError = stationSeries.error;
+  const seriesData = stationSeries.data;
 
   const availableSeries = useMemo(() => series.data?.series ?? [], [series.data]);
 
@@ -188,8 +185,6 @@ export function HistoryPage() {
     }
     return availableSeries.find((s) => s.sensor_type === "Temperatura") ?? availableSeries[0];
   }, [availableSeries, sensorFilter]);
-
-  const rawReadings = useMemo(() => readings.data?.data ?? [], [readings.data]);
 
   // Opções formatadas para o ReactSelect
   const stationOptions = useMemo<ReactSelectOption<string>[]>(() => {
@@ -229,223 +224,14 @@ export function HistoryPage() {
     { value: "all", label: "Todas as medições individuais" },
   ], []);
 
-  // Gera as leituras consolidadas de telemetria correspondentes ao período
-  const telemetryRows = useMemo<TelemetryRow[]>(() => {
-    if (!stations.length) return [];
-    if (stationId && !selectedStation) return [];
-
-    const rows: TelemetryRow[] = [];
-    const now = generatedAt
-      ? Math.floor(new Date(generatedAt).getTime() / 1000)
-      : 1776000000;
-    const stationTarget = selectedStation ?? stations[0]!;
-
-    // 1. Usar leituras da API /api/readings se disponíveis
-    if (rawReadings && rawReadings.length > 0) {
-      const sensorMap = new Map(allSensors.map((s) => [s.id, s]));
-      const byKey = new Map<
-        string,
-        {
-          stationId: number;
-          temp?: number;
-          hum?: number;
-          wind?: number;
-          rain?: number;
-          soilTemp?: number;
-          soilHum?: number;
-          inconsistent?: boolean;
-        }
-      >();
-
-      for (const r of rawReadings) {
-        const sensor = sensorMap.get(r.sensor_id);
-        const rowStationId = sensor?.station_id ?? (stationId || stationTarget.id);
-
-        // Filtro por estação se uma estação específica for selecionada
-        if (stationId && rowStationId !== stationId) {
-          continue;
-        }
-
-        const key = `${rowStationId}-${r.unix_time}`;
-        const item = byKey.get(key) ?? { stationId: rowStationId };
-
-        if (r.data_consistent === false) {
-          item.inconsistent = true;
-        }
-
-        const typeName = sensor?.sensor_type?.toLowerCase() ?? "";
-        const typeId = sensor?.sensor_type_id;
-        if (typeName.includes("temp") && !typeName.includes("solo")) {
-          item.temp = r.value;
-        } else if (typeName.includes("umid") && !typeName.includes("solo")) {
-          item.hum = r.value;
-        } else if (typeName.includes("vento")) {
-          item.wind = r.value;
-        } else if (typeName.includes("pluvio") || typeName.includes("chuva")) {
-          item.rain = r.value;
-        } else if (typeName.includes("temp") && typeName.includes("solo")) {
-          item.soilTemp = r.value;
-        } else if (typeName.includes("umid") && typeName.includes("solo")) {
-          item.soilHum = r.value;
-        } else if (typeId === 1 || r.sensor_id === 10 || r.sensor_id === 20 || r.sensor_id === 30) {
-          item.temp = r.value;
-        } else if (typeId === 2 || r.sensor_id === 11 || r.sensor_id === 21 || r.sensor_id === 31) {
-          item.hum = r.value;
-        } else if (typeId === 3 || r.sensor_id === 12 || r.sensor_id === 22) {
-          item.wind = r.value;
-        } else if (typeId === 4 || r.sensor_id === 13 || r.sensor_id === 23) {
-          item.rain = r.value;
-        } else if (typeId === 5 || r.sensor_id === 14 || r.sensor_id === 24) {
-          item.soilTemp = r.value;
-        } else if (typeId === 6 || r.sensor_id === 15 || r.sensor_id === 25) {
-          item.soilHum = r.value;
-        }
-
-        byKey.set(key, item);
-      }
-
-      for (const [key, dVal] of byKey.entries()) {
-        const unixTime = Number(key.split("-")[1]);
-        const d = new Date(unixTime * 1000);
-        const st = stations.find((s) => s.id === dVal.stationId) ?? stationTarget;
-
-        const tempVal = dVal.temp ?? 23.5;
-        const humVal = dVal.hum ?? 60.0;
-        const windVal = dVal.wind ?? 14.0;
-        const rainVal = dVal.rain ?? 0.0;
-        const soilTempVal = dVal.soilTemp ?? 22.8;
-        const soilHumVal = dVal.soilHum ?? 44.0;
-
-        const isHot = tempVal >= 35;
-        const isDry = humVal <= 30;
-        const isSoilDry = soilHumVal < 38;
-        const hasDiscrepancy = Boolean(dVal.inconsistent);
-
-        let alertMsg: string | null = null;
-        if (hasDiscrepancy) {
-          alertMsg = "Discrepância / Sensor inconsistente";
-        } else if (isHot) {
-          alertMsg = "Temp. acima de 35 °C";
-        } else if (isSoilDry) {
-          alertMsg = "Solo seco (< 38%)";
-        }
-
-        rows.push({
-          id: `rd-${dVal.stationId}-${unixTime}`,
-          stationId: dVal.stationId,
-          stationName: st.name,
-          propertyName: st.property_name,
-          unixTime,
-          dateTime: formatDateTime(d),
-          temp: tempVal,
-          tempAlert: isHot,
-          humidity: humVal,
-          humidityAlert: isDry,
-          wind: windVal,
-          windDir: "SE",
-          windAlert: windVal > 25,
-          rain: rainVal,
-          soilTemp: soilTempVal,
-          soilHum: soilHumVal,
-          soilAlert: isSoilDry,
-          alertMessage: alertMsg,
-          warnMessage: isDry ? "Umidade relativa baixa" : null,
-        });
-      }
-      return rows.sort((a, b) => b.unixTime - a.unixTime);
-    }
-
-    if (rawReadings && rawReadings.length === 0) {
-      return [];
-    }
-
-    // Usar pontos das séries quando disponíveis para máxima consistência
-    const tempPoints = availableSeries.find((s) => s.sensor_type === "Temperatura")?.points ?? [];
-    const humPoints = availableSeries.find((s) => s.sensor_type === "Umidade")?.points ?? [];
-
-    if (tempPoints.length > 0) {
-      tempPoints.forEach((p, idx) => {
-        const hPoint = humPoints[idx] ?? humPoints[0];
-        const pointDate = new Date(p.t * 1000);
-        const tempVal = aggregation === "min" ? p.min : aggregation === "max" ? p.max : p.avg;
-        const humVal = hPoint ? (aggregation === "min" ? hPoint.min : aggregation === "max" ? hPoint.max : hPoint.avg) : 60;
-        const isHot = tempVal >= 35;
-        const isDry = humVal <= 30;
-
-        rows.push({
-          id: `pt-${p.t}-${idx}`,
-          stationId: stationTarget.id,
-          stationName: stationTarget.name,
-          propertyName: stationTarget.property_name,
-          unixTime: p.t,
-          dateTime: formatDateTime(pointDate),
-          temp: tempVal,
-          tempAlert: isHot,
-          humidity: humVal,
-          humidityAlert: isDry,
-          wind: 12 + ((p.t % 15) * 1.2),
-          windDir: ["SE", "E", "NE", "S", "NO"][(idx + p.t) % 5]!,
-          windAlert: false,
-          rain: p.t % 4 === 0 ? 3.5 : 0,
-          soilTemp: 22.4,
-          soilHum: 48.0,
-          soilAlert: false,
-          alertMessage: isHot ? "Temp. alta (> 35 °C)" : null,
-          warnMessage: isDry ? "Umidade baixa (< 30%)" : null,
-        });
-      });
-    }
-
-    // Se o dataset de séries for curto, complementa com o grid horário consolidado
-    if (rows.length < 15) {
-      const hoursCount = range === "24" ? 24 : range === "720" ? 48 : 28;
-      const stepSeconds = (hoursCount <= 24 ? 1 : 4) * 3600;
-
-      for (let i = 0; i < hoursCount; i++) {
-        const t = now - (i * stepSeconds);
-        const d = new Date(t * 1000);
-        const hour = d.getHours();
-        const baseTemp = 20 + 8 * Math.sin(((hour - 8) / 24) * Math.PI * 2);
-        const tempVariation = (i % 5 === 0 ? 7.8 : 0);
-        const tempVal = Number((baseTemp + tempVariation).toFixed(1));
-        const humVal = Number((75 - 25 * Math.sin(((hour - 8) / 24) * Math.PI * 2)).toFixed(1));
-        const windVal = Number((10 + ((i * 3) % 18)).toFixed(1));
-        const rainVal = (i % 7 === 0 ? 14.2 : i % 5 === 0 ? 2.8 : 0.0);
-        const soilHumVal = Number((48 - (i * 0.4)).toFixed(1));
-
-        const isHot = tempVal >= 35;
-        const isDry = humVal <= 30;
-        const isSoilDry = soilHumVal < 38;
-
-        rows.push({
-          id: `gen-${t}-${i}`,
-          stationId: stationTarget.id,
-          stationName: stationTarget.name,
-          propertyName: stationTarget.property_name,
-          unixTime: t,
-          dateTime: formatDateTime(d),
-          temp: tempVal,
-          tempAlert: isHot,
-          humidity: humVal,
-          humidityAlert: isDry,
-          wind: windVal,
-          windDir: ["SE", "NE", "E", "S", "NO", "L"][(i + 2) % 6]!,
-          windAlert: windVal > 25,
-          rain: rainVal,
-          soilTemp: 23.1,
-          soilHum: soilHumVal,
-          soilAlert: isSoilDry,
-          alertMessage: isHot ? "Temp. acima de 35 °C" : isSoilDry ? "Solo seco (< 38%)" : null,
-          warnMessage: isDry ? "Umidade relativa baixa" : null,
-        });
-      }
-    }
-
-    // Ordenar do mais recente para o mais antigo
-    rows.sort((a, b) => b.unixTime - a.unixTime);
-
-    return rows;
-  }, [stations, selectedStation, stationId, availableSeries, aggregation, range, generatedAt, rawReadings, allSensors]);
+  // Linhas consolidadas por estação e intervalo, só com medições reais.
+  const telemetryRows = useMemo<TelemetryRow[]>(
+    () => buildHistoryRows(
+      tableStations.map((station, i) => ({ station, series: seriesData[i] })),
+      { start: timestamps.start, end: timestamps.end, aggregation, sensorFilter },
+    ),
+    [tableStations, seriesData, timestamps, aggregation, sensorFilter],
+  );
 
   // Filtro de alertas, período customizado e paginação
   const filteredRows = useMemo(() => {
@@ -815,19 +601,19 @@ export function HistoryPage() {
             </div>
           </div>
 
-          {overview.isLoading || readings.isLoading ? (
+          {overview.isLoading || seriesLoading ? (
             <div className="space-y-3 p-5">
               {Array.from({ length: 6 }, (_, i) => (
                 <Skeleton key={i} className="h-10 rounded-lg" />
               ))}
             </div>
-          ) : overview.error || readings.error ? (
+          ) : overview.error || seriesError ? (
             <ErrorState
-              message={overview.error?.message ?? readings.error?.message ?? "Falha de comunicação com a API meteorológica"}
+              message={overview.error?.message ?? seriesError?.message ?? "Falha de comunicação com a API meteorológica"}
               onRetry={() => {
                 void overview.refetch();
                 void series.refetch();
-                void readings.refetch();
+                stationSeries.refetch();
               }}
             />
           ) : filteredRows.length === 0 ? (
@@ -871,7 +657,7 @@ export function HistoryPage() {
                         </span>
                       </Td>
                       <Td className="tabular-nums text-muted">
-                        {row.wind !== null ? `${formatNumber(row.wind)} km/h · ${row.windDir}` : "—"}
+                        {row.wind !== null ? `${formatNumber(row.wind)} km/h${row.windDir ? ` · ${row.windDir}` : ""}` : "—"}
                       </Td>
                       <Td className="tabular-nums font-medium text-ink">
                         {row.rain !== null ? `${formatNumber(row.rain)} mm` : "—"}

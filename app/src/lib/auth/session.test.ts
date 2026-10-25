@@ -8,6 +8,7 @@ import { POST as login } from "@/app/api/auth/login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { GET as me } from "@/app/api/auth/me/route";
 import { GET as forward, POST as create } from "@/app/api/backend/[...path]/route";
+import { sameOrigin } from "@/lib/auth/session.server";
 
 const user = { id: 7, role_id: 2, name: "Gerente", email: "gerente@example.com", active: true, created_at: "2026-01-01", permissions: ["monitoring.read", "stations.read"] };
 const json = (body: unknown, status = 200) => Response.json(body, { status });
@@ -108,5 +109,24 @@ describe("proxy autenticado de API", () => {
   it("trata falha de rede sem devolver dados simulados", async () => {
     state.token = "session"; vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
     expect((await forward(new Request("http://localhost:3010/api/backend/stations"), context(["stations"]))).status).toBe(503);
+  });
+});
+
+describe("origem da requisição atrás de proxy", () => {
+  const behindProxy = (origin: string, headers: Record<string, string>) =>
+    new Request("http://localhost:3010/api/auth/login", { method: "POST", headers: { Origin: origin, ...headers } });
+
+  it("aceita a origem pública informada pelo nginx/Cloudflare", () => {
+    expect(sameOrigin(behindProxy("http://localhost:8080", { Host: "localhost:8080" }))).toBe(true);
+    expect(sameOrigin(behindProxy("https://agritech.example.com", { "X-Forwarded-Host": "agritech.example.com", "X-Forwarded-Proto": "https" }))).toBe(true);
+    expect(sameOrigin(behindProxy("https://agritech.example.com", { "X-Forwarded-Host": "agritech.example.com, interno", "X-Forwarded-Proto": "https,http" }))).toBe(true);
+  });
+
+  it("continua recusando outra origem, origem ausente e requisição cross-site", () => {
+    expect(sameOrigin(behindProxy("https://outro.test", { Host: "localhost:8080" }))).toBe(false);
+    expect(sameOrigin(behindProxy("http://localhost:8080", { "X-Forwarded-Host": "agritech.example.com" }))).toBe(false);
+    expect(sameOrigin(new Request("http://localhost:3010/api/auth/login", { method: "POST" }))).toBe(false);
+    expect(sameOrigin(behindProxy("http://localhost:8080", { Host: "localhost:8080", "Sec-Fetch-Site": "cross-site" }))).toBe(false);
+    expect(sameOrigin(behindProxy("javascript://localhost:8080", { Host: "localhost:8080", "X-Forwarded-Proto": "javascript" }))).toBe(false);
   });
 });

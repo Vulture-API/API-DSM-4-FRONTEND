@@ -187,6 +187,29 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     });
   });
 
+  it("Cenário 5b: sem trocar o responsável, envia o responsável exibido no formulário", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...defaultRoutes(),
+      "/api/properties": testProperties,
+      "POST /api/properties": { id: 5, name: "Fazenda Padrão", location: null, owner_user_id: 1 },
+    });
+
+    renderWithProviders(<PropertiesPage />);
+    await getPropertiesTable();
+    await user.click(screen.getByRole("button", { name: "Nova propriedade" }));
+    const dialog = screen.getByRole("dialog", { name: "Nova propriedade" });
+    await user.type(within(dialog).getByLabelText(/Nome da propriedade/), "Fazenda Padrão");
+    const owner = within(dialog).getByLabelText(/Responsável/) as HTMLSelectElement;
+    await waitFor(() => expect(owner.options.length).toBeGreaterThan(1));
+
+    await user.click(within(dialog).getByRole("button", { name: "Cadastrar propriedade" }));
+
+    expect(await screen.findByText('Propriedade "Fazenda Padrão" cadastrada com sucesso.')).toBeInTheDocument();
+    const postCall = calls.find((c) => c.method === "POST" && c.path === "/api/properties");
+    expect((postCall?.body as { owner_user_id: number }).owner_user_id).toBe(Number(owner.value));
+  });
+
   it("Cenário 6: abre modal de edição e atualiza propriedade via PUT", async () => {
     const user = userEvent.setup();
     const { calls } = mockApi({
@@ -250,15 +273,11 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/properties/3")).toBe(true);
   });
 
-  it("Cenário 8: trata erro 409 ao excluir propriedade com estações associadas", async () => {
+  it("Cenário 8: não oferece excluir propriedade com estações associadas", async () => {
     const user = userEvent.setup();
-    mockApi({
+    const { calls } = mockApi({
       ...defaultRoutes(),
       "/api/properties": testProperties,
-      "DELETE /api/properties/1": {
-        status: 409,
-        body: { message: "Não é possível excluir propriedade com estações associadas." },
-      },
     });
 
     renderWithProviders(<PropertiesPage />);
@@ -267,10 +286,32 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
 
     await user.click(within(santaRitaRow).getByRole("button", { name: "Excluir Fazenda Santa Rita" }));
     const dialog = screen.getByRole("dialog", { name: "Excluir propriedade agrícola" });
+    expect(within(dialog).getByText(/Desassocie as estações antes de excluir/)).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Entendi" }));
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+  });
+
+  it("Cenário 8b: traduz o 409 do backend ao excluir propriedade", async () => {
+    const user = userEvent.setup();
+    mockApi({
+      ...defaultRoutes(),
+      "/api/properties": testProperties,
+      "DELETE /api/properties/3": {
+        status: 409,
+        body: { message: "Cannot delete property because it has associated stations." },
+      },
+    });
+
+    renderWithProviders(<PropertiesPage />);
+    const table = await getPropertiesTable();
+    const esperancaRow = within(table).getByText("Fazenda Esperança").closest("tr")!;
+    await user.click(within(esperancaRow).getByRole("button", { name: "Excluir Fazenda Esperança" }));
+    const dialog = screen.getByRole("dialog", { name: "Excluir propriedade agrícola" });
     await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
 
     expect(
-      await screen.findByText("Não é possível excluir propriedade com estações associadas."),
+      await screen.findByText("A propriedade possui estações associadas. Desassocie as estações antes de excluir."),
     ).toBeInTheDocument();
   });
 

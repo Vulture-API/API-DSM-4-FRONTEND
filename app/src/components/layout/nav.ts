@@ -7,6 +7,7 @@ import {
   LineChart,
   type LucideIcon,
   RadioTower,
+  ShieldCheck,
   SlidersHorizontal,
   Users,
 } from "lucide-react";
@@ -94,6 +95,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Parâmetros",
         description: "Tipos de medição e unidades dos sensores",
         icon: Gauge,
+      },
+      {
+        href: "/administracao/perfis",
+        label: "Perfis e permissões",
+        description: "O que cada perfil de acesso pode fazer",
+        icon: ShieldCheck,
       },
     ],
   },

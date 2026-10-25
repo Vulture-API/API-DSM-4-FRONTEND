@@ -7,6 +7,7 @@ import { Field, Input, Select } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 
+import { useAuth } from "@/features/auth/AuthProvider";
 import { useUsers } from "@/features/users/hooks";
 
 import type { Property, PropertyInput } from "./api";
@@ -46,12 +47,21 @@ export function PropertyFormModal({
   const toast = useToast();
 
   const users = usersQuery.data ?? [];
+  const currentUserId = useAuth().user?.id;
 
   const [values, setValues] = useState<Values>(() => ({
     name: property?.name ?? "",
     location: property?.location ?? "",
-    owner_user_id: String(property?.owner_user_id ?? property?.owner_id ?? 38),
+    owner_user_id: String(property?.owner_user_id ?? property?.owner_id ?? ""),
   }));
+
+  // O select mostra a primeira opção quando o valor não existe na lista; o
+  // envio precisa usar o mesmo responsável que aparece na tela.
+  const listedOwner = users.some((u) => String(u.id) === values.owner_user_id);
+  const defaultOwner = users.find((u) => u.id === currentUserId) ?? users[0];
+  const ownerUserId = listedOwner || !users.length
+    ? values.owner_user_id
+    : String(defaultOwner?.id ?? "");
 
   const [errors, setErrors] = useState<Errors>({});
 
@@ -61,14 +71,14 @@ export function PropertyFormModal({
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const found = validate(values);
+    const found = validate({ ...values, owner_user_id: ownerUserId });
     setErrors(found);
     if (Object.keys(found).length) return;
 
     const input: PropertyInput = {
       name: values.name.trim(),
       location: values.location.trim() || null,
-      owner_user_id: Number(values.owner_user_id) || 1,
+      owner_user_id: Number(ownerUserId),
     };
 
     try {
@@ -131,7 +141,7 @@ export function PropertyFormModal({
           {(p) => (
             <Select
               {...p}
-              value={values.owner_user_id}
+              value={ownerUserId}
               onChange={(e) => set("owner_user_id")(e.target.value)}
             >
               {users.length > 0 ? (
@@ -141,7 +151,7 @@ export function PropertyFormModal({
                   </option>
                 ))
               ) : (
-                <option value={values.owner_user_id || 1}>
+                <option value={ownerUserId}>
                   Carregando responsáveis...
                 </option>
               )}

@@ -23,6 +23,7 @@ import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { useOverview } from "@/features/stations/hooks";
 import { useUsers } from "@/features/users/hooks";
+import { ApiError } from "@/lib/api/http";
 
 import type { Property } from "./api";
 import { useDeleteProperty, usePropertiesList } from "./hooks";
@@ -192,9 +193,14 @@ export function PropertiesPage() {
       }
       setDeletingProperty(null);
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error(error instanceof ApiError && error.status === 409
+        ? "A propriedade possui estações associadas. Desassocie as estações antes de excluir."
+        : (error as Error).message);
     }
   }
+
+  // O backend recusa excluir propriedade com estações (integridade, US13 CA5).
+  const deletingStations = deletingProperty ? (stationsByProperty.get(deletingProperty.id) ?? []).length : 0;
 
   return (
     <div className="space-y-6">
@@ -690,8 +696,11 @@ export function PropertiesPage() {
       <ConfirmDialog
         open={Boolean(deletingProperty)}
         title="Excluir propriedade agrícola"
-        message={`Deseja realmente excluir a propriedade "${deletingProperty?.name}"? Esta ação removerá o registro e desassociará as estações vinculadas a ela.`}
+        message={deletingStations
+          ? `A propriedade "${deletingProperty?.name}" possui ${deletingStations} estação(ões) associada(s). Desassocie as estações antes de excluir.`
+          : `Deseja realmente excluir a propriedade "${deletingProperty?.name}"? Esta ação removerá o registro.`}
         confirmLabel="Excluir"
+        confirmDisabled={deletingStations > 0}
         loading={deleteProperty.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setDeletingProperty(null)}
