@@ -90,10 +90,12 @@ export function AlertsPage() {
             ]}
           />
           {me && (
-            <p className="hidden items-center gap-2 text-xs text-muted sm:flex">
-              <Avatar name={me.name} size="sm" />
-              Reconhecendo como <span className="font-medium text-ink">{me.name}</span>
-            </p>
+            <Can permission="triggered-alerts.acknowledge">
+              <p className="hidden items-center gap-2 text-xs text-muted sm:flex">
+                <Avatar name={me.name} size="sm" />
+                Reconhecendo como <span className="font-medium text-ink">{me.name}</span>
+              </p>
+            </Can>
           )}
         </div>
 
