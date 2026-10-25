@@ -2,6 +2,7 @@ export const SESSION_EXPIRED = "agritech:session-expired";
 
 export function pagePermission(path: string): string | null {
   if (path.startsWith("/administracao/usuarios")) return "users.read";
+  if (path.startsWith("/administracao/perfis")) return "roles.read";
   // Ler tipos alimenta os filtros; administrar o catálogo exige permissão de edição.
   if (path.startsWith("/administracao/parametros")) return "sensor-types.update";
   if (path.startsWith("/alertas/regras") || path === "/regras") return "alert-configs.read";
@@ -13,7 +14,7 @@ export function pagePermission(path: string): string | null {
 }
 
 export function landingPage(permissions: string[]): string {
-  return ["/dashboard", "/estacoes", "/alertas", "/alertas/regras", "/administracao/usuarios", "/administracao/parametros"]
+  return ["/dashboard", "/estacoes", "/alertas", "/alertas/regras", "/administracao/usuarios", "/administracao/perfis", "/administracao/parametros"]
     .find((path) => permissions.includes(pagePermission(path)!)) ?? "/acesso-negado";
 }
 
