@@ -1,5 +1,7 @@
 "use client";
 
+import { Can } from "@/features/auth/Can";
+
 import { BellRing, Check, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -67,9 +69,9 @@ export function AlertsPage() {
         title="Alertas disparados"
         description="Ocorrências geradas pelo motor de regras a partir das leituras das estações."
         actions={
-          <Link href="/alertas/regras" className={buttonClasses("glass")}>
+          <Can permission="alert-configs.read"><Link href="/alertas/regras" className={buttonClasses("glass")}>
             Gerenciar regras
-          </Link>
+          </Link></Can>
         }
       />
 
@@ -88,10 +90,12 @@ export function AlertsPage() {
             ]}
           />
           {me && (
-            <p className="hidden items-center gap-2 text-xs text-muted sm:flex">
-              <Avatar name={me.name} size="sm" />
-              Reconhecendo como <span className="font-medium text-ink">{me.name}</span>
-            </p>
+            <Can permission="triggered-alerts.acknowledge">
+              <p className="hidden items-center gap-2 text-xs text-muted sm:flex">
+                <Avatar name={me.name} size="sm" />
+                Reconhecendo como <span className="font-medium text-ink">{me.name}</span>
+              </p>
+            </Can>
           )}
         </div>
 
@@ -193,7 +197,7 @@ export function AlertsPage() {
                           {alert.acknowledged_at && formatDateTime(alert.acknowledged_at)}
                         </span>
                       ) : (
-                        <Button
+                        <Can permission="triggered-alerts.acknowledge"><Button
                           size="sm"
                           variant="secondary"
                           icon={<Check className="size-3.5" />}
@@ -203,7 +207,7 @@ export function AlertsPage() {
                           className="max-sm:size-8 max-sm:px-0"
                         >
                           <span className="hidden sm:inline">Reconhecer</span>
-                        </Button>
+                        </Button></Can>
                       )}
                     </Td>
                   </Tr>

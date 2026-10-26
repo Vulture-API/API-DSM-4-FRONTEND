@@ -3,6 +3,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 
+import { AuthProvider } from "@/features/auth/AuthProvider";
+
 import { ToastProvider } from "@/components/ui/Toast";
 
 export function makeQueryClient() {
@@ -13,7 +15,7 @@ export function makeQueryClient() {
         // segundo plano, em vez de piscar "carregando".
         staleTime: 30_000,
         gcTime: 10 * 60_000,
-        retry: 1,
+        retry: (failureCount, error) => !("status" in error && [401, 403].includes(Number(error.status))) && failureCount < 1,
         refetchOnWindowFocus: false,
       },
     },
@@ -24,7 +26,7 @@ export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(makeQueryClient);
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider>{children}</ToastProvider>
+      <AuthProvider><ToastProvider>{children}</ToastProvider></AuthProvider>
     </QueryClientProvider>
   );
 }

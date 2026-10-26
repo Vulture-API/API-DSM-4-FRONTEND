@@ -12,11 +12,11 @@ RUN npm ci
 
 COPY app/ ./
 
-# Destinos dos rewrites do Next: gravados no build, por isso são build args.
+# Destinos REST em runtime; o rewrite WebSocket também usa o destino no build.
 ARG USERS_API_URL=http://localhost:3000
-ARG PARAMETERS_API_URL=http://localhost:3001
-ARG ALERTS_API_URL=http://localhost:3002
-ARG STATIONS_API_URL=http://localhost:3005
+ARG PARAMETERS_API_URL=http://localhost:3000
+ARG ALERTS_API_URL=http://localhost:3000
+ARG STATIONS_API_URL=http://localhost:3000
 ENV USERS_API_URL=$USERS_API_URL \
     PARAMETERS_API_URL=$PARAMETERS_API_URL \
     ALERTS_API_URL=$ALERTS_API_URL \
@@ -35,6 +35,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3010
+
+ARG USERS_API_URL=http://localhost:3000
+ARG PARAMETERS_API_URL=http://localhost:3000
+ARG ALERTS_API_URL=http://localhost:3000
+ARG STATIONS_API_URL=http://localhost:3000
+ENV USERS_API_URL=$USERS_API_URL \
+    PARAMETERS_API_URL=$PARAMETERS_API_URL \
+    ALERTS_API_URL=$ALERTS_API_URL \
+    STATIONS_API_URL=$STATIONS_API_URL
 
 COPY app/package*.json ./
 

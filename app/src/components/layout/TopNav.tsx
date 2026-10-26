@@ -1,9 +1,13 @@
 "use client";
 
-import { Bell, ChevronDown, Leaf, Menu, X } from "lucide-react";
+import { LogOut, Bell, ChevronDown, Leaf, Menu, X } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+import { useAuth } from "@/features/auth/AuthProvider";
+import { useToast } from "@/components/ui/Toast";
+import { landingPage, pagePermission } from "@/lib/auth/policy";
 
 import { usePendingAlertCount } from "@/features/alerts/hooks";
 import { cn } from "@/lib/cn";
@@ -18,6 +22,11 @@ function subscribeScroll(onChange: () => void) {
 }
 
 export function TopNav() {
+  const auth = useAuth();
+  const router = useRouter();
+  const toast = useToast();
+  const [leaving, setLeaving] = useState(false);
+  const groups = NAV_GROUPS.map((group) => ({ ...group, items: group.items.filter((item) => auth.can(pagePermission(item.href) ?? "")) })).filter((group) => group.items.length);
   const pathname = usePathname() ?? "";
   const current = activeItem(pathname);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -64,7 +73,7 @@ export function TopNav() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
-        <Link href="/dashboard" className="flex items-center gap-2.5 rounded-lg" aria-label="Agritech, ir para o dashboard">
+        <Link href={landingPage(auth.user?.permissions ?? [])} className="flex items-center gap-2.5 rounded-lg" aria-label="Agritech, ir para o dashboard">
           <span className="inline-flex size-9 items-center justify-center rounded-xl bg-brand-300 text-forest shadow-sm ring-1 ring-white/20">
             <Leaf className="size-[18px]" strokeWidth={2.2} />
           </span>
@@ -75,7 +84,7 @@ export function TopNav() {
         </Link>
 
         <nav aria-label="Navegação principal" className="hidden h-full items-center gap-1 md:flex">
-          {NAV_GROUPS.map((group) => (
+          {groups.map((group) => (
             <MegaMenu
               key={group.id}
               group={group}
@@ -102,7 +111,7 @@ export function TopNav() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link
+          {auth.can("triggered-alerts.read") && <Link
             href="/alertas"
             aria-label={pending ? `${pending} alertas pendentes` : "Alertas"}
             className="relative inline-flex size-9 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white"
@@ -113,13 +122,20 @@ export function TopNav() {
                 {pending > 99 ? "99+" : pending}
               </span>
             )}
-          </Link>
+          </Link>}
           <span className="hidden items-center gap-2 rounded-full bg-white/10 py-1 pr-3 pl-1 ring-1 ring-white/15 sm:inline-flex">
             <span className="inline-flex size-6 items-center justify-center rounded-full bg-brand-300 text-[11px] font-semibold text-forest">
-              DM
+              {auth.user?.name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase()}
             </span>
-            <span className="text-[13px] text-white/85">Demonstração</span>
+            <span className="text-[13px] text-white/85">{auth.user?.name}</span>
           </span>
+          <button type="button" aria-label="Sair da conta" title="Sair da conta" disabled={leaving}
+            className="inline-flex size-9 items-center justify-center rounded-lg text-white/85 hover:bg-white/10 disabled:opacity-50"
+            onClick={async () => {
+              setLeaving(true);
+              try { await auth.logout(); router.replace("/login"); router.refresh(); }
+              catch (error) { toast.error((error as Error).message); setLeaving(false); }
+            }}><LogOut className="size-4" /></button>
           <button
             type="button"
             className="inline-flex size-9 items-center justify-center rounded-lg text-white/85 hover:bg-white/10 md:hidden"
@@ -135,7 +151,7 @@ export function TopNav() {
 
       {mobileOpen && (
         <nav id="menu-mobile" aria-label="Menu" className="animate-fade-in border-t border-forest-line bg-forest px-4 pt-2 pb-4 md:hidden">
-          {NAV_GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.id} className="py-2">
               <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-[0.12em] text-brand-300">{group.label}</p>
               {group.items.map((item) => (

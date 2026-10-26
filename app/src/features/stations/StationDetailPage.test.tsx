@@ -2,6 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
+import { current } from "@/test/fixtures";
 import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
 
 import { StationDetailPage } from "./StationDetailPage";
@@ -14,7 +15,7 @@ describe("StationDetailPage", () => {
     expect(await screen.findByRole("heading", { name: "Estação Sede" })).toBeInTheDocument();
     expect(screen.getByText("Online")).toBeInTheDocument();
     const readings = screen.getByRole("region", { name: "Leituras atuais" });
-    expect(within(readings).getByText("24")).toBeInTheDocument();
+    expect(await within(readings).findByText("24")).toBeInTheDocument();
     const measure = await screen.findByLabelText("Medição exibida no gráfico");
     await waitFor(() => expect(measure).toHaveValue("1"));
     expect(within(measure).getByRole("option", { name: "Umidade (%)" })).toBeInTheDocument();
@@ -95,6 +96,18 @@ describe("StationDetailPage", () => {
     mockApi(defaultRoutes());
     renderWithProviders(<StationDetailPage id={404} />);
     expect(await screen.findByText("Estação não encontrada")).toBeInTheDocument();
+  });
+
+  it("mostra ausência de medição e identifica leituras antigas", async () => {
+    const data = structuredClone(current);
+    data.stations[0]!.readings[0]!.value = null;
+    data.stations[0]!.readings[0]!.unix_time = null;
+    data.stations[0]!.readings[1]!.unix_time = Math.floor(Date.now() / 1000) - 3600;
+    mockApi({ ...defaultRoutes(), "/api/stations/1/current": data });
+    renderWithProviders(<StationDetailPage id={1} />);
+    expect(await screen.findByText("Sem leitura")).toBeInTheDocument();
+    expect(screen.getByText("Aguardando medição")).toBeInTheDocument();
+    expect(screen.getByText(/Leitura antiga/)).toBeInTheDocument();
   });
 
   it("mostra estado vazio sem leituras", async () => {

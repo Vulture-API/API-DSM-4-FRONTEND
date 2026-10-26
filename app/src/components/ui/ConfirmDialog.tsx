@@ -9,6 +9,7 @@ export function ConfirmDialog({
   message,
   confirmLabel = "Excluir",
   loading,
+  confirmDisabled,
   onConfirm,
   onCancel,
 }: {
@@ -17,6 +18,8 @@ export function ConfirmDialog({
   message: string;
   confirmLabel?: string;
   loading?: boolean;
+  /** Esconde a ação quando ela não pode ser feita (ex.: registro em uso). */
+  confirmDisabled?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -29,11 +32,13 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="secondary" onClick={onCancel}>
-            Cancelar
+            {confirmDisabled ? "Entendi" : "Cancelar"}
           </Button>
-          <Button variant="danger" onClick={onConfirm} loading={loading}>
-            {confirmLabel}
-          </Button>
+          {!confirmDisabled && (
+            <Button variant="danger" onClick={onConfirm} loading={loading}>
+              {confirmLabel}
+            </Button>
+          )}
         </>
       }
     >

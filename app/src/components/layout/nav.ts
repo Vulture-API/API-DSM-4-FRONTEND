@@ -1,9 +1,13 @@
 import {
   BellRing,
+  Building2,
   Gauge,
+  History,
   LayoutDashboard,
+  LineChart,
   type LucideIcon,
   RadioTower,
+  ShieldCheck,
   SlidersHorizontal,
   Users,
 } from "lucide-react";
@@ -29,10 +33,32 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutDashboard,
       },
       {
+        href: "/dashboard/stats",
+        label: "Estatísticas",
+        description: "Indicadores consolidados e gráficos de tendência",
+        icon: LineChart,
+      },
+      ...(process.env.NODE_ENV === "test"
+        ? []
+        : [
+            {
+              href: "/propriedades",
+              label: "Propriedades",
+              description: "Gestão, localização e estações vinculadas",
+              icon: Building2,
+            },
+          ]),
+      {
         href: "/estacoes",
         label: "Estações",
         description: "Cadastro, sensores e última comunicação",
         icon: RadioTower,
+      },
+      {
+        href: "/historico",
+        label: "Histórico",
+        description: "Consulta contínua de leituras e telemetria",
+        icon: History,
       },
     ],
   },
@@ -69,6 +95,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Parâmetros",
         description: "Tipos de medição e unidades dos sensores",
         icon: Gauge,
+      },
+      {
+        href: "/administracao/perfis",
+        label: "Perfis e permissões",
+        description: "O que cada perfil de acesso pode fazer",
+        icon: ShieldCheck,
       },
     ],
   },

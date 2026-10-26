@@ -82,7 +82,9 @@ describe("ParametersPage", () => {
     await user.click(screen.getByRole("button", { name: "Excluir Temperatura" }));
     const confirm = screen.getByRole("dialog", { name: "Excluir parâmetro" });
     expect(confirm).toHaveTextContent("está em uso por 2 sensor(es)");
-    await user.click(within(confirm).getByRole("button", { name: "Excluir" }));
-    expect(await screen.findByText("Tipo em uso")).toBeInTheDocument();
+    // Tipo em uso não oferece a exclusão: o backend recusaria (ON DELETE RESTRICT).
+    expect(within(confirm).queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
+    await user.click(within(confirm).getByRole("button", { name: "Entendi" }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Excluir parâmetro" })).not.toBeInTheDocument());
   });
 });

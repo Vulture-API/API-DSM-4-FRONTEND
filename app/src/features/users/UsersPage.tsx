@@ -1,5 +1,8 @@
 "use client";
 
+import { useCan } from "@/features/auth/AuthProvider";
+import { Can } from "@/features/auth/Can";
+
 import { Pencil, Plus, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 
@@ -27,6 +30,7 @@ type StatusFilter = "all" | "active" | "inactive";
 const ROLE_TONE: Record<string, Tone> = { Administrador: "brand", "Gerente Agrícola": "info" };
 
 export function UsersPage() {
+  const canUpdate = useCan("users.update");
   const users = useUsers();
   const roles = useRoles();
   const update = useUpdateUser();
@@ -75,9 +79,9 @@ export function UsersPage() {
         title="Usuários"
         description="Pessoas com acesso ao portal e seus cargos."
         actions={
-          <Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
+          <Can permission="users.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
             Novo usuário
-          </Button>
+          </Button></Can>
         }
       />
       <Card className="shadow-[var(--shadow-lift)]">
@@ -153,17 +157,17 @@ export function UsersPage() {
                     </Badge>
                   </Td>
                   <Td>
-                    <Switch label={`${user.name} ativo`} checked={user.active} onChange={() => void toggle(user)} />
+                    <Switch disabled={!canUpdate} label={`${user.name} ativo`} checked={user.active} onChange={() => void toggle(user)} />
                   </Td>
                   <Td className="hidden whitespace-nowrap text-muted md:table-cell">{formatDate(user.created_at)}</Td>
                   <Td>
                     <RowActions>
-                      <IconButton label={`Editar ${user.name}`} onClick={() => setEditing(user)}>
+                      <Can permission="users.update"><IconButton label={`Editar ${user.name}`} onClick={() => setEditing(user)}>
                         <Pencil className="size-4" />
-                      </IconButton>
-                      <IconButton label={`Excluir ${user.name}`} onClick={() => setDeleting(user)} className="hover:text-danger">
+                      </IconButton></Can>
+                      <Can permission="users.delete"><IconButton label={`Excluir ${user.name}`} onClick={() => setDeleting(user)} className="hover:text-danger">
                         <Trash2 className="size-4" />
-                      </IconButton>
+                      </IconButton></Can>
                     </RowActions>
                   </Td>
                 </Tr>
@@ -172,15 +176,15 @@ export function UsersPage() {
           </Table>
         )}
       </Card>
-      {editing && <UserFormModal user={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
-      <ConfirmDialog
+      {editing && <Can permission={editing === "new" ? "users.create" : "users.update"}><UserFormModal user={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} /></Can>}
+      <Can permission="users.delete"><ConfirmDialog
         open={Boolean(deleting)}
         title="Excluir usuário"
         message={`${deleting?.name ?? ""} perde o acesso ao portal. Se ele tiver registros vinculados, prefira desativar.`}
         loading={remove.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setDeleting(null)}
-      />
+      /></Can>
     </>
   );
 }
