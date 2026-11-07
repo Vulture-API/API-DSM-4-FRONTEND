@@ -47,24 +47,6 @@ jobs:
       run:
         working-directory: ${{ env.APP_DIR }}
 
-    # Postgres descartável para os testes de integração (*.integration.test.ts),
-    # que só rodam quando TEST_DATABASE_URL está definida.
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
-    env:
-      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
-
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
@@ -110,7 +92,13 @@ jobs:
             npx tsc --noEmit
           fi
 
-      - name: Testes unitários com cobertura
+      - name: Testes unitários
+        run: npm run test:unit
+
+      - name: Testes de integração (telas)
+        run: npm run test:int
+
+      - name: Testes com cobertura
         run: |
           if ! node -e "require.resolve('vitest/package.json')" 2>/dev/null; then
             echo "::error::Este pipeline mede cobertura com o Vitest, e ele não está nas dependências do projeto. Adicione 'vitest' às devDependencies (padrão do template do time)."
@@ -120,11 +108,8 @@ jobs:
           if ! node -e "require.resolve('@vitest/coverage-v8/package.json')" 2>/dev/null; then
             npm install --no-save --no-audit --no-fund "@vitest/coverage-v8@${VITEST_VERSION}"
           fi
-          npx vitest run --exclude '**/*integration*' --coverage.enabled=true \
+          npx vitest run --coverage.enabled=true \
             --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov
-
-      - name: Testes de integração
-        run: npx vitest run integration --passWithNoTests
 
       - name: Quality Gate de cobertura (DoD 80%)
         id: coverage_gate
