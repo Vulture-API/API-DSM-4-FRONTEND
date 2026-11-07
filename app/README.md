@@ -16,7 +16,11 @@ Para subir tudo junto (APIs, banco com dados de demonstração e simulador de es
 | --- | --- |
 | `npm run lint` | ESLint |
 | `npm test` | Vitest + cobertura (mínimo de 80%) |
+| `npm run test:unit` | só os unitários (funções, hooks e componentes isolados) |
+| `npm run test:int` | só os de tela (`*.integration.test.tsx`: página montada com API simulada) |
 | `npm run build` | build de produção |
+
+Teste novo que monta uma página inteira ou o layout vai com o sufixo `.integration.test.tsx`.
 
 ## Como está organizado
 
