@@ -1,5 +1,7 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
+
+const integrationFiles = ["src/**/*.integration.test.{ts,tsx}"];
 
 export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)), "server-only": fileURLToPath(new URL("./node_modules/next/dist/compiled/server-only/empty.js", import.meta.url)) } },
@@ -19,5 +21,19 @@ export default defineConfig({
       reporter: ["text", "html", "json-summary"],
       thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
     },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/**/*.test.{ts,tsx}"],
+          exclude: [...configDefaults.exclude, ...integrationFiles],
+        },
+      },
+      {
+        extends: true,
+        test: { name: "integration", include: integrationFiles },
+      },
+    ],
   },
 });
