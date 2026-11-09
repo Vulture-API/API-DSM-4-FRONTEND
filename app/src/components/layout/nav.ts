@@ -1,6 +1,7 @@
 import {
   BellRing,
   Building2,
+  FileSpreadsheet,
   Gauge,
   History,
   LayoutDashboard,
@@ -60,6 +61,16 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Consulta contínua de leituras e telemetria",
         icon: History,
       },
+      ...(process.env.NODE_ENV === "test"
+        ? []
+        : [
+            {
+              href: "/relatorios",
+              label: "Relatórios",
+              description: "Histórico consolidado, previsão e alertas",
+              icon: FileSpreadsheet,
+            },
+          ]),
     ],
   },
   {

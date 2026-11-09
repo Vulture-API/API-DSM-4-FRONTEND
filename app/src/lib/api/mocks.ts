@@ -1,6 +1,7 @@
 import type { AlertRule, TriggeredAlert } from "@/features/alerts/api";
 import type { Sensor, SensorType } from "@/features/parameters/api";
 import type { Reading } from "@/features/readings/api";
+import { buildReportFromTelemetry, validateReportFilters } from "@/features/reports/reportRules";
 import type {
   CurrentData,
   ForecastDay,
@@ -808,6 +809,28 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
   // GET /api/roles
   if (path === "/api/roles" || path === "/roles") {
     return mockRoles as unknown as T;
+  }
+
+  if (path === "/api/reports" || path === "/reports") {
+    const validated = validateReportFilters({
+      reportType: search.get("type") ?? "history",
+      stationId: search.get("station_id"),
+      propertyId: search.get("property_id"),
+      startDate: search.get("from") ?? undefined,
+      endDate: search.get("to") ?? undefined,
+      days: search.get("days"),
+    });
+    return buildReportFromTelemetry(validated, {
+      stations: mockStations,
+      properties: mockProperties,
+      sensors: mockSensors,
+      sensorTypes: mockSensorTypes,
+      readings: mockReadings,
+      forecast: mockForecast,
+      alertRules: mockAlertRules,
+      triggeredAlerts: mockTriggeredAlerts,
+      generatedAt: BASE_MOCK_ISO,
+    }) as unknown as T;
   }
 
   return undefined;
