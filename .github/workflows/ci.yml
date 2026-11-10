@@ -163,24 +163,20 @@ jobs:
             npx tsc --noEmit
           fi
 
+      # Cada nível roda uma vez e guarda a sua cobertura; o passo de cobertura
+      # só junta os dois relatórios e cobra os 80%, sem rodar os testes de novo.
       - name: Testes unitários
-        run: npm run test:unit
+        env:
+          COBERTURA_PARCIAL: "1"
+        run: npm run test:ci:unit
 
       - name: Testes de integração (telas)
-        run: npm run test:int
+        env:
+          COBERTURA_PARCIAL: "1"
+        run: npm run test:ci:int
 
-      - name: Testes com cobertura
-        run: |
-          if ! node -e "require.resolve('vitest/package.json')" 2>/dev/null; then
-            echo "::error::Este pipeline mede cobertura com o Vitest, e ele não está nas dependências do projeto. Adicione 'vitest' às devDependencies (padrão do template do time)."
-            exit 1
-          fi
-          VITEST_VERSION=$(node -p "require('vitest/package.json').version")
-          if ! node -e "require.resolve('@vitest/coverage-v8/package.json')" 2>/dev/null; then
-            npm install --no-save --no-audit --no-fund "@vitest/coverage-v8@${VITEST_VERSION}"
-          fi
-          npx vitest run --coverage.enabled=true \
-            --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov
+      - name: Cobertura total dos dois níveis
+        run: npm run test:ci:coverage
 
       - name: Quality Gate de cobertura (DoD 80%)
         id: coverage_gate
