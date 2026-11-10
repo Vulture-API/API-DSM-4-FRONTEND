@@ -25,6 +25,7 @@ import { formatNumber, formatRelative } from "@/lib/format";
 
 import { useCurrentReadings } from "@/features/stations/useCurrentReadings";
 import { CurrentReadingsState } from "@/features/stations/CurrentReadingsState";
+import { LastUpdate } from "@/features/stations/LastUpdate";
 
 import { currentConditions } from "./current-conditions";
 
@@ -175,7 +176,8 @@ export function DashboardPage() {
                     </li>
                   ))}
                 {visible.map((station) => (
-                  <StationRow key={station.id} station={station} />
+                  <StationRow key={station.id} station={station}
+                    lastUpdate={current.data?.stations.find((s) => s.station_id === station.id)?.last_update} />
                 ))}
                 {!overview.isLoading && visible.length === 0 && (
                   <li>
@@ -282,7 +284,7 @@ function Metric({ label, value, hint, status }: { label: string; value: number; 
   );
 }
 
-function StationRow({ station }: { station: StationOverview }) {
+function StationRow({ station, lastUpdate }: { station: StationOverview; lastUpdate: string | null | undefined }) {
   const temp = station.latest_readings.find((r) => r.sensor_type === "Temperatura");
   const humidity = station.latest_readings.find((r) => r.sensor_type === "Umidade");
   return (
@@ -295,6 +297,7 @@ function StationRow({ station }: { station: StationOverview }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-700">{station.name}</span>
           <span className="block truncate text-xs text-muted">{station.property_name}</span>
+          <LastUpdate lastUpdate={lastUpdate} stationName={station.name} />
           {communicationDelay(station.last_communication_at) && (
             <LastCommunication lastCommunicationAt={station.last_communication_at} className="mt-0.5 text-xs" />
           )}

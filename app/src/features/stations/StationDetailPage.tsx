@@ -22,6 +22,7 @@ import { formatDateTime, formatNumber, formatRelative } from "@/lib/format";
 
 import type { CurrentReading, StationOverview } from "./api";
 import { ReadingTile } from "./ReadingTile";
+import { LastUpdate } from "./LastUpdate";
 import { CurrentReadingsState } from "./CurrentReadingsState";
 import { useCurrentReadings } from "./useCurrentReadings";
 import { useOverview } from "./hooks";
@@ -115,6 +116,9 @@ export function StationDetailPage({ id }: { id: number }) {
         <Card className="overflow-hidden shadow-[var(--shadow-lift)]">
           <CurrentReadingsState connection={current.connection} error={current.error} updatedAt={current.dataUpdatedAt}
             now={current.now} onRetry={() => void current.refetch()} />
+          <div className="px-5 pb-3">
+            <LastUpdate lastUpdate={currentStation?.last_update} stationName={station.name} />
+          </div>
           {current.error && !current.data ? <ErrorState message={current.error.message} onRetry={() => void current.refetch()} /> : (
             <section aria-label="Leituras atuais" className="-mb-px -ml-px flex flex-wrap">
               {current.isLoading && <Skeleton className="m-5 h-24 w-full" />}
