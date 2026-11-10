@@ -34,4 +34,3 @@ export function currentConditions(stations: CurrentStation[], nowSeconds = Date.
     }];
   });
 }
-

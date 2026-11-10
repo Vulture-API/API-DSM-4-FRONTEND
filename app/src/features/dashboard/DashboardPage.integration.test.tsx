@@ -65,4 +65,3 @@ describe("DashboardPage", () => {
     expect(await screen.findByText("Serviço fora")).toBeInTheDocument();
   });
 });
-

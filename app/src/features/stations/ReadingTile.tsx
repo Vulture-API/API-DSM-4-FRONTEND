@@ -29,4 +29,3 @@ export function ReadingTile({ reading, now }: { reading: CurrentReading; now: nu
     </div>
   );
 }
-
