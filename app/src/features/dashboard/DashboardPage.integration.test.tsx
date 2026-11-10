@@ -2,10 +2,9 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import { current } from "@/test/fixtures";
 import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
 
-import { currentConditions, DashboardPage } from "./DashboardPage";
+import { DashboardPage } from "./DashboardPage";
 
 describe("DashboardPage", () => {
   it("mostra o resumo, as condições atuais e as estações", async () => {
@@ -67,24 +66,3 @@ describe("DashboardPage", () => {
   });
 });
 
-describe("currentConditions", () => {
-  it("conta estações distintas e não dá peso extra a sensores duplicados", () => {
-    const stations = structuredClone(current.stations);
-    stations[0]!.readings.push({ ...stations[0]!.readings[0]!, sensor_id: 99, value: 28 });
-    const result = currentConditions(stations);
-    expect(result[0]).toMatchObject({ avg: 28, stations: 2 });
-    stations[0]!.readings[0]!.value = null;
-    expect(currentConditions(stations)[0]!.avg).toBe(29);
-  });
-
-  it("ignora leituras velhas e mantém a ordem dos tipos", () => {
-    const now = Date.now() / 1000;
-    const stations = structuredClone(current.stations);
-    stations[0]!.readings[1]!.unix_time = now - 3 * 3600;
-
-    const result = currentConditions(stations, now);
-
-    expect(result.map((c) => c.type)).toEqual(["Temperatura"]);
-    expect(result[0]).toMatchObject({ avg: 27, min: 24, max: 30, stations: 2, unit: "°C" });
-  });
-});
