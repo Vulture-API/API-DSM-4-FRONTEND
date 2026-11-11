@@ -6,6 +6,7 @@ export type SensorType = {
   unit_of_measure: string;
   factor: number | null;
   gain: number | null;
+  offset_value?: number | null;
 };
 export type SensorTypeInput = Omit<SensorType, "id">;
 
@@ -15,6 +16,10 @@ export type Sensor = {
   sensor_type_id: number;
   local_identifier: string;
   operational_status: boolean;
+  /** Calibração deste sensor; vazio usa a do tipo. */
+  gain?: number | null;
+  offset_value?: number | null;
+  model?: string | null;
   created_at: string;
 };
 export type SensorInput = Omit<Sensor, "id" | "created_at">;
