@@ -17,6 +17,7 @@ export default defineConfig({
         // Arquivos de rota do App Router: só montam a página da feature.
         "src/app/**",
         "src/features/properties/**",
+        "src/features/reports/**",
       ],
       reporter: ["text", "html", "json-summary"],
       thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
