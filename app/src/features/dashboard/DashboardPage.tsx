@@ -14,7 +14,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { OccurrencesSummary } from "@/features/occurrences/OccurrencesSummary";
 import { sensorVisual } from "@/features/sensor-visual";
-import type { CurrentStation, Overview, StationOverview, StationStatus } from "@/features/stations/api";
+import type { Overview, StationOverview, StationStatus } from "@/features/stations/api";
 import { useOverview, useProperties } from "@/features/stations/hooks";
 import { SeriesCard } from "@/features/stations/SeriesCard";
 import { communicationDelay, LastCommunication } from "@/features/stations/CommunicationDelay";
@@ -25,43 +25,11 @@ import { formatNumber, formatRelative } from "@/lib/format";
 
 import { useCurrentReadings } from "@/features/stations/useCurrentReadings";
 import { CurrentReadingsState } from "@/features/stations/CurrentReadingsState";
+import { LastUpdate } from "@/features/stations/LastUpdate";
+
+import { currentConditions } from "./current-conditions";
 
 import { PendingAlertsCard } from "./PendingAlertsCard";
-
-/** Tipos mostrados em "Condições agora", na ordem. */
-const CONDITIONS = ["Temperatura", "Umidade", "Velocidade do Vento", "Pressão", "Umidade do Solo"];
-/** Leitura mais velha que isso não entra na média "agora". */
-const FRESH_SECONDS = 30 * 60;
-
-export function currentConditions(stations: CurrentStation[], nowSeconds = Date.now() / 1000) {
-  const groups = new Map<string, { unit: string; values: number[]; stations: Set<number> }>();
-  for (const station of stations) {
-    const localGroups = new Map<string, { unit: string; values: number[] }>();
-    for (const reading of station.readings) {
-      if (reading.value === null || reading.unix_time === null ||
-          reading.unix_time > nowSeconds || nowSeconds - reading.unix_time > FRESH_SECONDS) continue;
-      const group = localGroups.get(reading.sensor_type) ?? { unit: reading.unit_of_measure, values: [] };
-      group.values.push(reading.value);
-      localGroups.set(reading.sensor_type, group);
-    }
-    for (const [type, local] of localGroups) {
-      const group = groups.get(type) ?? { unit: local.unit, values: [], stations: new Set<number>() };
-      group.values.push(local.values.reduce((a, b) => a + b, 0) / local.values.length);
-      group.stations.add(station.station_id);
-      groups.set(type, group);
-    }
-  }
-  return CONDITIONS.flatMap((type) => {
-    const group = groups.get(type);
-    if (!group?.values.length) return [];
-    return [{
-      type, unit: group.unit,
-      avg: group.values.reduce((a, b) => a + b, 0) / group.values.length,
-      min: Math.min(...group.values), max: Math.max(...group.values),
-      stations: group.stations.size,
-    }];
-  });
-}
 
 type Filter = "all" | StationStatus;
 
@@ -208,7 +176,8 @@ export function DashboardPage() {
                     </li>
                   ))}
                 {visible.map((station) => (
-                  <StationRow key={station.id} station={station} />
+                  <StationRow key={station.id} station={station}
+                    lastUpdate={current.data?.stations.find((s) => s.station_id === station.id)?.last_update} />
                 ))}
                 {!overview.isLoading && visible.length === 0 && (
                   <li>
@@ -315,7 +284,7 @@ function Metric({ label, value, hint, status }: { label: string; value: number; 
   );
 }
 
-function StationRow({ station }: { station: StationOverview }) {
+function StationRow({ station, lastUpdate }: { station: StationOverview; lastUpdate: string | null | undefined }) {
   const temp = station.latest_readings.find((r) => r.sensor_type === "Temperatura");
   const humidity = station.latest_readings.find((r) => r.sensor_type === "Umidade");
   return (
@@ -328,6 +297,7 @@ function StationRow({ station }: { station: StationOverview }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-700">{station.name}</span>
           <span className="block truncate text-xs text-muted">{station.property_name}</span>
+          <LastUpdate lastUpdate={lastUpdate} stationName={station.name} />
           {communicationDelay(station.last_communication_at) && (
             <LastCommunication lastCommunicationAt={station.last_communication_at} className="mt-0.5 text-xs" />
           )}

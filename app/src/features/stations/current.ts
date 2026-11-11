@@ -29,7 +29,10 @@ export function mergeReading(data: CurrentData, event: LiveReading): CurrentData
       if (previous?.unix_time != null && previous.unix_time >= event.unix_time) return station;
       const { sensor_id, local_identifier, sensor_type_id, sensor_type, unit_of_measure, value, unix_time } = event;
       const reading = { sensor_id, local_identifier, sensor_type_id, sensor_type, unit_of_measure, value, unix_time };
-      const last = Math.max(event.unix_time * 1000, station.last_update ? Date.parse(station.last_update) : 0);
+      const previousUpdate = station.last_update ? Date.parse(station.last_update) : NaN;
+      const last = Number.isFinite(previousUpdate)
+        ? Math.max(event.unix_time * 1000, previousUpdate)
+        : event.unix_time * 1000;
       return {
         ...station,
         last_update: new Date(last).toISOString(),
