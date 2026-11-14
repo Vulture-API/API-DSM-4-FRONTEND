@@ -68,12 +68,12 @@ export const mockStations: Station[] = [
 ];
 
 export const mockSensorTypes: SensorType[] = [
-  { id: 1, name: "Temperatura", unit_of_measure: "°C", factor: 1.0, gain: 0 },
-  { id: 2, name: "Umidade", unit_of_measure: "%", factor: 1.0, gain: 0 },
-  { id: 3, name: "Velocidade do Vento", unit_of_measure: "km/h", factor: 1.0, gain: 0 },
-  { id: 4, name: "Índice Pluviométrico", unit_of_measure: "mm", factor: 1.0, gain: 0 },
-  { id: 5, name: "Temperatura do Solo", unit_of_measure: "°C", factor: 1.0, gain: 0 },
-  { id: 6, name: "Umidade do Solo", unit_of_measure: "%", factor: 1.0, gain: 0 },
+  { id: 1, name: "Temperatura", unit_of_measure: "°C", factor: null, gain: null, offset_value: null },
+  { id: 2, name: "Umidade", unit_of_measure: "%", factor: null, gain: null, offset_value: null },
+  { id: 3, name: "Velocidade do Vento", unit_of_measure: "km/h", factor: null, gain: null, offset_value: null },
+  { id: 4, name: "Índice Pluviométrico", unit_of_measure: "mm", factor: null, gain: null, offset_value: null },
+  { id: 5, name: "Temperatura do Solo", unit_of_measure: "°C", factor: null, gain: null, offset_value: null },
+  { id: 6, name: "Umidade do Solo", unit_of_measure: "%", factor: null, gain: null, offset_value: null },
 ];
 
 export const mockSensors: Sensor[] = [

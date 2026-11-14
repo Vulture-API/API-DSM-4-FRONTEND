@@ -15,7 +15,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { RowActions, Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
-import type { Sensor } from "@/features/parameters/api";
+import type { Sensor, SensorInput } from "@/features/parameters/api";
+import { calibrationParts, calibrationText, effectiveCalibration, multiplierError, offsetError, parseCalibration } from "@/features/parameters/calibration";
 import { useDeleteSensor, useSaveSensor, useSensors, useSensorTypes } from "@/features/parameters/hooks";
 import { sensorOrder, sensorVisual } from "@/features/sensor-visual";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/format";
@@ -187,6 +188,7 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
   const remove = useDeleteSensor();
   const toast = useToast();
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<Sensor | null>(null);
   const typeById = useMemo(() => new Map(types.data?.map((t) => [t.id, t])), [types.data]);
   const readingBySensor = useMemo(
     () => new Map(readings.map((r) => [r.sensor_id, r])),
@@ -247,6 +249,7 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
               <tr>
                 <Th>Medição</Th>
                 <Th className="hidden sm:table-cell">Identificador</Th>
+                <Th className="hidden md:table-cell">Calibração</Th>
                 <Th className="text-right">Última leitura</Th>
                 <Th>Operacional</Th>
                 <Th className="w-16">
@@ -265,6 +268,8 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                   const type = typeById.get(sensor.sensor_type_id);
                   const visual = sensorVisual(type?.name ?? "");
                   const reading = readingBySensor.get(sensor.id);
+                  const calibration = effectiveCalibration(sensor, type);
+                  const parts = calibrationParts(calibration);
                   return (
                     <Tr key={sensor.id}>
                       <Td>
@@ -284,6 +289,17 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                       </Td>
                       <Td className="hidden sm:table-cell">
                         <span className="rounded-md bg-subtle px-1.5 py-0.5 font-mono text-[13px]">{sensor.local_identifier}</span>
+                        {sensor.model && <span className="mt-1 block text-xs text-faint">{sensor.model}</span>}
+                      </Td>
+                      <Td className="hidden text-sm text-muted md:table-cell">
+                        {parts.length ? (
+                          <>
+                            <span className="tabular-nums">{parts.join(" · ")}</span>
+                            <span className="block text-xs text-faint">{calibration.fromSensor ? "do sensor" : "do tipo"}</span>
+                          </>
+                        ) : (
+                          <span className="text-faint">Sem calibração</span>
+                        )}
                       </Td>
                       <Td className="whitespace-nowrap text-right tabular-nums">
                         {reading && reading.value !== null && reading.unix_time !== null ? (
@@ -306,6 +322,9 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                       </Td>
                       <Td>
                         <RowActions>
+                          <Can permission="sensors.update"><IconButton label={`Editar sensor ${sensor.local_identifier}`} onClick={() => setEditing(sensor)}>
+                            <Pencil className="size-4" />
+                          </IconButton></Can>
                           <Can permission="sensors.delete"><IconButton
                             label={`Remover sensor ${sensor.local_identifier}`}
                             onClick={() => void removeSensor(sensor)}
@@ -322,61 +341,82 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
           </Table>
         )}
       </div>
-      {adding && <Can permission="sensors.create"><AddSensorModal stationId={station.id} onClose={() => setAdding(false)} /></Can>}
+      {adding && <Can permission="sensors.create"><SensorFormModal stationId={station.id} onClose={() => setAdding(false)} /></Can>}
+      {editing && <Can permission="sensors.update"><SensorFormModal stationId={station.id} sensor={editing} onClose={() => setEditing(null)} /></Can>}
     </Card>
   );
 }
 
-function AddSensorModal({ stationId, onClose }: { stationId: number; onClose: () => void }) {
+type SensorFormErrors = { type?: string; identifier?: string; gain?: string; offset?: string };
+
+function SensorFormModal({ stationId, sensor, onClose }: { stationId: number; sensor?: Sensor | undefined; onClose: () => void }) {
   const types = useSensorTypes();
   const save = useSaveSensor();
   const toast = useToast();
-  const [typeId, setTypeId] = useState("");
-  const [identifier, setIdentifier] = useState("");
-  const [errors, setErrors] = useState<{ type?: string; identifier?: string }>({});
+  const [typeId, setTypeId] = useState(sensor ? String(sensor.sensor_type_id) : "");
+  const [identifier, setIdentifier] = useState(sensor?.local_identifier ?? "");
+  const [gain, setGain] = useState(calibrationText(sensor?.gain));
+  const [offset, setOffset] = useState(calibrationText(sensor?.offset_value));
+  const [model, setModel] = useState(sensor?.model ?? "");
+  const [errors, setErrors] = useState<SensorFormErrors>({});
+  const type = types.data?.find((t) => String(t.id) === typeId);
+  const typeCalibration = type ? calibrationParts(type) : [];
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const found: typeof errors = {};
+    const found: SensorFormErrors = {};
     if (!typeId) found.type = "Escolha o tipo de medição.";
     if (!identifier.trim()) found.identifier = "Informe o identificador.";
+    const gainError = multiplierError(gain);
+    const offsetValueError = offsetError(offset);
+    if (gainError) found.gain = gainError;
+    if (offsetValueError) found.offset = offsetValueError;
     setErrors(found);
     if (Object.keys(found).length) return;
+
+    const input: SensorInput = {
+      station_id: stationId,
+      sensor_type_id: Number(typeId),
+      local_identifier: identifier.trim(),
+      operational_status: sensor?.operational_status ?? true,
+    };
+    // Na edição, campo vazio remove a calibração do sensor; no cadastro nem é enviado.
+    const gainValue = parseCalibration(gain);
+    const offsetValue = parseCalibration(offset);
+    const modelValue = model.trim() || null;
+    if (sensor || gainValue !== null) input.gain = gainValue;
+    if (sensor || offsetValue !== null) input.offset_value = offsetValue;
+    if (sensor || modelValue !== null) input.model = modelValue;
+
     try {
-      await save.mutateAsync({
-        input: {
-          station_id: stationId,
-          sensor_type_id: Number(typeId),
-          local_identifier: identifier.trim(),
-          operational_status: true,
-        },
-      });
-      toast.success("Sensor vinculado à estação.");
+      await save.mutateAsync({ id: sensor?.id, input });
+      toast.success(sensor ? "Sensor atualizado." : "Sensor vinculado à estação.");
       onClose();
     } catch (error) {
       toast.error((error as Error).message);
     }
   }
 
+  const title = sensor ? "Editar sensor" : "Adicionar sensor";
   return (
     <Modal
       open
       onClose={onClose}
-      title="Adicionar sensor"
-      description="Vincule um sensor do datalogger a esta estação."
+      title={title}
+      description={sensor ? "Altere o identificador, o modelo ou a calibração deste sensor." : "Vincule um sensor do datalogger a esta estação."}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" form="add-sensor-form" loading={save.isPending}>
-            Vincular sensor
+          <Button type="submit" form="sensor-form" loading={save.isPending}>
+            {sensor ? "Salvar" : "Vincular sensor"}
           </Button>
         </>
       }
     >
-      <form id="add-sensor-form" onSubmit={submit} noValidate className="grid gap-4">
-        <Field label="Tipo de medição" error={errors.type}>
+      <form id="sensor-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
+        <Field label="Tipo de medição" error={errors.type} className="sm:col-span-2">
           {(p) => (
             <Select {...p} value={typeId} onChange={(e) => setTypeId(e.target.value)}>
               <option value="">Selecione…</option>
@@ -388,7 +428,7 @@ function AddSensorModal({ stationId, onClose }: { stationId: number; onClose: ()
             </Select>
           )}
         </Field>
-        <Field label="Identificador" error={errors.identifier} hint="Mesma chave usada no payload MQTT, ex.: temp">
+        <Field label="Identificador" error={errors.identifier} hint="Mesma chave usada no payload MQTT, ex.: temp" className="sm:col-span-2">
           {(p) => (
             <Input
               {...p}
@@ -399,6 +439,19 @@ function AddSensorModal({ stationId, onClose }: { stationId: number; onClose: ()
               className="font-mono"
             />
           )}
+        </Field>
+        <Field label="Modelo" hint="Opcional, ex.: DHT22" className="sm:col-span-2">
+          {(p) => <Input {...p} value={model} maxLength={100} onChange={(e) => setModel(e.target.value)} />}
+        </Field>
+        <p className="text-sm text-muted sm:col-span-2">
+          Calibração deste sensor, opcional: valor = leitura × fator × ganho + offset. Em branco, vale a do tipo
+          {type ? ` (${typeCalibration.length ? typeCalibration.join(" · ") : "sem calibração"})` : ""}.
+        </p>
+        <Field label="Ganho" error={errors.gain} hint="Multiplica a leitura">
+          {(p) => <Input {...p} inputMode="decimal" value={gain} onChange={(e) => setGain(e.target.value)} />}
+        </Field>
+        <Field label="Offset" error={errors.offset} hint="Somado à leitura">
+          {(p) => <Input {...p} inputMode="decimal" value={offset} onChange={(e) => setOffset(e.target.value)} />}
         </Field>
       </form>
     </Modal>
