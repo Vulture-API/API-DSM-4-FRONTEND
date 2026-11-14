@@ -5,6 +5,21 @@ import { useAuth, useCan } from "@/features/auth/AuthProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { type CreateUserInput, type UpdateUserInput, usersApi } from "./api";
+import { propertiesApi } from "@/features/properties/api";
+
+export const useUserProperties = (id: number | undefined, enabled: boolean) => useQuery({
+  queryKey: ["users", id, "properties"], queryFn: () => usersApi.properties(id!), enabled: enabled && id !== undefined,
+});
+export const usePropertyOptions = (enabled: boolean) => useQuery({
+  queryKey: ["properties", "user-link-options"], queryFn: propertiesApi.list, enabled,
+});
+export function useReplaceUserProperties() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ids }: { id: number; ids: number[] }) => usersApi.replaceProperties(id, ids),
+    onSuccess: async () => { await client.invalidateQueries(); },
+  });
+}
 
 export const userKeys = { list: ["users"] as const, roles: ["roles"] as const };
 

@@ -7,8 +7,10 @@ import { Field, Input, Select, Switch } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 
+import { useAuth } from "@/features/auth/AuthProvider";
+import { UserPropertySelect } from "./UserPropertySelect";
 import type { User } from "./api";
-import { useCreateUser, useRoles, useUpdateUser } from "./hooks";
+import { useCreateUser, useRoles, useUpdateUser, useUserProperties, usePropertyOptions, useReplaceUserProperties } from "./hooks";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,6 +20,14 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
   const create = useCreateUser();
   const update = useUpdateUser();
   const toast = useToast();
+  const isAdministrator = useAuth().user?.role_name === "Administrador";
+  const [persistedUser, setPersistedUser] = useState(user);
+  const [savedFields, setSavedFields] = useState<string | null>(null);
+  const [editedProperties, setEditedProperties] = useState<number[] | null>(null);
+  const links = useUserProperties(persistedUser?.id, isAdministrator);
+  const options = usePropertyOptions(isAdministrator);
+  const replaceLinks = useReplaceUserProperties();
+  const selectedProperties = editedProperties ?? links.data?.map(property => property.id) ?? [];
   const [values, setValues] = useState({
     name: user?.name ?? "",
     email: user?.email ?? "",
@@ -29,6 +39,11 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
   const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
 
+  const targetRole = roles.data?.find(role => role.id === Number(values.role_id));
+  const needsLinks = isAdministrator && targetRole !== undefined && targetRole.name !== "Administrador";
+  const linksUnavailable = needsLinks && (options.isPending || Boolean(options.error) || (persistedUser !== undefined && (links.isPending || Boolean(links.error))));
+  const busy = create.isPending || update.isPending || replaceLinks.isPending;
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     const found: typeof errors = {};
@@ -38,26 +53,26 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
     if (!user && values.password.length < 8) found.password = "Mínimo de 8 caracteres.";
     setErrors(found);
     if (Object.keys(found).length) return;
+    if (linksUnavailable) return;
     try {
-      if (user) {
-        await update.mutateAsync({
-          id: user.id,
+      const fields = JSON.stringify(values);
+      let target = persistedUser;
+      if (savedFields !== fields) {
+        target = target ? await update.mutateAsync({
+          id: target.id,
           input: { name: values.name.trim(), role_id: Number(values.role_id), active: values.active },
+        }) : await create.mutateAsync({
+          name: values.name.trim(), email: values.email.trim(), password: values.password,
+          role_id: Number(values.role_id), active: values.active,
         });
-        toast.success("Usuário atualizado.");
-      } else {
-        await create.mutateAsync({
-          name: values.name.trim(),
-          email: values.email.trim(),
-          password: values.password,
-          role_id: Number(values.role_id),
-          active: values.active,
-        });
-        toast.success("Usuário cadastrado.");
+        setPersistedUser(target);
+        setSavedFields(fields);
       }
+      if (needsLinks && target) await replaceLinks.mutateAsync({ id: target.id, ids: selectedProperties });
+      toast.success(user ? "Usuário atualizado." : "Usuário cadastrado.");
       onClose();
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.error(`Não foi possível concluir o salvamento: ${(error as Error).message}. Tente novamente; as etapas já salvas serão preservadas.`);
     }
   }
 
@@ -71,7 +86,7 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" form="user-form" loading={create.isPending || update.isPending}>
+          <Button type="submit" form="user-form" loading={busy} disabled={linksUnavailable}>
             {user ? "Salvar" : "Cadastrar"}
           </Button>
         </>
@@ -105,6 +120,10 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
             </Select>
           )}
         </Field>
+        {needsLinks && <UserPropertySelect properties={options.data ?? []} selected={selectedProperties} onChange={setEditedProperties}
+          loading={options.isPending || (persistedUser !== undefined && links.isPending)}
+          error={options.error?.message ?? links.error?.message} disabled={busy} />}
+        {isAdministrator && targetRole?.name === "Administrador" && <p className="text-sm text-muted">Administrador possui acesso a todas as propriedades.</p>}
         <div className="flex items-center gap-3">
           <Switch labelledBy={`${formId}-user-active`} checked={values.active} onChange={(value) => set("active", value)} />
           <span id={`${formId}-user-active`} className="text-sm text-ink">
