@@ -67,6 +67,9 @@ describe("getOpenApiMock", () => {
     expect(getOpenApiMock("/api/alerts/triggered")).toBeDefined();
     expect(getOpenApiMock("/api/users")).toEqual(mockUsers);
     expect(getOpenApiMock("/api/roles")).toEqual(mockRoles);
+    expect(getOpenApiMock("/api/reports?type=history")).toBeDefined();
+    expect(getOpenApiMock("/api/reports?type=forecast&station_id=1&days=3")).toBeDefined();
+    expect(getOpenApiMock("/api/reports?type=alerts")).toBeDefined();
     expect(getOpenApiMock("/api/rota-inexistente")).toBeUndefined();
   });
 });
