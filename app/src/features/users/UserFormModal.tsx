@@ -49,8 +49,8 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
     const found: typeof errors = {};
     if (!values.name.trim()) found.name = "Informe o nome.";
     if (!values.role_id) found.role_id = "Escolha o cargo.";
-    if (!user && !EMAIL.test(values.email.trim())) found.email = "E-mail inválido.";
-    if (!user && values.password.length < 8) found.password = "Mínimo de 8 caracteres.";
+    if (!persistedUser && !EMAIL.test(values.email.trim())) found.email = "E-mail inválido.";
+    if (!persistedUser && values.password.length < 8) found.password = "Mínimo de 8 caracteres.";
     setErrors(found);
     if (Object.keys(found).length) return;
     if (linksUnavailable) return;
@@ -96,12 +96,12 @@ export function UserFormModal({ user, onClose }: { user?: User | undefined; onCl
         <Field label="Nome completo" error={errors.name}>
           {(p) => <Input {...p} value={values.name} onChange={(e) => set("name", e.target.value)} />}
         </Field>
-        <Field label="E-mail" error={errors.email} hint={user ? "O e-mail não pode ser alterado." : undefined}>
+        <Field label="E-mail" error={errors.email} hint={persistedUser ? "O e-mail não pode ser alterado." : undefined}>
           {(p) => (
-            <Input {...p} type="email" value={values.email} disabled={Boolean(user)} onChange={(e) => set("email", e.target.value)} />
+            <Input {...p} type="email" value={values.email} disabled={Boolean(persistedUser)} onChange={(e) => set("email", e.target.value)} />
           )}
         </Field>
-        {!user && (
+        {!persistedUser && (
           <Field label="Senha" error={errors.password} hint="Mínimo de 8 caracteres.">
             {(p) => (
               <Input {...p} type="password" autoComplete="new-password" value={values.password} onChange={(e) => set("password", e.target.value)} />

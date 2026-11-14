@@ -49,6 +49,10 @@ describe("SCRUM-616: integração dos vínculos", () => {
     await userEvent.click(screen.getByRole("button",{name:"Cadastrar"}));
     await screen.findByText(/Falha temporária/);
     expect(close).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("E-mail")).toBeDisabled();
+    expect(screen.queryByLabelText("Senha")).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("E-mail"), "ignorado@review.test");
+    expect(screen.getByLabelText("E-mail")).toHaveValue("novo@test.dev");
     await waitFor(()=>expect(screen.getByRole("button",{name:"Cadastrar"})).toBeEnabled());
     await userEvent.click(screen.getByRole("button",{name:"Cadastrar"}));
     await waitFor(()=>expect(close).toHaveBeenCalledOnce());
