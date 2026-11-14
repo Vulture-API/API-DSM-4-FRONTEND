@@ -6,6 +6,7 @@ describe("políticas de acesso", () => {
     expect(pagePermission("/administracao/usuarios")).toBe("users.read");
     expect(pagePermission("/alertas/regras")).toBe("alert-configs.read");
     expect(pagePermission("/dashboard/stats")).toBe("monitoring.read");
+    expect(pagePermission("/relatorios")).toBe("monitoring.read");
     expect(landingPage([])).toBe("/acesso-negado");
   });
   it("recusa redirecionamentos externos e páginas sem permissão", () => {
@@ -21,6 +22,8 @@ describe("políticas de acesso", () => {
     expect(apiPermission(["occurrences", "1", "resolve"], "PATCH")).toBe("occurrences.resolve");
     expect(apiPermission(["roles", "2", "permissions"], "PUT")).toBe("roles.permissions.update");
     expect(apiPermission(["alerts", "triggered", "1", "acknowledge"], "PUT")).toBe("triggered-alerts.acknowledge");
+    expect(apiPermission(["reports"], "GET")).toBe("monitoring.read");
+    expect(apiPermission(["reports"], "POST")).toBeNull();
     expect(apiPermission(["readings"], "POST")).toBeNull();
     expect(apiPermission(["unknown"], "GET")).toBeNull();
   });
