@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { apiPermission } from "@/lib/auth/policy";
+import { apiPermission, canPerform } from "@/lib/auth/policy";
 
 import { apiDestination, clearSession, errorResponse, fetchIdentity, isAuthUser, sameOrigin, sessionToken } from "@/lib/auth/session.server";
 
@@ -26,7 +26,8 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
     const user = await identity.json();
     if (!isAuthUser(user)) return errorResponse(502, "Resposta de autenticação inválida.");
     const permission = apiPermission(path, request.method);
-    if (!permission || !user.permissions.includes(permission)) return errorResponse(403, "Seu perfil não possui permissão para esta operação.");
+    if (!permission || !canPerform(user, permission)) return errorResponse(403, "Seu perfil não possui permissão para esta operação.");
+    if (path[0] === "users" && path[2] === "properties" && user.role_name !== "Administrador") return errorResponse(403, "Somente o Administrador pode gerenciar vínculos.");
     const body = ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer();
     if (body && body.byteLength > 1_048_576) return errorResponse(413, "Requisição muito grande.");
     const backend = await fetch(`${destination}/api/${path.join("/")}${new URL(request.url).search}`, {

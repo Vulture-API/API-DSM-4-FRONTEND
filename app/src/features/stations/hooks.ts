@@ -53,7 +53,6 @@ export const useSeries = (options: SeriesOptions & { stationId?: number | undefi
     enabled: useCan("monitoring.read"), queryKey: stationId ? stationKeys.stationSeries(stationId, rest) : stationKeys.networkSeries(rest),
     queryFn: () => (stationId ? stationsApi.stationSeries(stationId, rest) : stationsApi.networkSeries(rest)),
     refetchInterval: LIVE * 2,
-    placeholderData: (previous) => previous,
   });
 };
 
