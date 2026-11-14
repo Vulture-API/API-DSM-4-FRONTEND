@@ -43,7 +43,7 @@ jobs:
   procedencia:
     name: Procedência do commit na dev
     if: github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -54,7 +54,7 @@ jobs:
     steps:
       - name: Conferir se o conteúdo já foi testado no PR
         id: conferir
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const sha = context.sha;
@@ -108,7 +108,7 @@ jobs:
     # provar que este conteúdo já passou no PR.
     if: ${{ !cancelled() && needs.procedencia.outputs.testado != 'true' }}
     name: Lint, testes e build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
@@ -120,12 +120,12 @@ jobs:
 
     steps:
       - name: Checkout do repositório
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Configurar Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -163,24 +163,20 @@ jobs:
             npx tsc --noEmit
           fi
 
+      # Cada nível roda uma vez e guarda a sua cobertura; o passo de cobertura
+      # só junta os dois relatórios e cobra os 80%, sem rodar os testes de novo.
       - name: Testes unitários
-        run: npm run test:unit
+        env:
+          COBERTURA_PARCIAL: "1"
+        run: npm run test:ci:unit
 
       - name: Testes de integração (telas)
-        run: npm run test:int
+        env:
+          COBERTURA_PARCIAL: "1"
+        run: npm run test:ci:int
 
-      - name: Testes com cobertura
-        run: |
-          if ! node -e "require.resolve('vitest/package.json')" 2>/dev/null; then
-            echo "::error::Este pipeline mede cobertura com o Vitest, e ele não está nas dependências do projeto. Adicione 'vitest' às devDependencies (padrão do template do time)."
-            exit 1
-          fi
-          VITEST_VERSION=$(node -p "require('vitest/package.json').version")
-          if ! node -e "require.resolve('@vitest/coverage-v8/package.json')" 2>/dev/null; then
-            npm install --no-save --no-audit --no-fund "@vitest/coverage-v8@${VITEST_VERSION}"
-          fi
-          npx vitest run --coverage.enabled=true \
-            --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov
+      - name: Cobertura total dos dois níveis
+        run: npm run test:ci:coverage
 
       - name: Quality Gate de cobertura (DoD 80%)
         id: coverage_gate
@@ -213,7 +209,7 @@ jobs:
 
       - name: Publicar relatório de cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: ${{ env.APP_DIR }}/coverage/
@@ -222,7 +218,7 @@ jobs:
 
   docker:
     name: Validar build da imagem Docker
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: quality
     if: ${{ !cancelled() && needs.quality.result == 'success' }}
     timeout-minutes: 15
@@ -231,7 +227,7 @@ jobs:
 
     steps:
       - name: Checkout do repositório
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -252,7 +248,7 @@ jobs:
   # escrita e não executa nenhum código vindo do PR.
   comment:
     name: Comentar resultado no PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [quality, docker]
     # PRs de fork recebem token só de leitura: nesses, o comentário é pulado.
     if: >-
@@ -265,7 +261,7 @@ jobs:
       - name: Criar ou atualizar o comentário do CI
         # O comentário é informativo: nunca derruba o pipeline.
         continue-on-error: true
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           QUALITY: ${{ needs.quality.result }}
           DOCKER: ${{ needs.docker.result }}
