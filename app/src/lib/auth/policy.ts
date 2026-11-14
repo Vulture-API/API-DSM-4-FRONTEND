@@ -9,7 +9,7 @@ export function pagePermission(path: string): string | null {
   if (path.startsWith("/alertas")) return "triggered-alerts.read";
   if (path.startsWith("/estacoes")) return "stations.read";
   if (path.startsWith("/propriedades")) return "properties.read";
-  if (path.startsWith("/dashboard") || path.startsWith("/historico")) return "monitoring.read";
+  if (path.startsWith("/dashboard") || path.startsWith("/historico") || path.startsWith("/relatorios")) return "monitoring.read";
   return null;
 }
 
@@ -32,7 +32,7 @@ export function apiPermission(path: string[], method: string): string | null {
   const read = method === "GET" || method === "HEAD";
   if (resource === "stations" && segment === "properties") return read ? "properties.read" : null;
   if (resource === "stations" && path.some((part) => ["overview", "current", "statistics", "forecast", "status", "readings"].includes(part))) return read ? "monitoring.read" : null;
-  if (resource === "readings") return read ? "monitoring.read" : null;
+  if (resource === "readings" || resource === "reports") return read ? "monitoring.read" : null;
   if (resource === "occurrences") return read ? "occurrences.read" : method === "PATCH" && action === "resolve" ? "occurrences.resolve" : null;
   if (resource === "permissions") return read ? "permissions.read" : null;
   if (resource === "roles" && action === "permissions") return read ? "roles.read" : method === "PUT" ? "roles.permissions.update" : null;

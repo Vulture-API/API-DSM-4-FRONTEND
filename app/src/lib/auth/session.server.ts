@@ -23,6 +23,7 @@ export function apiDestination(resource: string): string | null {
     stations,
     properties: process.env.PROPERTIES_API_URL ?? users,
     readings: stations,
+    reports: stations,
     occurrences: stations,
     alerts: process.env.ALERTS_API_URL ?? base,
     sensors: parameters,

@@ -21,6 +21,7 @@ export default defineConfig({
         // Arquivos de rota do App Router: só montam a página da feature.
         "src/app/**",
         "src/features/properties/**",
+        "src/features/reports/**",
       ],
       reporter: coberturaParcial ? [] : ["text", "html", "json-summary"],
       thresholds: coberturaParcial
