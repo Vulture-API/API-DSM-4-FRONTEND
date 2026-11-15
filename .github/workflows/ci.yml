@@ -1,14 +1,14 @@
 # ---------------------------------------------------------------------------
 # SCRUM-377 — Pipeline de Integração Contínua (Equipe Vulture)
 #
-# Arquivo ÚNICO para todos os repositórios Node/TypeScript do projeto.
-# Copie como está; só ajuste APP_DIR se o package.json não estiver na raiz
-# (ex.: frontend, APP_DIR: app). Cada etapa se adapta ao que o repo tem:
-# scripts ausentes viram aviso, e o Docker só roda se existir Dockerfile.
+# Pipeline do frontend (Next.js em APP_DIR). Cada etapa se adapta ao que o
+# repo tem: scripts ausentes viram aviso, e o Docker só roda se existir
+# Dockerfile.
 #
 # Etapas (documento "Integração Contínua CI" do Confluence):
 #   Instalação clean room -> Auditoria -> Lint -> Formatação -> Tipos
-#   -> Testes (unitários + integração com Postgres) -> Quality Gate 80% -> Build
+#   -> Testes unitários -> Testes de integração (telas) -> Quality Gate 80%
+#   -> Build -> Imagem Docker
 # ---------------------------------------------------------------------------
 name: CI
 
@@ -252,7 +252,7 @@ jobs:
     needs: [quality, docker]
     # PRs de fork recebem token só de leitura: nesses, o comentário é pulado.
     if: >-
-      always() && github.event_name == 'pull_request' &&
+      !cancelled() && github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 5
     permissions:
@@ -278,12 +278,12 @@ jobs:
               `- Lint, testes e build: \`${process.env.QUALITY}\``,
               `- Imagem Docker: \`${process.env.DOCKER}\``,
               `- Cobertura de linhas: **${coverage}%** (mínimo ${process.env.COVERAGE_THRESHOLD}%)`,
-              `- Commit: \`${context.sha.substring(0, 7)}\``,
+              `- Commit: \`${context.payload.pull_request.head.sha.substring(0, 7)}\``,
               `- [Ver execução completa](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
             ].join('\n');
 
             // Um comentário só por PR, atualizado a cada execução.
-            const { data: comments } = await github.rest.issues.listComments({
+            const comments = await github.paginate(github.rest.issues.listComments, {
               ...context.repo,
               issue_number: context.issue.number,
               per_page: 100,
