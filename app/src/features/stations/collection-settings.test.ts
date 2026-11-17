@@ -8,13 +8,13 @@ describe("validação do intervalo de coleta", () => {
   it.each(["", " "])("exige preenchimento: %j", (value) => {
     expect(collectionIntervalError(value, 10, 300)).toBe("Informe o intervalo de coleta.");
   });
-  it.each(["abc", "60.5", "60,5", "NaN", "Infinity", "1e2", "0x40", "-10", "9007199254740993"])("rejeita um inteiro inválido: %s", (value) => {
+  it.each(["abc", "60.5", "60,5", "NaN", "Infinity", "1e2", "0x40", "-10", "+60", "1 20", "9007199254740993"])("rejeita um inteiro inválido: %s", (value) => {
     expect(collectionIntervalError(value, 10, 300)).toBe("Informe um número inteiro de segundos.");
   });
   it.each(["0", "9", "301"])("respeita os limites do servidor: %s", (value) => {
     expect(collectionIntervalError(value, 10, 300)).toBe("Use um intervalo entre 10 e 300 segundos.");
   });
-  it.each(["10", "60", "300", " 120 "])("aceita inteiro dentro dos limites: %s", (value) => {
+  it.each(["10", "60", "300", " 120 ", "060"])("aceita inteiro dentro dos limites: %s", (value) => {
     expect(collectionIntervalError(value, 10, 300)).toBeUndefined();
   });
   it("não fixa o máximo no frontend", () => {
@@ -24,7 +24,7 @@ describe("validação do intervalo de coleta", () => {
 });
 
 describe("formatação do intervalo de coleta", () => {
-  it.each([[10, "10 segundos"], [60, "60 segundos (1 minuto)"], [120, "120 segundos (2 minutos)"]])("formata %s", (seconds, text) => {
+  it.each([[10, "10 segundos"], [59, "59 segundos"], [60, "60 segundos (1 minuto)"], [61, "61 segundos"], [120, "120 segundos (2 minutos)"], [300, "300 segundos (5 minutos)"]])("formata %s", (seconds, text) => {
     expect(formatCollectionInterval(Number(seconds))).toBe(text);
   });
 });
