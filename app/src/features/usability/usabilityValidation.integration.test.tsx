@@ -198,7 +198,7 @@ describe("Validação de usabilidade das principais interfaces (SCRUM-545 / RNF0
     expect(screen.getByRole("link", { name: /Estações/i })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Leituras atuais" })).toBeInTheDocument();
 
-    const editBtn = screen.getByRole("button", { name: /Editar/i });
+    const editBtn = screen.getByRole("button", { name: "Editar" });
     await user.click(editBtn);
 
     const dialog = screen.getByRole("dialog", { name: "Editar estação" });
