@@ -26,6 +26,7 @@ export const stationKeys = {
   current: (options: { station_id?: number; property_id?: number }) =>
     [...stationKeys.all, "current", options] as const,
   status: (id: number) => [...stationKeys.all, "status", id] as const,
+  collection: (id: number) => [...stationKeys.all, "collection", id] as const,
 };
 
 /** Status muda na escala de minutos: polling a cada 30 s (ADR-003). */
@@ -106,8 +107,25 @@ export function useCurrentData(options: { station_id?: number; property_id?: num
 
 export function useStationStatus(id: number) {
   return useQuery({
-    enabled: useCan("monitoring.read"), queryKey: stationKeys.status(id),
+    enabled: useCan("stations.read"), queryKey: stationKeys.status(id),
     queryFn: () => stationsApi.status(id),
     refetchInterval: LIVE,
+  });
+}
+
+export function useCollectionSettings(id: number) {
+  return useQuery({
+    enabled: useCan("station-collection.read"), queryKey: stationKeys.collection(id),
+    queryFn: () => stationsApi.collection(id),
+  });
+}
+
+export function useSaveCollectionSettings(id: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (seconds: number) => stationsApi.updateCollection(id, seconds),
+    onSuccess: (settings) => {
+      client.setQueryData(stationKeys.collection(id), settings);
+    },
   });
 }

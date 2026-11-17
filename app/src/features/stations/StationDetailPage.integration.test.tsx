@@ -3,11 +3,26 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { current, sensors, sensorTypes } from "@/test/fixtures";
-import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
+import { defaultRoutes, mockApi, renderWithProviders, testUser } from "@/test/utils";
 
 import { StationDetailPage } from "./StationDetailPage";
 
 describe("StationDetailPage", () => {
+  it("integra o painel administrativo à estação selecionada", async () => {
+    mockApi(defaultRoutes());
+    renderWithProviders(<StationDetailPage id={1} />);
+    const panel = await screen.findByRole("region", { name: "Configuração da coleta" });
+    expect(await within(panel).findByLabelText("Novo intervalo de coleta (segundos)")).toHaveValue("60");
+    expect(within(panel).getByText("Estação selecionada: Estação Sede")).toBeInTheDocument();
+  });
+
+  it("mantém detalhes e status para Gerente sem consultar a configuração administrativa", async () => {
+    const { calls } = mockApi(defaultRoutes());
+    renderWithProviders(<StationDetailPage id={1} />, { ...testUser, permissions: ["monitoring.read", "stations.read", "sensors.read", "sensor-types.read", "properties.read"] });
+    expect(await screen.findByRole("heading", { name: "Estação Sede" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Configuração da coleta" })).not.toBeInTheDocument();
+    expect(calls.some((c) => c.path.includes("/collection"))).toBe(false);
+  });
   it("mostra cabeçalho, leituras atuais, histórico e sensores", async () => {
     mockApi(defaultRoutes());
     renderWithProviders(<StationDetailPage id={1} />);

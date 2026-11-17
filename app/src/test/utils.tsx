@@ -13,6 +13,7 @@ import * as fx from "./fixtures";
 export const testUser: AuthUser = {
   id: 1, role_id: 1, name: "Administrador", email: "admin@example.com", active: true, created_at: "2026-01-01T00:00:00Z",
   permissions: [
+    "station-collection.read", "station-collection.update",
     ...["users", "roles", "properties", "stations", "sensors", "sensor-types", "alert-configs"].flatMap((resource) => ["create", "read", "update", "delete"].map((action) => `${resource}.${action}`)),
     "monitoring.read", "permissions.read", "roles.permissions.update", "triggered-alerts.read", "triggered-alerts.acknowledge", "occurrences.read", "occurrences.resolve", "occurrences.run", "rules-engine.run",
   ],
@@ -76,6 +77,10 @@ export const page = <T,>(data: T[]) => ({
 /** Todas as leituras (GET) que as telas fazem, respondidas pelos fixtures. */
 export function defaultRoutes(): Routes {
   return {
+    ...Object.fromEntries(fx.overview.stations.map((s) => [
+      `/api/stations/${s.id}/collection`, { station_id: s.id, mac_address: s.mac_address,
+        collection_interval_seconds: 60, min_interval_seconds: 10, max_interval_seconds: 300 },
+    ])),
     "/api/stations/current": ({ url }: { url: URL }) => ({
       ...fx.current,
       stations: fx.current.stations.filter((s) => !url.searchParams.get("property_id") ||

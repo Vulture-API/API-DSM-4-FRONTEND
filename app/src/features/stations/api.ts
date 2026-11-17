@@ -154,7 +154,19 @@ export type StationStatusResponse = {
   offline_threshold_minutes: number;
 };
 
+export type StationCollectionSettings = {
+  station_id: number;
+  mac_address: string;
+  collection_interval_seconds: number;
+  min_interval_seconds: number;
+  max_interval_seconds: number;
+};
+
 export const stationsApi = {
+  collection: (id: number) => request<StationCollectionSettings>(`/api/stations/${id}/collection`),
+  updateCollection: (id: number, seconds: number) => request<StationCollectionSettings>(`/api/stations/${id}/collection`, {
+    method: "PUT", json: { collection_interval_seconds: seconds },
+  }),
   current: (
     arg1?: number | { station_id?: number; property_id?: number },
     arg2?: number,
