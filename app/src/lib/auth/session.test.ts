@@ -92,6 +92,36 @@ describe("proxy autenticado de API", () => {
     expect(fetch.mock.calls[1]![1].headers.Authorization).toBe("Bearer real-session");
   });
 
+  it("permite POST /api/backend/reports/export e preserva Content-Disposition no proxy", async () => {
+    state.token = "real-session";
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(json(user))
+      .mockResolvedValueOnce(
+        new Response("\uFEFF\"ID Leitura\"\r\n\"1\"", {
+          status: 200,
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition":
+              'attachment; filename="relatorio-historico-geral-2026-10-01_a_2026-10-10.csv"',
+          },
+        }),
+      );
+    vi.stubGlobal("fetch", fetch);
+
+    const response = await create(
+      request("/api/backend/reports/export", { type: "history", format: "csv" }),
+      context(["reports", "export"]),
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/csv; charset=utf-8");
+    expect(response.headers.get("content-disposition")).toBe(
+      'attachment; filename="relatorio-historico-geral-2026-10-01_a_2026-10-10.csv"',
+    );
+    expect(fetch.mock.calls[1]![0]).toBe("http://backend.test/api/reports/export");
+  });
+
   it("revalida permissões no backend e impede escrita ou administração de outro perfil", async () => {
     state.token = "session";
     const fetch = vi.fn().mockImplementation(async () => json(user)); vi.stubGlobal("fetch", fetch);

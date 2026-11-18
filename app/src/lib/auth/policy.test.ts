@@ -23,7 +23,9 @@ describe("políticas de acesso", () => {
     expect(apiPermission(["roles", "2", "permissions"], "PUT")).toBe("roles.permissions.update");
     expect(apiPermission(["alerts", "triggered", "1", "acknowledge"], "PUT")).toBe("triggered-alerts.acknowledge");
     expect(apiPermission(["reports"], "GET")).toBe("monitoring.read");
-    expect(apiPermission(["reports"], "POST")).toBeNull();
+    expect(apiPermission(["reports"], "POST")).toBe("monitoring.read");
+    expect(apiPermission(["reports", "export"], "POST")).toBe("monitoring.read");
+    expect(apiPermission(["reports"], "DELETE")).toBeNull();
     expect(apiPermission(["readings"], "POST")).toBeNull();
     expect(apiPermission(["unknown"], "GET")).toBeNull();
   });
