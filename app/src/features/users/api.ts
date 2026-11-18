@@ -1,4 +1,5 @@
 import { request, requestAll } from "@/lib/api/http";
+import type { Property } from "@/features/properties/api";
 
 export type User = {
   id: number;
@@ -13,6 +14,8 @@ export type CreateUserInput = { role_id: number; name: string; email: string; pa
 export type UpdateUserInput = { role_id: number; name: string; active: boolean };
 
 export const usersApi = {
+  properties: (id: number) => request<Property[]>(`/api/users/${id}/properties`),
+  replaceProperties: (id: number, property_ids: number[]) => request<Property[]>(`/api/users/${id}/properties`, { method: "PUT", json: { property_ids } }),
   list: () => requestAll<User>("/api/users"),
   roles: () => request<Role[]>("/api/roles"),
   create: (input: CreateUserInput) => request<User>("/api/users", { method: "POST", json: input }),

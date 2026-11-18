@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 
-import { query } from "@/lib/api/http";
+import { ApiError, query } from "@/lib/api/http";
 
 import { type CurrentData, type LiveReading, stationsApi } from "./api";
 import { mergeReading, parseLiveReading } from "./current";
@@ -21,6 +21,7 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
   const auth = useAuth();
   const allowed = auth.can("monitoring.read");
   const userId = auth.user?.id;
+  const accessIdentity = JSON.stringify([auth.user?.role_name, auth.user?.property_ids]);
   const refreshSession = auth.refresh;
   const buffers = useRef(new Map<string, Map<number, LiveReading>>());
   const scope = `${propertyId ?? "all"}:${stationId ?? "all"}`;
@@ -129,9 +130,9 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
         socket.close();
       }
     };
-  }, [client, propertyId, stationId, scope, allowed, userId, refreshSession]);
+  }, [client, propertyId, stationId, scope, allowed, userId, accessIdentity, refreshSession]);
 
   // Dados novos do REST (ex.: troca de filtro) não podem parecer "do futuro"
   // para um relógio que só avança com eventos do WebSocket ou a cada 30 s.
-  return { ...current, connection, now: Math.max(now, current.dataUpdatedAt) };
+  return { ...current, data: current.error instanceof ApiError && [403, 404].includes(current.error.status) ? undefined : current.data, connection, now: Math.max(now, current.dataUpdatedAt) };
 }

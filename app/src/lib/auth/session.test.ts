@@ -130,3 +130,28 @@ describe("origem da requisição atrás de proxy", () => {
     expect(sameOrigin(behindProxy("javascript://localhost:8080", { Host: "localhost:8080", "X-Forwarded-Proto": "javascript" }))).toBe(false);
   });
 });
+
+
+describe("SCRUM-616: proxy de vínculos e relatórios", () => {
+  it("restringe os vínculos pelo perfil e mantém o JWT do cookie", async () => {
+    state.token = "session";
+    const fetch = vi.fn().mockResolvedValueOnce(json({ ...user, role_name: "Gerente Agrícola", permissions: ["users.read"] }))
+      .mockResolvedValueOnce(json({ ...user, role_name: "Administrador", permissions: ["users.read"] }))
+      .mockResolvedValueOnce(json([]));
+    vi.stubGlobal("fetch", fetch);
+    const path = "/api/backend/users/9/properties";
+    expect((await forward(new Request("http://localhost:3010" + path), context(["users", "9", "properties"]))).status).toBe(403);
+    expect((await forward(new Request("http://localhost:3010" + path), context(["users", "9", "properties"]))).status).toBe(200);
+    expect(fetch.mock.calls[2]![0]).toBe("http://backend.test/api/users/9/properties");
+  });
+  it("permite POST de relatório para Cliente mas nega suas alterações", async () => {
+    state.token = "session";
+    const identity = { ...user, role_name: "Cliente", permissions: ["monitoring.read", "properties.create"] };
+    const fetch = vi.fn().mockResolvedValueOnce(json(identity)).mockResolvedValueOnce(json({ total_readings: 0 }))
+      .mockResolvedValueOnce(json(identity));
+    vi.stubGlobal("fetch", fetch);
+    expect((await create(request("/api/backend/reports", { type: "history" }), context(["reports"]))).status).toBe(200);
+    expect((await create(request("/api/backend/properties", { name: "Proibida" }), context(["properties"]))).status).toBe(403);
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+});
