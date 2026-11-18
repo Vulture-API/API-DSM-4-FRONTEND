@@ -1,5 +1,10 @@
 export const SESSION_EXPIRED = "agritech:session-expired";
 
+export function canPerform(user: { role_name?: string; permissions: string[] } | null, permission: string): boolean {
+  return Boolean(user?.permissions.includes(permission) &&
+    (user.role_name !== "Cliente" || permission.endsWith(".read")));
+}
+
 export function pagePermission(path: string): string | null {
   if (path.startsWith("/administracao/usuarios")) return "users.read";
   if (path.startsWith("/administracao/perfis")) return "roles.read";
@@ -32,7 +37,7 @@ export function apiPermission(path: string[], method: string): string | null {
   const read = method === "GET" || method === "HEAD";
   if (resource === "stations" && segment === "properties") return read ? "properties.read" : null;
   if (resource === "stations" && path.some((part) => ["overview", "current", "statistics", "forecast", "status", "readings"].includes(part))) return read ? "monitoring.read" : null;
-  if (resource === "readings" || resource === "reports") return read ? "monitoring.read" : null;
+  if (resource === "readings" || resource === "reports") return read || (resource === "reports" && method === "POST" && path.length === 1) ? "monitoring.read" : null;
   if (resource === "occurrences") return read ? "occurrences.read" : method === "PATCH" && action === "resolve" ? "occurrences.resolve" : null;
   if (resource === "permissions") return read ? "permissions.read" : null;
   if (resource === "roles" && action === "permissions") return read ? "roles.read" : method === "PUT" ? "roles.permissions.update" : null;

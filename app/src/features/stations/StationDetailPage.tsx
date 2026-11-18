@@ -56,7 +56,7 @@ export function StationDetailPage({ id }: { id: number }) {
       </>
     );
   }
-  if (overview.error && !overview.data) {
+  if (overview.error) {
     return (
       <>
         <PageHeader title="Estação" back={back} />

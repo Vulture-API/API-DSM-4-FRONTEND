@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef } from "react";
 
-import { SESSION_EXPIRED } from "@/lib/auth/policy";
+import { canPerform, SESSION_EXPIRED } from "@/lib/auth/policy";
 
 import { authApi } from "./api";
 import type { LoginCredentials } from "./LoginPage";
@@ -36,7 +36,7 @@ export function AuthProvider({ children, initialUser, validateSession = true }: 
   const refetchSession = session.refetch;
   const refresh = useCallback(() => { void refetchSession(); }, [refetchSession]);
   useEffect(() => {
-    const next = session.data ? JSON.stringify([session.data.id, session.data.role_id, session.data.permissions]) : null;
+    const next = session.data ? JSON.stringify([session.data.id, session.data.role_id, session.data.role_name, session.data.permissions, session.data.property_ids]) : null;
     if (identity.current !== null && identity.current !== next) {
       void client.cancelQueries({ predicate: (q) => q.queryKey[0] !== "auth" });
       client.removeQueries({ predicate: (q) => q.queryKey[0] !== "auth" });
@@ -70,7 +70,7 @@ export function AuthProvider({ children, initialUser, validateSession = true }: 
   return (
     <Context.Provider value={{
       user, loading: session.isLoading || (validateSession && session.data === undefined && session.isFetching),
-      error: session.error, can: (permission) => user?.permissions.includes(permission) ?? false,
+      error: session.error, can: (permission) => canPerform(user, permission),
       refresh,
       login: async (credentials) => {
         const authenticated = await authApi.login(credentials);
