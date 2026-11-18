@@ -779,3 +779,244 @@ export function buildReportCsv(report: GeneratedReport | null | undefined): stri
   );
   return [headers.join(";"), ...rows].join("\n");
 }
+
+export type ReportExportFormat = "csv" | "json";
+
+export type ReportExportArtifact = {
+  content: string;
+  contentType: string;
+  filename: string;
+};
+
+export const MAX_INLINE_REPORT_EXPORT_BYTES = 512 * 1024;
+
+export type ExportRequestPayload =
+  | { report: GeneratedReport; format: ReportExportFormat }
+  | {
+      type: CanonicalReportType;
+      station_id?: number;
+      property_id?: number;
+      from?: string;
+      to?: string;
+      days?: number;
+      format: ReportExportFormat;
+    };
+
+/** Extrai o payload enxuto de filtros para exportação direta no backend sem reenviar relatórios grandes. */
+export function buildFilterExportPayload(
+  report: GeneratedReport,
+  format: ReportExportFormat,
+  filters?: ValidatedReportFilters,
+): Exclude<ExportRequestPayload, { report: GeneratedReport }> {
+  const stationId = filters?.stationId ?? report.station?.id ?? undefined;
+  const propertyId =
+    filters?.propertyId ??
+    (stationId === undefined ? report.property?.id : undefined) ??
+    undefined;
+
+  if (report.report_type === "forecast") {
+    return {
+      type: "forecast",
+      ...(stationId !== undefined ? { station_id: stationId } : {}),
+      ...(propertyId !== undefined ? { property_id: propertyId } : {}),
+      days: filters?.days ?? report.total_days,
+      format,
+    };
+  }
+
+  return {
+    type: report.report_type,
+    ...(stationId !== undefined ? { station_id: stationId } : {}),
+    ...(propertyId !== undefined ? { property_id: propertyId } : {}),
+    from: filters?.fromIso ?? report.period.from,
+    to: filters?.toIso ?? report.period.to,
+    format,
+  };
+}
+
+/** Seleciona o payload inline quando compacto ou por filtros quando ultrapassa o limite seguro de corpo HTTP. */
+export function buildExportRequestPayload(
+  report: GeneratedReport,
+  format: ReportExportFormat,
+  filters?: ValidatedReportFilters,
+  maxInlineBytes = MAX_INLINE_REPORT_EXPORT_BYTES,
+): ExportRequestPayload {
+  const inlinePayload: ExportRequestPayload = { report, format };
+  const byteLength = new TextEncoder().encode(JSON.stringify(inlinePayload)).byteLength;
+  if (byteLength > maxInlineBytes) {
+    return buildFilterExportPayload(report, format, filters);
+  }
+  return inlinePayload;
+}
+
+const REPORT_TYPE_SLUGS: Record<CanonicalReportType, string> = {
+  history: "historico",
+  forecast: "previsao",
+  alerts: "alertas",
+};
+
+/** Gera o nome padronizado do arquivo preservando tipo, escopo e período filtrado. */
+export function buildReportExportFilename(
+  report: GeneratedReport,
+  format: ReportExportFormat,
+): string {
+  const typeSlug = REPORT_TYPE_SLUGS[report.report_type];
+  const scopeSlug = report.station
+    ? `estacao-${report.station.id}`
+    : report.property
+      ? `propriedade-${report.property.id}`
+      : "geral";
+  const fromDate = report.period.from.slice(0, 10);
+  const toDate = report.period.to.slice(0, 10);
+
+  return `relatorio-${typeSlug}-${scopeSlug}-${fromDate}_a_${toDate}.${format}`;
+}
+
+/** Extrai com segurança o nome de arquivo do cabeçalho Content-Disposition. */
+export function extractFilenameFromContentDisposition(
+  headerValue: string | null | undefined,
+): string | null {
+  if (!headerValue) return null;
+  const quoted = headerValue.match(/filename="([^"]+)"/i);
+  const raw = quoted?.[1] ?? headerValue.match(/filename=([^;\s]+)/i)?.[1];
+  if (!raw) return null;
+
+  const cleaned = raw.trim().replace(/[\\/]/g, "");
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+/** Formata o relatório gerado em JSON estruturado preservando dados e filtros aplicados. */
+export function buildReportJson(report: GeneratedReport): string {
+  const filters = {
+    report_type: report.report_type,
+    period: {
+      from: report.period.from,
+      to: report.period.to,
+    },
+    station: report.station ? { ...report.station } : null,
+    property: report.property ? { ...report.property } : null,
+  };
+
+  if (report.report_type === "history") {
+    const stationName = report.station?.name ?? "Todas";
+    const propertyName = report.property?.name ?? "Todas";
+    const data = [...report.readings]
+      .sort((a, b) => a.unix_time - b.unix_time || a.id - b.id)
+      .map((reading) => ({
+        "ID Leitura": reading.id,
+        Estação: stationName,
+        Propriedade: propertyName,
+        "Sensor ID": reading.sensor_id,
+        Parâmetro: reading.sensor_type,
+        Valor: reading.value,
+        Unidade: reading.unit_of_measure,
+        "Data/Hora ISO": reading.date_time,
+        Consistente: reading.data_consistent ? "Sim" : "Não",
+      }));
+
+    return JSON.stringify(
+      {
+        report_type: "history",
+        generated_at: report.generated_at,
+        filters,
+        total_records: data.length,
+        summary: report.summary,
+        data,
+      },
+      null,
+      2,
+    );
+  }
+
+  if (report.report_type === "forecast") {
+    const propertyName = report.property?.name ?? "Todas";
+    const data = [...report.days]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((day) => ({
+        Data: day.date,
+        Estação: report.station.name,
+        Propriedade: propertyName,
+        "Temp Min (°C)": day.temperature_min,
+        "Temp Max (°C)": day.temperature_max,
+        "Chuva (mm)": day.precipitation_mm,
+        "Probabilidade Chuva (%)": day.precipitation_probability,
+        "Vento Max (km/h)": day.wind_speed_max_kmh,
+        "Código WMO": day.weather_code,
+        Condição: day.weather_description,
+      }));
+
+    return JSON.stringify(
+      {
+        report_type: "forecast",
+        generated_at: report.generated_at,
+        filters,
+        total_records: data.length,
+        data,
+      },
+      null,
+      2,
+    );
+  }
+
+  const propertyName = report.property?.name ?? "Todas";
+  const data = [...report.alerts]
+    .sort(
+      (a, b) =>
+        new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime() ||
+        b.id - a.id,
+    )
+    .map((alert) => ({
+      "ID Alerta": alert.id,
+      Estação: alert.station_name,
+      Propriedade: propertyName,
+      "Sensor ID": alert.sensor_id,
+      Parâmetro: alert.sensor_type,
+      Regra: alert.rule_name,
+      Condição: alert.condition,
+      Limite: alert.threshold_value,
+      "Valor Medido": alert.reading_value,
+      Unidade: alert.unit_of_measure,
+      "Disparado Em": alert.triggered_at,
+      Status: alert.status === "acknowledged" ? "Reconhecido" : "Pendente",
+    }));
+
+  return JSON.stringify(
+    {
+      report_type: "alerts",
+      generated_at: report.generated_at,
+      filters,
+      total_records: data.length,
+      data,
+    },
+    null,
+    2,
+  );
+}
+
+/** Prepara artefato de exportação localmente quando o endpoint dedicado não estiver disponível. */
+export function buildLocalExportArtifact(
+  report: GeneratedReport | null | undefined,
+  format: ReportExportFormat,
+): ReportExportArtifact {
+  if (!report || isReportEmpty(report)) {
+    throw new Error("Não existem dados disponíveis no relatório para exportar.");
+  }
+
+  if (format === "csv") {
+    const csv = buildReportCsv(report);
+    if (!csv) {
+      throw new Error("Não existem dados disponíveis no relatório para exportar.");
+    }
+    return {
+      content: `\uFEFF${csv}`,
+      contentType: "text/csv;charset=utf-8",
+      filename: buildReportExportFilename(report, "csv"),
+    };
+  }
+
+  return {
+    content: buildReportJson(report),
+    contentType: "application/json;charset=utf-8",
+    filename: buildReportExportFilename(report, "json"),
+  };
+}

@@ -1,12 +1,12 @@
 "use client";
 
-import { AlertCircle, Calendar, Download, Filter, RotateCcw } from "lucide-react";
+import { AlertCircle, Calendar, Download, FileJson, Filter, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import { ReactSelect } from "@/components/ui/ReactSelect";
 import type { Property, Station } from "@/features/stations/api";
-import type { CanonicalReportType } from "./reportRules";
+import type { CanonicalReportType, ReportExportFormat } from "./reportRules";
 
 export type ReportFiltersFormProps = {
   reportType: CanonicalReportType;
@@ -19,12 +19,14 @@ export type ReportFiltersFormProps = {
   days: string;
   validationErrors: string[];
   canExport: boolean;
+  exportingFormat?: ReportExportFormat | null;
   onPropertyChange: (propertyId: string) => void;
   onStationChange: (stationId: string) => void;
   onDateRangeChange: (startDate: string, endDate: string) => void;
   onDaysChange: (days: string) => void;
   onReset: () => void;
   onExportCsv: () => void;
+  onExportJson?: () => void;
 };
 
 const FORECAST_DAYS_OPTIONS = [
@@ -46,12 +48,14 @@ export function ReportFiltersForm({
   days,
   validationErrors,
   canExport,
+  exportingFormat = null,
   onPropertyChange,
   onStationChange,
   onDateRangeChange,
   onDaysChange,
   onReset,
   onExportCsv,
+  onExportJson,
 }: ReportFiltersFormProps) {
   const filteredStations =
     propertyId === "all"
@@ -165,12 +169,26 @@ export function ReportFiltersForm({
             type="button"
             variant="primary"
             size="sm"
-            disabled={!canExport}
+            disabled={!canExport || exportingFormat !== null}
+            loading={exportingFormat === "csv"}
             icon={<Download className="size-3.5" />}
             onClick={onExportCsv}
           >
             Exportar CSV
           </Button>
+          {onExportJson && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!canExport || exportingFormat !== null}
+              loading={exportingFormat === "json"}
+              icon={<FileJson className="size-3.5" />}
+              onClick={onExportJson}
+            >
+              Exportar JSON
+            </Button>
+          )}
         </div>
       </div>
 
