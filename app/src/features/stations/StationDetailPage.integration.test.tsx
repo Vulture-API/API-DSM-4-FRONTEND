@@ -96,6 +96,58 @@ describe("StationDetailPage", () => {
     expect(await screen.findByText("Sensor removido.")).toBeInTheDocument();
   });
 
+  it("vincula sensor escolhendo o canal da placa", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({ ...defaultRoutes(), "POST /api/sensors": { id: 99 } });
+    renderWithProviders(<StationDetailPage id={1} />);
+    await screen.findByRole("switch", { name: "Sensor umid operacional" });
+
+    await user.click(screen.getByRole("button", { name: "Adicionar sensor" }));
+    const dialog = screen.getByRole("dialog", { name: "Adicionar sensor" });
+    const channel = within(dialog).getByLabelText("Canal da placa");
+    const options = within(channel).getAllByRole("option").map((o) => o.getAttribute("value"));
+    expect(options).toContain("pu26");
+    expect(options).not.toContain("temp");
+    expect(options).not.toContain("umid");
+
+    await user.selectOptions(within(dialog).getByLabelText("Tipo de medição"), "2");
+    await user.selectOptions(channel, "pu26");
+    expect(within(dialog).getByLabelText("Identificador")).toHaveValue("pu26");
+    expect(within(dialog).getByText(/pluviômetro de 0,2 mm/)).toBeInTheDocument();
+
+    await user.selectOptions(channel, "");
+    expect(within(dialog).getByLabelText("Identificador")).toHaveValue("");
+    await user.type(within(dialog).getByLabelText("Identificador"), "AN34");
+    expect(channel).toHaveValue("an34");
+    expect(within(dialog).getByText(/0 a 4095/)).toBeInTheDocument();
+
+    await user.selectOptions(channel, "pu26");
+    await user.type(within(dialog).getByLabelText("Ganho"), "0,2");
+    await user.click(within(dialog).getByRole("button", { name: "Vincular sensor" }));
+
+    expect(await screen.findByText("Sensor vinculado à estação.")).toBeInTheDocument();
+    expect(calls.find((c) => c.method === "POST")?.body).toEqual({
+      station_id: 1,
+      sensor_type_id: 2,
+      local_identifier: "pu26",
+      operational_status: true,
+      gain: 0.2,
+    });
+  });
+
+  it("na edição o canal do próprio sensor continua selecionado", async () => {
+    const user = userEvent.setup();
+    mockApi(defaultRoutes());
+    renderWithProviders(<StationDetailPage id={1} />);
+    await user.click(await screen.findByRole("button", { name: "Editar sensor temp" }));
+    const dialog = screen.getByRole("dialog", { name: "Editar sensor" });
+    const channel = within(dialog).getByLabelText("Canal da placa");
+    expect(channel).toHaveValue("temp");
+    const options = within(channel).getAllByRole("option").map((o) => o.getAttribute("value"));
+    expect(options).toContain("temp");
+    expect(options).not.toContain("umid");
+  });
+
   it("vincula sensor com modelo, ganho e offset", async () => {
     const user = userEvent.setup();
     const { calls } = mockApi({ ...defaultRoutes(), "POST /api/sensors": { id: 99 } });
