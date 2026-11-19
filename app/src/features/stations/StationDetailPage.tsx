@@ -22,6 +22,7 @@ import { sensorOrder, sensorVisual } from "@/features/sensor-visual";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/format";
 
 import type { CurrentReading, StationOverview } from "./api";
+import { availableChannels, channelHint, channelLabel, findChannel } from "./board-channels";
 import { ReadingTile } from "./ReadingTile";
 import { LastUpdate } from "./LastUpdate";
 import { CurrentReadingsState } from "./CurrentReadingsState";
@@ -192,6 +193,7 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Sensor | null>(null);
   const typeById = useMemo(() => new Map(types.data?.map((t) => [t.id, t])), [types.data]);
+  const usedIdentifiers = useMemo(() => sensors.data?.map((s) => s.local_identifier) ?? [], [sensors.data]);
   const readingBySensor = useMemo(
     () => new Map(readings.map((r) => [r.sensor_id, r])),
     [readings],
@@ -227,7 +229,7 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
     <Card>
       <CardHeader
         title="Sensores"
-        description="O identificador é a chave que o datalogger usa no payload (ex.: temp, umid)."
+        description="O identificador é o canal da placa que o datalogger usa no payload (ex.: temp, an34, pu26)."
         icon={<Cpu className="size-4" />}
         action={
           <Can permission="sensors.create"><Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
@@ -343,15 +345,25 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
           </Table>
         )}
       </div>
-      {adding && <Can permission="sensors.create"><SensorFormModal stationId={station.id} onClose={() => setAdding(false)} /></Can>}
-      {editing && <Can permission="sensors.update"><SensorFormModal stationId={station.id} sensor={editing} onClose={() => setEditing(null)} /></Can>}
+      {adding && <Can permission="sensors.create"><SensorFormModal stationId={station.id} used={usedIdentifiers} onClose={() => setAdding(false)} /></Can>}
+      {editing && <Can permission="sensors.update"><SensorFormModal stationId={station.id} sensor={editing} used={usedIdentifiers} onClose={() => setEditing(null)} /></Can>}
     </Card>
   );
 }
 
 type SensorFormErrors = { type?: string; identifier?: string; gain?: string; offset?: string };
 
-function SensorFormModal({ stationId, sensor, onClose }: { stationId: number; sensor?: Sensor | undefined; onClose: () => void }) {
+function SensorFormModal({
+  stationId,
+  sensor,
+  used,
+  onClose,
+}: {
+  stationId: number;
+  sensor?: Sensor | undefined;
+  used: readonly string[];
+  onClose: () => void;
+}) {
   const types = useSensorTypes();
   const save = useSaveSensor();
   const toast = useToast();
@@ -363,6 +375,8 @@ function SensorFormModal({ stationId, sensor, onClose }: { stationId: number; se
   const [errors, setErrors] = useState<SensorFormErrors>({});
   const type = types.data?.find((t) => String(t.id) === typeId);
   const typeCalibration = type ? calibrationParts(type) : [];
+  const channels = availableChannels(used, sensor?.local_identifier);
+  const channel = findChannel(identifier);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -425,6 +439,22 @@ function SensorFormModal({ stationId, sensor, onClose }: { stationId: number; se
               {types.data?.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name} ({t.unit_of_measure})
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        <Field
+          label="Canal da placa"
+          hint={channel ? channelHint(channel) : "Canal do datalogger onde o sensor está ligado; outro identificador pode ser digitado abaixo."}
+          className="sm:col-span-2"
+        >
+          {(p) => (
+            <Select {...p} value={channel?.id ?? ""} onChange={(e) => setIdentifier(e.target.value || (channel ? "" : identifier))}>
+              <option value="">Outro identificador</option>
+              {channels.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {channelLabel(c)}
                 </option>
               ))}
             </Select>
