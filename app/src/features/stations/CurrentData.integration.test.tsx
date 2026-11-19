@@ -62,13 +62,15 @@ function routes() {
     ...overview, stations: [station],
     summary: { total: 1, online: 1, with_alert: 0, offline: 0 },
   };
+  const emptySeries = { from: initial.generated_at, to: initial.generated_at, bucket_minutes: 30, series: [] };
   return {
     ...defaultRoutes(),
     "/api/stations/overview": network,
     "/api/properties": [{ id: 1, name: "Fazenda A", location: "SJC" }],
     "/api/stations/current": structuredClone(initial),
     "/api/stations/10/current": structuredClone(initial),
-    "/api/stations/10/readings/series": { from: initial.generated_at, to: initial.generated_at, bucket_minutes: 30, series: [] },
+    "/api/stations/readings/series": emptySeries,
+    "/api/stations/10/readings/series": emptySeries,
     "/api/sensors": page(initial.stations[0]!.readings.map((r, index) => ({
       ...sensors[index]!, id: r.sensor_id, station_id: 10, local_identifier: r.local_identifier,
     }))),
