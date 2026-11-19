@@ -36,7 +36,7 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
       }, body: body?.byteLength ? body : undefined, cache: "no-store", signal: AbortSignal.timeout(10_000),
     });
     const headers = new Headers({ "Cache-Control": "no-store" });
-    for (const name of ["content-type", "retry-after"]) {
+    for (const name of ["content-type", "content-disposition", "retry-after"]) {
       const value = backend.headers.get(name);
       if (value) headers.set(name, value);
     }

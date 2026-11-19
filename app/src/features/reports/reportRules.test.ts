@@ -7,11 +7,17 @@ import {
   type AlertsReport,
   type ForecastReport,
   type HistoryReport,
+  buildExportRequestPayload,
+  buildFilterExportPayload,
+  buildLocalExportArtifact,
   buildReportCsv,
+  buildReportExportFilename,
   buildReportFromTelemetry,
+  buildReportJson,
   buildReportQueryParams,
   computeReportSummaryMetrics,
   describeWeatherCode,
+  extractFilenameFromContentDisposition,
   getReportTypeOption,
   isReportEmpty,
   normalizeReportType,
@@ -445,5 +451,160 @@ describe("organização e formatação dos dados por tipo de relatório", () => 
     const forecastCsv = buildReportCsv(populatedForecast);
     expect(forecastCsv).toContain("Data;Estacao;Temp Min (C)");
     expect(forecastCsv).toContain('"2026-10-14";"Estação Pomar Norte"');
+  });
+
+  it("gera nome de arquivo, extrai Content-Disposition e formata JSON estruturado preservando filtros", () => {
+    const historyFilters = validateReportFilters({
+      reportType: "history",
+      stationId: 10,
+      startDate: "10/10/2026",
+      endDate: "13/10/2026",
+    });
+    const historyReport = buildReportFromTelemetry(historyFilters, {
+      stations: fictionalStations,
+      properties: fictionalProperties,
+      sensors: fictionalSensors,
+      sensorTypes: fictionalSensorTypes,
+      readings: fictionalReadings,
+      forecast: null,
+      alertRules: [],
+      triggeredAlerts: [],
+    }) as HistoryReport;
+
+    expect(buildReportExportFilename(historyReport, "csv")).toBe(
+      "relatorio-historico-estacao-10-2026-10-10_a_2026-10-13.csv",
+    );
+    expect(buildReportExportFilename(historyReport, "json")).toBe(
+      "relatorio-historico-estacao-10-2026-10-10_a_2026-10-13.json",
+    );
+    expect(
+      extractFilenameFromContentDisposition(
+        'attachment; filename="relatorio-historico-estacao-2-2026-10-22_a_2026-10-23.csv"',
+      ),
+    ).toBe("relatorio-historico-estacao-2-2026-10-22_a_2026-10-23.csv");
+    expect(extractFilenameFromContentDisposition(null)).toBeNull();
+
+    const parsedJson = JSON.parse(buildReportJson(historyReport));
+    expect(parsedJson).toMatchObject({
+      report_type: "history",
+      total_records: 4,
+      filters: {
+        report_type: "history",
+        station: { id: 10, name: "Estação Pomar Norte" },
+        property: { id: 1, name: "Fazenda Vale Verde" },
+      },
+    });
+    expect(parsedJson.summary).toHaveLength(2);
+    expect(parsedJson.data).toHaveLength(4);
+
+    const forecastReport = buildReportFromTelemetry(
+      validateReportFilters({ reportType: "forecast", stationId: 10, days: 2 }),
+      {
+        stations: fictionalStations,
+        properties: fictionalProperties,
+        sensors: fictionalSensors,
+        sensorTypes: fictionalSensorTypes,
+        readings: [],
+        forecast: fictionalForecast,
+        alertRules: [],
+        triggeredAlerts: [],
+      },
+    ) as ForecastReport;
+    const forecastJson = JSON.parse(buildReportJson(forecastReport));
+    expect(forecastJson.report_type).toBe("forecast");
+    expect(forecastJson.total_records).toBe(2);
+
+    const alertsReport = buildReportFromTelemetry(
+      validateReportFilters({
+        reportType: "alerts",
+        stationId: 10,
+        startDate: "10/10/2026",
+        endDate: "13/10/2026",
+      }),
+      {
+        stations: fictionalStations,
+        properties: fictionalProperties,
+        sensors: fictionalSensors,
+        sensorTypes: fictionalSensorTypes,
+        readings: [],
+        forecast: null,
+        alertRules: fictionalAlertRules,
+        triggeredAlerts: fictionalTriggeredAlerts,
+      },
+    ) as AlertsReport;
+    const alertsJson = JSON.parse(buildReportJson(alertsReport));
+    expect(alertsJson.report_type).toBe("alerts");
+    expect(alertsJson.total_records).toBe(2);
+
+    const artifact = buildLocalExportArtifact(historyReport, "csv");
+    expect(artifact.content.startsWith("\uFEFF")).toBe(true);
+    expect(artifact.contentType).toContain("text/csv");
+
+    const jsonArtifact = buildLocalExportArtifact(historyReport, "json");
+    expect(jsonArtifact.contentType).toContain("application/json");
+    expect(jsonArtifact.filename).toBe(
+      "relatorio-historico-estacao-10-2026-10-10_a_2026-10-13.json",
+    );
+
+    expect(() => buildLocalExportArtifact(null, "json")).toThrow(
+      "Não existem dados disponíveis no relatório para exportar.",
+    );
+  });
+
+  it("alterna para payload enxuto de filtros quando o relatório ultrapassa o limite inline", () => {
+    const filters = validateReportFilters({
+      reportType: "history",
+      stationId: 10,
+      propertyId: 1,
+      startDate: "10/10/2026",
+      endDate: "13/10/2026",
+    });
+    const historyReport = buildReportFromTelemetry(filters, {
+      stations: fictionalStations,
+      properties: fictionalProperties,
+      sensors: fictionalSensors,
+      sensorTypes: fictionalSensorTypes,
+      readings: fictionalReadings,
+      forecast: null,
+      alertRules: [],
+      triggeredAlerts: [],
+    }) as HistoryReport;
+
+    expect(buildExportRequestPayload(historyReport, "csv", filters)).toEqual({
+      report: historyReport,
+      format: "csv",
+    });
+
+    expect(buildExportRequestPayload(historyReport, "csv", filters, 128)).toEqual({
+      type: "history",
+      station_id: 10,
+      property_id: 1,
+      from: "2026-10-10T00:00:00.000Z",
+      to: "2026-10-13T23:59:59.999Z",
+      format: "csv",
+    });
+
+    const forecastFilters = validateReportFilters({
+      reportType: "forecast",
+      stationId: 10,
+      days: 5,
+    });
+    const forecastReport = buildReportFromTelemetry(forecastFilters, {
+      stations: fictionalStations,
+      properties: fictionalProperties,
+      sensors: fictionalSensors,
+      sensorTypes: fictionalSensorTypes,
+      readings: [],
+      forecast: fictionalForecast,
+      alertRules: [],
+      triggeredAlerts: [],
+    }) as ForecastReport;
+
+    expect(buildFilterExportPayload(forecastReport, "json", forecastFilters)).toEqual({
+      type: "forecast",
+      station_id: 10,
+      days: 5,
+      format: "json",
+    });
   });
 });
