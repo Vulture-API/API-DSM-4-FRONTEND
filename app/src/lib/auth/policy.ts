@@ -30,6 +30,8 @@ export function safeDestination(value: string | null, permissions: string[]): st
 export function apiPermission(path: string[], method: string): string | null {
   const [resource, segment, action] = path;
   const read = method === "GET" || method === "HEAD";
+  if (resource === "stations" && path.length === 3 && action === "collection") return read ? "station-collection.read" : method === "PUT" ? "station-collection.update" : null;
+  if (resource === "stations" && path.length === 3 && action === "status") return read ? "stations.read" : null;
   if (resource === "stations" && segment === "properties") return read ? "properties.read" : null;
   if (resource === "stations" && path.some((part) => ["overview", "current", "statistics", "forecast", "status", "readings"].includes(part))) return read ? "monitoring.read" : null;
   if (resource === "readings") return read ? "monitoring.read" : null;

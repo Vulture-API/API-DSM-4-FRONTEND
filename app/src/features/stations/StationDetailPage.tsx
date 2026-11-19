@@ -32,6 +32,7 @@ import { StationFormModal } from "./StationFormModal";
 import { StationsMapLazy } from "./StationsMapLazy";
 import { toStation } from "./StationsPage";
 import { StationStatusBadge } from "./StationStatusBadge";
+import { CollectionSettingsCard } from "./CollectionSettingsCard";
 
 export function StationDetailPage({ id }: { id: number }) {
   const overview = useOverview();
@@ -141,6 +142,7 @@ export function StationDetailPage({ id }: { id: number }) {
         </div>
 
         <SensorsCard station={station} readings={readings} />
+        <CollectionSettingsCard stationId={station.id} stationName={station.name} />
       </div>
 
       {editing && <Can permission="stations.update"><StationFormModal open station={toStation(station)} onClose={() => setEditing(false)} /></Can>}

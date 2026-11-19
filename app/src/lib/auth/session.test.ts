@@ -7,7 +7,7 @@ vi.mock("next/headers", () => ({ cookies: async () => ({ get: () => state.token 
 import { POST as login } from "@/app/api/auth/login/route";
 import { POST as logout } from "@/app/api/auth/logout/route";
 import { GET as me } from "@/app/api/auth/me/route";
-import { GET as forward, POST as create } from "@/app/api/backend/[...path]/route";
+import { GET as forward, POST as create, PUT as update } from "@/app/api/backend/[...path]/route";
 import { sameOrigin } from "@/lib/auth/session.server";
 
 const user = { id: 7, role_id: 2, name: "Gerente", email: "gerente@example.com", active: true, created_at: "2026-01-01", permissions: ["monitoring.read", "stations.read"] };
@@ -77,6 +77,27 @@ describe("sessão JWT no servidor do frontend", () => {
 });
 
 describe("proxy autenticado de API", () => {
+  it("nega consulta e alteração da coleta ao Gerente antes de encaminhar ao backend", async () => {
+    state.token = "session";
+    const fetch = vi.fn().mockImplementation(async () => json(user)); vi.stubGlobal("fetch", fetch);
+    const path = "/api/backend/stations/1/collection";
+    expect((await forward(new Request(`http://localhost:3010${path}`), context(["stations", "1", "collection"]))).status).toBe(403);
+    const put = new Request(`http://localhost:3010${path}`, { method: "PUT", headers: { Origin: "http://localhost:3010", "Content-Type": "application/json" }, body: JSON.stringify({ collection_interval_seconds: 120 }) });
+    expect((await update(put, context(["stations", "1", "collection"]))).status).toBe(403);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls.every(([url]) => String(url).endsWith("/api/auth/me"))).toBe(true);
+  });
+
+  it("encaminha configuração autenticada com a permissão administrativa específica", async () => {
+    state.token = "session";
+    const fetch = vi.fn().mockResolvedValueOnce(json({ ...user, permissions: ["station-collection.update"] }))
+      .mockResolvedValueOnce(json({ collection_interval_seconds: 120 })); vi.stubGlobal("fetch", fetch);
+    const put = new Request("http://localhost:3010/api/backend/stations/1/collection", { method: "PUT", headers: { Origin: "http://localhost:3010", "Content-Type": "application/json" }, body: JSON.stringify({ collection_interval_seconds: 120 }) });
+    expect((await update(put, context(["stations", "1", "collection"]))).status).toBe(200);
+    expect(fetch.mock.calls[1]![0]).toBe("http://backend.test/api/stations/1/collection");
+    expect(fetch.mock.calls[1]![1]).toMatchObject({ method: "PUT", headers: { Authorization: "Bearer session" } });
+    expect(new TextDecoder().decode(fetch.mock.calls[1]![1].body)).toBe(JSON.stringify({ collection_interval_seconds: 120 }));
+  });
   it("exige sessão antes de consultar recursos", async () => {
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     expect((await forward(new Request("http://localhost:3010/api/backend/stations"), context(["stations"]))).status).toBe(401);

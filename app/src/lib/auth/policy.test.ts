@@ -16,6 +16,11 @@ describe("políticas de acesso", () => {
     expect(safeDestination("/estacoes/2?tab=dados", ["stations.read"])).toBe("/estacoes/2?tab=dados");
   });
   it("mapeia operações e consultas auxiliares com os códigos do backend", () => {
+    expect(apiPermission(["stations", "2", "collection"], "GET")).toBe("station-collection.read");
+    expect(apiPermission(["stations", "2", "collection"], "HEAD")).toBe("station-collection.read");
+    expect(apiPermission(["stations", "2", "collection"], "PUT")).toBe("station-collection.update");
+    expect(apiPermission(["stations", "2", "collection"], "DELETE")).toBeNull();
+    expect(apiPermission(["stations", "2", "status"], "GET")).toBe("stations.read");
     expect(apiPermission(["stations", "properties"], "GET")).toBe("properties.read");
     expect(apiPermission(["stations", "2", "current"], "GET")).toBe("monitoring.read");
     expect(apiPermission(["stations"], "POST")).toBe("stations.create");
