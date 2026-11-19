@@ -4,13 +4,14 @@ import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/Toast";
 import { useProperties, useStations } from "@/features/stations/hooks";
+import { reportsApi } from "./api";
 import { useReport } from "./hooks";
 import { ReportFiltersForm } from "./ReportFiltersForm";
 import { ReportTypeSelector } from "./ReportTypeSelector";
 import { ReportViewer } from "./ReportViewer";
 import {
   type CanonicalReportType,
-  buildReportCsv,
+  type ReportExportFormat,
   isReportEmpty,
   validateReportFilters,
 } from "./reportRules";
@@ -20,13 +21,14 @@ const DEFAULT_END_DATE = "14/10/2026";
 const DEFAULT_DAYS = "7";
 
 export function ReportsPage() {
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
   const [reportType, setReportType] = useState<CanonicalReportType>("history");
   const [propertyId, setPropertyId] = useState<string>("all");
   const [stationId, setStationId] = useState<string>("all");
   const [startDate, setStartDate] = useState<string>(DEFAULT_START_DATE);
   const [endDate, setEndDate] = useState<string>(DEFAULT_END_DATE);
   const [days, setDays] = useState<string>(DEFAULT_DAYS);
+  const [exportingFormat, setExportingFormat] = useState<ReportExportFormat | null>(null);
 
   const propertiesQuery = useProperties();
   const stationsQuery = useStations();
@@ -88,25 +90,36 @@ export function ReportsPage() {
     setDays(DEFAULT_DAYS);
   }
 
-  function handleExportCsv() {
-    const csvContent = buildReportCsv(reportQuery.data);
-    if (!csvContent) return;
+  async function handleExport(format: ReportExportFormat) {
+    if (!reportQuery.data || isReportEmpty(reportQuery.data)) {
+      showError("Não existem dados disponíveis no relatório para exportar.");
+      return;
+    }
 
-    const blob = new Blob([`\uFEFF${csvContent}`], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `relatorio-${reportType}-${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    success("Relatório exportado em formato CSV");
+    setExportingFormat(format);
+    try {
+      const exported = await reportsApi.export(reportQuery.data, format, validatedFilters);
+      const blob = new Blob([exported.content], {
+        type: exported.contentType,
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", exported.filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      success(`Relatório exportado em formato ${format.toUpperCase()}`);
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Não foi possível exportar o relatório. Tente novamente.";
+      showError(message);
+    } finally {
+      setExportingFormat(null);
+    }
   }
 
   const errorMessage = reportQuery.error
@@ -116,6 +129,7 @@ export function ReportsPage() {
   const canExport =
     validatedFilters.valid &&
     !reportQuery.isLoading &&
+    !reportQuery.isFetching &&
     !reportQuery.isError &&
     !isReportEmpty(reportQuery.data);
 
@@ -143,6 +157,7 @@ export function ReportsPage() {
         days={days}
         validationErrors={validatedFilters.errors}
         canExport={canExport}
+        exportingFormat={exportingFormat}
         onPropertyChange={handlePropertyChange}
         onStationChange={setStationId}
         onDateRangeChange={(start, end) => {
@@ -151,7 +166,8 @@ export function ReportsPage() {
         }}
         onDaysChange={setDays}
         onReset={handleReset}
-        onExportCsv={handleExportCsv}
+        onExportCsv={() => void handleExport("csv")}
+        onExportJson={() => void handleExport("json")}
       />
 
       <ReportViewer

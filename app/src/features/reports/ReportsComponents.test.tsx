@@ -231,6 +231,7 @@ describe("ReportFiltersForm", () => {
   it("exibe seletor de horizonte de dias quando o tipo é previsão e habilita exportação quando válido", () => {
     const onDaysChange = vi.fn();
     const onExportCsv = vi.fn();
+    const onExportJson = vi.fn();
 
     render(
       <ReportFiltersForm
@@ -250,6 +251,7 @@ describe("ReportFiltersForm", () => {
         onDaysChange={onDaysChange}
         onReset={vi.fn()}
         onExportCsv={onExportCsv}
+        onExportJson={onExportJson}
       />,
     );
 
@@ -262,6 +264,11 @@ describe("ReportFiltersForm", () => {
     expect(exportBtn).toBeEnabled();
     fireEvent.click(exportBtn);
     expect(onExportCsv).toHaveBeenCalledTimes(1);
+
+    const exportJsonBtn = screen.getByRole("button", { name: /Exportar JSON/i });
+    expect(exportJsonBtn).toBeEnabled();
+    fireEvent.click(exportJsonBtn);
+    expect(onExportJson).toHaveBeenCalledTimes(1);
   });
 });
 

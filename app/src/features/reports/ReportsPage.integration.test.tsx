@@ -63,8 +63,10 @@ describe("ReportsPage", () => {
     expect(exportBtn).toBeEnabled();
     fireEvent.click(exportBtn);
 
-    expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
-    expect(revokeObjectUrlSpy).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjectUrlSpy).toHaveBeenCalledTimes(1);
+    });
 
     fireEvent.change(screen.getByLabelText("Propriedade Rural"), {
       target: { value: "1" },
@@ -220,5 +222,245 @@ describe("ReportsPage", () => {
     expect(within(readingsTable).getByText("27 °C")).toBeInTheDocument();
 
     generateSpy.mockRestore();
+  });
+
+  it("exporta relatório gerado em CSV e JSON pelo endpoint do backend e trata falhas na exportação", async () => {
+    const createObjectUrlSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:relatorio-exportado");
+    const revokeObjectUrlSpy = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+    const downloadedFilenames: Array<string | null> = [];
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        downloadedFilenames.push(this.getAttribute("download"));
+      });
+
+    const sampleHistoryReport: HistoryReport = {
+      report_type: "history",
+      generated_at: "2026-10-14T12:00:00.000Z",
+      period: {
+        from: "2026-10-07T00:00:00.000Z",
+        to: "2026-10-14T23:59:59.999Z",
+      },
+      station: { id: 1, name: "Estação Sede" },
+      property: { id: 1, name: "Fazenda Vale Verde" },
+      total_readings: 1,
+      summary: [
+        {
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          count: 1,
+          avg: 25,
+          min: 25,
+          max: 25,
+          stddev: null,
+          accumulated: null,
+        },
+      ],
+      readings: [
+        {
+          id: 10,
+          sensor_id: 1,
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          value: 25,
+          unix_time: 1791892800,
+          date_time: "2026-10-13T12:00:00.000Z",
+          data_consistent: true,
+        },
+      ],
+    };
+
+    const { fetchMock } = mockApi({
+      ...defaultRoutes(),
+      "/api/reports": sampleHistoryReport,
+    });
+
+    const baseFetch = fetchMock.getMockImplementation()!;
+    let exportCalls = 0;
+    const exportRequests: Array<{ url: string; body: unknown }> = [];
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const urlText = String(input);
+      if (urlText.includes("/api/backend/reports/export")) {
+        exportCalls += 1;
+        const parsedBody = init?.body ? JSON.parse(String(init.body)) : null;
+        exportRequests.push({ url: urlText, body: parsedBody });
+        if (exportCalls === 1) {
+          return new Response('\uFEFF"ID Leitura";"Valor"\r\n"10";"25"', {
+            status: 200,
+            headers: {
+              "Content-Type": "text/csv; charset=utf-8",
+              "Content-Disposition":
+                'attachment; filename="relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.csv"',
+            },
+          });
+        }
+        if (exportCalls === 2) {
+          return new Response(JSON.stringify({ report_type: "history", total_records: 1 }), {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              "Content-Disposition":
+                'attachment; filename="relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.json"',
+            },
+          });
+        }
+        return new Response(
+          JSON.stringify({ message: "Falha ao gerar arquivo para exportação." }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      return baseFetch(input, init);
+    });
+
+    renderWithProviders(<ReportsPage />);
+
+    const exportCsvBtn = screen.getByRole("button", { name: /Exportar CSV/i });
+    const exportJsonBtn = screen.getByRole("button", { name: /Exportar JSON/i });
+    await waitFor(() => expect(exportCsvBtn).toBeEnabled());
+
+    fireEvent.click(exportCsvBtn);
+    await waitFor(() => {
+      expect(screen.getByText("Relatório exportado em formato CSV")).toBeInTheDocument();
+    });
+    expect(exportRequests[0]).toMatchObject({
+      url: "/api/backend/reports/export",
+      body: { format: "csv", report: sampleHistoryReport },
+    });
+
+    fireEvent.click(exportJsonBtn);
+    await waitFor(() => {
+      expect(screen.getByText("Relatório exportado em formato JSON")).toBeInTheDocument();
+    });
+    expect(exportRequests[1]).toMatchObject({
+      url: "/api/backend/reports/export",
+      body: { format: "json", report: sampleHistoryReport },
+    });
+
+    fireEvent.click(exportCsvBtn);
+    await waitFor(() => {
+      expect(
+        screen.getByText("Falha ao gerar arquivo para exportação."),
+      ).toBeInTheDocument();
+    });
+    expect(createObjectUrlSpy).toHaveBeenCalledTimes(2);
+    expect(revokeObjectUrlSpy).toHaveBeenCalledTimes(2);
+    expect(downloadedFilenames).toEqual([
+      "relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.csv",
+      "relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.json",
+    ]);
+
+    anchorClickSpy.mockRestore();
+    createObjectUrlSpy.mockRestore();
+    revokeObjectUrlSpy.mockRestore();
+  });
+
+  it("reenvia com filtros enxutos quando a exportação inline excede o limite (413) ou o relatório é grande", async () => {
+    const createObjectUrlSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:relatorio-grande");
+    const revokeObjectUrlSpy = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    const sampleHistoryReport: HistoryReport = {
+      report_type: "history",
+      generated_at: "2026-10-14T12:00:00.000Z",
+      period: {
+        from: "2026-10-07T00:00:00.000Z",
+        to: "2026-10-14T23:59:59.999Z",
+      },
+      station: { id: 1, name: "Estação Sede" },
+      property: { id: 1, name: "Fazenda Vale Verde" },
+      total_readings: 1,
+      summary: [
+        {
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          count: 1,
+          avg: 25,
+          min: 25,
+          max: 25,
+          stddev: null,
+          accumulated: null,
+        },
+      ],
+      readings: [
+        {
+          id: 10,
+          sensor_id: 1,
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          value: 25,
+          unix_time: 1791892800,
+          date_time: "2026-10-13T12:00:00.000Z",
+          data_consistent: true,
+        },
+      ],
+    };
+
+    const { fetchMock } = mockApi({
+      ...defaultRoutes(),
+      "/api/reports": sampleHistoryReport,
+    });
+
+    const baseFetch = fetchMock.getMockImplementation()!;
+    const sentBodies: unknown[] = [];
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const urlText = String(input);
+      if (urlText.includes("/api/backend/reports/export")) {
+        const parsedBody = init?.body ? JSON.parse(String(init.body)) : null;
+        sentBodies.push(parsedBody);
+        if (parsedBody && "report" in parsedBody) {
+          return new Response(JSON.stringify({ message: "Requisição muito grande." }), {
+            status: 413,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return new Response('\uFEFF"ID Leitura";"Valor"\r\n"10";"25"', {
+          status: 200,
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition":
+              'attachment; filename="relatorio-historico-geral-2026-10-07_a_2026-10-14.csv"',
+          },
+        });
+      }
+      return baseFetch(input, init);
+    });
+
+    renderWithProviders(<ReportsPage />);
+
+    const exportCsvBtn = screen.getByRole("button", { name: /Exportar CSV/i });
+    await waitFor(() => expect(exportCsvBtn).toBeEnabled());
+
+    fireEvent.click(exportCsvBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText("Relatório exportado em formato CSV")).toBeInTheDocument();
+    });
+    expect(sentBodies).toHaveLength(2);
+    expect(sentBodies[0]).toHaveProperty("report");
+    expect(sentBodies[1]).toEqual({
+      type: "history",
+      station_id: 1,
+      from: "2026-10-07T00:00:00.000Z",
+      to: "2026-10-14T23:59:59.999Z",
+      format: "csv",
+    });
+
+    anchorClickSpy.mockRestore();
+    createObjectUrlSpy.mockRestore();
+    revokeObjectUrlSpy.mockRestore();
   });
 });
