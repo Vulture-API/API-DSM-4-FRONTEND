@@ -446,7 +446,7 @@ function SensorFormModal({
         </Field>
         <Field
           label="Canal da placa"
-          hint={channel ? channelHint(channel) : "Canal do datalogger onde o sensor está ligado; outro identificador pode ser digitado abaixo."}
+          hint={channel ? channelHint(channel) : "Canal em que o sensor mudou o valor (no payload ou no comando \"canais\" da serial do datalogger); outro identificador pode ser digitado abaixo."}
           className="sm:col-span-2"
         >
           {(p) => (
