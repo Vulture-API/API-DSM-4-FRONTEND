@@ -14,7 +14,7 @@ export type BoardChannel = {
 };
 
 const ANALOG_PINS = [32, 33, 34, 35, 36, 39];
-const DIGITAL_PINS = [4, 13, 14, 16, 17, 18, 19, 21, 22, 23, 26, 27];
+const DIGITAL_PINS = [4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 26, 27];
 
 export const BOARD_CHANNELS: readonly BoardChannel[] = [
   { id: "temp", kind: "dht22", pin: 4, raw: "°C, de -40 a 80" },
