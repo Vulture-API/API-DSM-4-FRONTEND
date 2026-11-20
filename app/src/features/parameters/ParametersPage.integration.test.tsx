@@ -148,4 +148,96 @@ describe("ParametersPage", () => {
       offset_value: null,
     });
   });
+
+  // SCRUM-637: limites físicos do tipo.
+  it("mostra os limites físicos de cada tipo na lista", async () => {
+    mockApi({
+      ...defaultRoutes(),
+      "/api/sensor-types": [
+        { id: 1, name: "Temperatura", unit_of_measure: "°C", factor: null, gain: null },
+        { id: 2, name: "Umidade", unit_of_measure: "%", factor: null, gain: null, min_value: 0, max_value: 100 },
+        { id: 3, name: "Chuva", unit_of_measure: "mm", factor: null, gain: null, min_value: 0, max_value: null },
+      ],
+    });
+    renderWithProviders(<ParametersPage />);
+
+    const humidity = (await screen.findByText("Umidade")).closest("li")!;
+    expect(within(humidity).getByText("0 a 100 %")).toBeInTheDocument();
+    expect(within(screen.getByText("Chuva").closest("li")!).getByText("mínimo 0 mm")).toBeInTheDocument();
+    expect(within(screen.getByText("Temperatura").closest("li")!).getByText("Sem limites")).toBeInTheDocument();
+  });
+
+  it("cadastra com limites e recusa mínimo maior que o máximo antes de enviar", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({ ...defaultRoutes(), "POST /api/sensor-types": { id: 8 } });
+    renderWithProviders(<ParametersPage />);
+    await screen.findByText("Umidade");
+
+    await user.click(screen.getByRole("button", { name: "Novo parâmetro" }));
+    const dialog = screen.getByRole("dialog", { name: "Novo parâmetro" });
+    await user.type(within(dialog).getByLabelText("Nome"), "Umidade do Ar");
+    await user.type(within(dialog).getByLabelText("Unidade de medida"), "%");
+    expect(within(dialog).getByText("substitui o do tipo", { exact: false })).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText("Mínimo físico"), "100");
+    await user.type(within(dialog).getByLabelText("Máximo físico"), "0");
+    await user.click(within(dialog).getByRole("button", { name: "Cadastrar" }));
+    expect(within(dialog).getByText("O mínimo não pode ser maior que o máximo.")).toBeInTheDocument();
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+
+    await user.clear(within(dialog).getByLabelText("Mínimo físico"));
+    await user.type(within(dialog).getByLabelText("Mínimo físico"), "0");
+    await user.clear(within(dialog).getByLabelText("Máximo físico"));
+    await user.type(within(dialog).getByLabelText("Máximo físico"), "100");
+    await user.click(within(dialog).getByRole("button", { name: "Cadastrar" }));
+
+    expect(await screen.findByText("Parâmetro cadastrado.")).toBeInTheDocument();
+    expect(calls.find((c) => c.method === "POST")?.body).toEqual({
+      name: "Umidade do Ar",
+      unit_of_measure: "%",
+      factor: null,
+      gain: null,
+      min_value: 0,
+      max_value: 100,
+    });
+  });
+
+  it("cadastra sem limites sem enviar os campos", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({ ...defaultRoutes(), "POST /api/sensor-types": { id: 9 } });
+    renderWithProviders(<ParametersPage />);
+    await screen.findByText("Umidade");
+
+    await user.click(screen.getByRole("button", { name: "Novo parâmetro" }));
+    const dialog = screen.getByRole("dialog", { name: "Novo parâmetro" });
+    await user.type(within(dialog).getByLabelText("Nome"), "Pressão");
+    await user.type(within(dialog).getByLabelText("Unidade de medida"), "hPa");
+    await user.click(within(dialog).getByRole("button", { name: "Cadastrar" }));
+
+    expect(await screen.findByText("Parâmetro cadastrado.")).toBeInTheDocument();
+    const body = calls.find((c) => c.method === "POST")?.body as Record<string, unknown>;
+    expect(body).not.toHaveProperty("min_value");
+    expect(body).not.toHaveProperty("max_value");
+  });
+
+  it("edita os limites e remove um deles deixando o campo em branco", async () => {
+    const user = userEvent.setup();
+    const { calls } = mockApi({
+      ...defaultRoutes(),
+      "/api/sensor-types": [{ id: 2, name: "Umidade", unit_of_measure: "%", factor: null, gain: null, min_value: 0, max_value: 100 }],
+      "PUT /api/sensor-types/2": { id: 2 },
+    });
+    renderWithProviders(<ParametersPage />);
+
+    await user.click(await screen.findByRole("button", { name: "Editar Umidade" }));
+    const dialog = screen.getByRole("dialog", { name: "Editar parâmetro" });
+    expect(within(dialog).getByLabelText("Mínimo físico")).toHaveValue("0");
+    expect(within(dialog).getByLabelText("Máximo físico")).toHaveValue("100");
+    await user.clear(within(dialog).getByLabelText("Mínimo físico"));
+    await user.type(within(dialog).getByLabelText("Mínimo físico"), "5");
+    await user.clear(within(dialog).getByLabelText("Máximo físico"));
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByText("Parâmetro atualizado.")).toBeInTheDocument();
+    expect(calls.find((c) => c.method === "PUT")?.body).toMatchObject({ min_value: 5, max_value: null });
+  });
 });
