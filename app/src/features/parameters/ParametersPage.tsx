@@ -21,6 +21,7 @@ import { ApiError } from "@/lib/api/http";
 import type { SensorType } from "./api";
 import { calibrationParts, calibrationText, multiplierError, offsetError, parseCalibration } from "./calibration";
 import { useDeleteSensorType, useSaveSensorType, useSensors, useSensorTypes } from "./hooks";
+import { limitsErrors, limitsText } from "./limits";
 
 export function ParametersPage() {
   const types = useSensorTypes();
@@ -60,7 +61,7 @@ export function ParametersPage() {
       <PageHeader
         eyebrow="Administração"
         title="Parâmetros meteorológicos"
-        description="Tipos de medição que os sensores podem registrar, com unidade e calibração."
+        description="Tipos de medição que os sensores podem registrar, com unidade, calibração e limites físicos."
         actions={
           <Can permission="sensor-types.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
             Novo parâmetro
@@ -142,6 +143,10 @@ export function ParametersPage() {
                         )}
                       </dd>
                     </div>
+                    <div className="col-span-2">
+                      <dt className="text-xs text-faint">Limites físicos</dt>
+                      <dd className="tabular-nums text-muted">{limitsText(type, type.unit_of_measure)}</dd>
+                    </div>
                   </dl>
                 </li>
               );
@@ -176,6 +181,8 @@ function SensorTypeModal({ type, onClose }: { type?: SensorType | undefined; onC
     factor: calibrationText(type?.factor),
     gain: calibrationText(type?.gain),
     offset_value: calibrationText(type?.offset_value),
+    min_value: calibrationText(type?.min_value),
+    max_value: calibrationText(type?.max_value),
   });
   const [errors, setErrors] = useState<Partial<Record<keyof typeof values, string>>>({});
   const set = (key: keyof typeof values) => (value: string) => setValues((v) => ({ ...v, [key]: value }));
@@ -191,9 +198,12 @@ function SensorTypeModal({ type, onClose }: { type?: SensorType | undefined; onC
     if (factorError) found.factor = factorError;
     if (gainError) found.gain = gainError;
     if (offsetValueError) found.offset_value = offsetValueError;
+    Object.assign(found, limitsErrors(values.min_value, values.max_value));
     setErrors(found);
     if (Object.keys(found).length) return;
     const offsetValue = parseCalibration(values.offset_value);
+    const minValue = parseCalibration(values.min_value);
+    const maxValue = parseCalibration(values.max_value);
     try {
       await save.mutateAsync({
         id: type?.id,
@@ -204,6 +214,9 @@ function SensorTypeModal({ type, onClose }: { type?: SensorType | undefined; onC
           gain: parseCalibration(values.gain),
           // Na edição, vazio remove o offset; no cadastro o campo nem é enviado.
           ...(type || offsetValue !== null ? { offset_value: offsetValue } : {}),
+          // Limite vazio só é enviado para remover um que o tipo já tinha.
+          ...(minValue !== null || type?.min_value != null ? { min_value: minValue } : {}),
+          ...(maxValue !== null || type?.max_value != null ? { max_value: maxValue } : {}),
         },
       });
       toast.success(type ? "Parâmetro atualizado." : "Parâmetro cadastrado.");
@@ -247,6 +260,15 @@ function SensorTypeModal({ type, onClose }: { type?: SensorType | undefined; onC
         </Field>
         <Field label="Offset" error={errors.offset_value} hint="Somado à leitura" className="sm:col-span-2">
           {(p) => <Input {...p} inputMode="decimal" value={values.offset_value} onChange={(e) => set("offset_value")(e.target.value)} />}
+        </Field>
+        <p className="text-sm text-muted sm:col-span-2">
+          Limites físicos, opcionais: leitura fora da faixa é gravada como inconsistente. Quando o sensor tem limite próprio, ele substitui o do tipo.
+        </p>
+        <Field label="Mínimo físico" error={errors.min_value} hint={values.unit_of_measure.trim() ? `Em ${values.unit_of_measure.trim()}` : "Na unidade do tipo"}>
+          {(p) => <Input {...p} inputMode="decimal" value={values.min_value} onChange={(e) => set("min_value")(e.target.value)} />}
+        </Field>
+        <Field label="Máximo físico" error={errors.max_value} hint={values.unit_of_measure.trim() ? `Em ${values.unit_of_measure.trim()}` : "Na unidade do tipo"}>
+          {(p) => <Input {...p} inputMode="decimal" value={values.max_value} onChange={(e) => set("max_value")(e.target.value)} />}
         </Field>
       </form>
     </Modal>
