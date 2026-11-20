@@ -6,9 +6,10 @@ describe("canais da placa", () => {
   it("lista os canais que o firmware envia", () => {
     expect(BOARD_CHANNELS.map((c) => c.id)).toEqual([
       "temp", "umid",
-      "an32", "an33", "an34", "an35", "an36", "an39",
-      "pu32", "pu33", "pu34", "pu35", "pu36", "pu39",
+      "an34", "an35", "an36", "an39",
+      "pu34", "pu35", "pu36", "pu39",
       "pu4", "pu5", "pu12", "pu13", "pu14", "pu15", "pu16", "pu17", "pu18", "pu19", "pu21", "pu22", "pu23", "pu26", "pu27",
+      "pu32", "pu33",
     ]);
   });
 
@@ -24,7 +25,7 @@ describe("canais da placa", () => {
     expect(ids).not.toContain("temp");
     expect(ids).not.toContain("an34");
     expect(ids).toContain("umid");
-    expect(ids).toHaveLength(27);
+    expect(ids).toHaveLength(25);
   });
 
   it("na edição mantém o canal do próprio sensor", () => {
