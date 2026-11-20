@@ -7,6 +7,9 @@ export type SensorType = {
   factor: number | null;
   gain: number | null;
   offset_value?: number | null;
+  /** Limites físicos do tipo (SCRUM-636): valem para o sensor sem limite próprio. */
+  min_value?: number | null;
+  max_value?: number | null;
 };
 export type SensorTypeInput = Omit<SensorType, "id">;
 
