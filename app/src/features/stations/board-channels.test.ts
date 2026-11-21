@@ -1,15 +1,43 @@
 import { describe, expect, it } from "vitest";
 
-import { availableChannels, BOARD_CHANNELS, channelHint, channelLabel, findChannel } from "./board-channels";
+import {
+  availableChannels,
+  BOARD_CHANNELS,
+  channelHint,
+  channelLabel,
+  findChannel,
+} from "./board-channels";
 
 describe("canais da placa", () => {
   it("lista os canais que o firmware envia", () => {
     expect(BOARD_CHANNELS.map((c) => c.id)).toEqual([
-      "temp", "umid",
-      "an34", "an35", "an36", "an39",
-      "pu34", "pu35", "pu36", "pu39",
-      "pu4", "pu5", "pu12", "pu13", "pu14", "pu15", "pu16", "pu17", "pu18", "pu19", "pu21", "pu22", "pu23", "pu26", "pu27",
-      "pu32", "pu33",
+      "temp",
+      "umid",
+      "an34",
+      "an35",
+      "an36",
+      "an39",
+      "pu34",
+      "pu35",
+      "pu36",
+      "pu39",
+      "pu4",
+      "pu5",
+      "pu12",
+      "pu13",
+      "pu14",
+      "pu15",
+      "pu16",
+      "pu17",
+      "pu18",
+      "pu19",
+      "pu21",
+      "pu22",
+      "pu23",
+      "pu26",
+      "pu27",
+      "pu32",
+      "pu33",
     ]);
   });
 
@@ -38,7 +66,9 @@ describe("canais da placa", () => {
     expect(channelLabel(findChannel("pu26")!)).toBe("pu26 · Pulsos GPIO26");
     expect(channelLabel(findChannel("pu35")!)).toBe("pu35 · Pulsos GPIO35");
     expect(channelLabel(findChannel("temp")!)).toBe("temp · DHT22");
-    expect(channelHint(findChannel("pu26")!)).toContain("pluviômetro de 0,2 mm → 0,2");
+    expect(channelHint(findChannel("pu26")!)).toContain(
+      "pluviômetro de 0,2 mm → 0,2",
+    );
     expect(channelHint(findChannel("an39")!)).toContain("0 a 4095");
     expect(channelHint(findChannel("an39")!)).toContain("0,000805860805");
     expect(findChannel("di18")).toBeUndefined();

@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start -p 3010",
     "lint": "eslint",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
     "test": "vitest run --coverage",
     "test:unit": "vitest run --project unit",
     "test:int": "vitest run --project integration",
@@ -41,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.4.3",
     "jsdom": "^26.0.0",
+    "prettier": "^3.10.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "4.1.12"

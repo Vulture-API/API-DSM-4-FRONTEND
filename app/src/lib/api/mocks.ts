@@ -1,7 +1,10 @@
 import type { AlertRule, TriggeredAlert } from "@/features/alerts/api";
 import type { Sensor, SensorType } from "@/features/parameters/api";
 import type { Reading } from "@/features/readings/api";
-import { buildReportFromTelemetry, validateReportFilters } from "@/features/reports/reportRules";
+import {
+  buildReportFromTelemetry,
+  validateReportFilters,
+} from "@/features/reports/reportRules";
 import type {
   CurrentData,
   ForecastDay,
@@ -22,16 +25,52 @@ export const BASE_MOCK_TIME_MS = BASE_MOCK_TIME_SEC * 1000;
 export const BASE_MOCK_ISO = "2026-10-14T00:00:00.000Z";
 
 const nowSeconds = () => BASE_MOCK_TIME_SEC;
-const minutesAgo = (m: number) => new Date(BASE_MOCK_TIME_MS - m * 60_000).toISOString();
+const minutesAgo = (m: number) =>
+  new Date(BASE_MOCK_TIME_MS - m * 60_000).toISOString();
 
 export const mockProperties: Property[] = [
-  { id: 1, name: "Fazenda Santa Rita", location: "São José dos Campos - SP", owner: "Mariana Albuquerque" },
-  { id: 2, name: "Fazenda Boa Vista", location: "Taubaté - SP", owner: "Juliana Prado" },
-  { id: 3, name: "Fazenda Esperança", location: "Jacareí - SP", owner: "Tiago Ribeiro" },
-  { id: 4, name: "Sítio Água Limpa", location: "Pindamonhangaba - SP", owner: "Aline Camargo" },
-  { id: 5, name: "Fazenda Três Irmãos", location: "Caçapava - SP", owner: "Aline Camargo" },
-  { id: 6, name: "Sítio Recanto Verde", location: "Lorena - SP", owner: "Carlos Mendes" },
-  { id: 7, name: "Fazenda Santa Clara", location: "Piracicaba - SP", owner: "Carlos Mendes" },
+  {
+    id: 1,
+    name: "Fazenda Santa Rita",
+    location: "São José dos Campos - SP",
+    owner: "Mariana Albuquerque",
+  },
+  {
+    id: 2,
+    name: "Fazenda Boa Vista",
+    location: "Taubaté - SP",
+    owner: "Juliana Prado",
+  },
+  {
+    id: 3,
+    name: "Fazenda Esperança",
+    location: "Jacareí - SP",
+    owner: "Tiago Ribeiro",
+  },
+  {
+    id: 4,
+    name: "Sítio Água Limpa",
+    location: "Pindamonhangaba - SP",
+    owner: "Aline Camargo",
+  },
+  {
+    id: 5,
+    name: "Fazenda Três Irmãos",
+    location: "Caçapava - SP",
+    owner: "Aline Camargo",
+  },
+  {
+    id: 6,
+    name: "Sítio Recanto Verde",
+    location: "Lorena - SP",
+    owner: "Carlos Mendes",
+  },
+  {
+    id: 7,
+    name: "Fazenda Santa Clara",
+    location: "Piracicaba - SP",
+    owner: "Carlos Mendes",
+  },
 ];
 
 export const mockStations: Station[] = [
@@ -68,34 +107,182 @@ export const mockStations: Station[] = [
 ];
 
 export const mockSensorTypes: SensorType[] = [
-  { id: 1, name: "Temperatura", unit_of_measure: "°C", factor: null, gain: null, offset_value: null },
-  { id: 2, name: "Umidade", unit_of_measure: "%", factor: null, gain: null, offset_value: null, min_value: 0, max_value: 100 },
-  { id: 3, name: "Velocidade do Vento", unit_of_measure: "km/h", factor: null, gain: null, offset_value: null, min_value: 0, max_value: null },
-  { id: 4, name: "Índice Pluviométrico", unit_of_measure: "mm", factor: null, gain: null, offset_value: null, min_value: 0, max_value: null },
-  { id: 5, name: "Temperatura do Solo", unit_of_measure: "°C", factor: null, gain: null, offset_value: null },
-  { id: 6, name: "Umidade do Solo", unit_of_measure: "%", factor: null, gain: null, offset_value: null, min_value: 0, max_value: 100 },
+  {
+    id: 1,
+    name: "Temperatura",
+    unit_of_measure: "°C",
+    factor: null,
+    gain: null,
+    offset_value: null,
+  },
+  {
+    id: 2,
+    name: "Umidade",
+    unit_of_measure: "%",
+    factor: null,
+    gain: null,
+    offset_value: null,
+    min_value: 0,
+    max_value: 100,
+  },
+  {
+    id: 3,
+    name: "Velocidade do Vento",
+    unit_of_measure: "km/h",
+    factor: null,
+    gain: null,
+    offset_value: null,
+    min_value: 0,
+    max_value: null,
+  },
+  {
+    id: 4,
+    name: "Índice Pluviométrico",
+    unit_of_measure: "mm",
+    factor: null,
+    gain: null,
+    offset_value: null,
+    min_value: 0,
+    max_value: null,
+  },
+  {
+    id: 5,
+    name: "Temperatura do Solo",
+    unit_of_measure: "°C",
+    factor: null,
+    gain: null,
+    offset_value: null,
+  },
+  {
+    id: 6,
+    name: "Umidade do Solo",
+    unit_of_measure: "%",
+    factor: null,
+    gain: null,
+    offset_value: null,
+    min_value: 0,
+    max_value: 100,
+  },
 ];
 
 export const mockSensors: Sensor[] = [
   // Estação 1: Sede (Fazenda Santa Rita)
-  { id: 10, station_id: 1, sensor_type_id: 1, local_identifier: "temp_ar", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 11, station_id: 1, sensor_type_id: 2, local_identifier: "umid_ar", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 12, station_id: 1, sensor_type_id: 3, local_identifier: "vento_dir", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 13, station_id: 1, sensor_type_id: 4, local_identifier: "pluv_calha", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 14, station_id: 1, sensor_type_id: 5, local_identifier: "temp_solo_10cm", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 15, station_id: 1, sensor_type_id: 6, local_identifier: "umid_solo_10cm", operational_status: true, created_at: minutesAgo(43200) },
+  {
+    id: 10,
+    station_id: 1,
+    sensor_type_id: 1,
+    local_identifier: "temp_ar",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 11,
+    station_id: 1,
+    sensor_type_id: 2,
+    local_identifier: "umid_ar",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 12,
+    station_id: 1,
+    sensor_type_id: 3,
+    local_identifier: "vento_dir",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 13,
+    station_id: 1,
+    sensor_type_id: 4,
+    local_identifier: "pluv_calha",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 14,
+    station_id: 1,
+    sensor_type_id: 5,
+    local_identifier: "temp_solo_10cm",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 15,
+    station_id: 1,
+    sensor_type_id: 6,
+    local_identifier: "umid_solo_10cm",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
 
   // Estação 2: Pivô Central (Fazenda Santa Rita)
-  { id: 20, station_id: 2, sensor_type_id: 1, local_identifier: "temp_pivo", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 21, station_id: 2, sensor_type_id: 2, local_identifier: "umid_pivo", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 22, station_id: 2, sensor_type_id: 3, local_identifier: "vento_pivo", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 23, station_id: 2, sensor_type_id: 4, local_identifier: "pluv_pivo", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 24, station_id: 2, sensor_type_id: 5, local_identifier: "temp_solo_pivo", operational_status: true, created_at: minutesAgo(43200) },
-  { id: 25, station_id: 2, sensor_type_id: 6, local_identifier: "umid_solo_pivo", operational_status: true, created_at: minutesAgo(43200) },
+  {
+    id: 20,
+    station_id: 2,
+    sensor_type_id: 1,
+    local_identifier: "temp_pivo",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 21,
+    station_id: 2,
+    sensor_type_id: 2,
+    local_identifier: "umid_pivo",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 22,
+    station_id: 2,
+    sensor_type_id: 3,
+    local_identifier: "vento_pivo",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 23,
+    station_id: 2,
+    sensor_type_id: 4,
+    local_identifier: "pluv_pivo",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 24,
+    station_id: 2,
+    sensor_type_id: 5,
+    local_identifier: "temp_solo_pivo",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 25,
+    station_id: 2,
+    sensor_type_id: 6,
+    local_identifier: "umid_solo_pivo",
+    operational_status: true,
+    created_at: minutesAgo(43200),
+  },
 
   // Estação 3: Brejo (Sítio Água Limpa)
-  { id: 30, station_id: 3, sensor_type_id: 1, local_identifier: "temp_brejo", operational_status: false, created_at: minutesAgo(43200) },
-  { id: 31, station_id: 3, sensor_type_id: 2, local_identifier: "umid_brejo", operational_status: false, created_at: minutesAgo(43200) },
+  {
+    id: 30,
+    station_id: 3,
+    sensor_type_id: 1,
+    local_identifier: "temp_brejo",
+    operational_status: false,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 31,
+    station_id: 3,
+    sensor_type_id: 2,
+    local_identifier: "umid_brejo",
+    operational_status: false,
+    created_at: minutesAgo(43200),
+  },
 ];
 
 /** Gera leituras históricas mockadas seguindo o schema OpenAPI Reading */
@@ -110,12 +297,25 @@ export function generateMockReadings(): Reading[] {
     const hour = new Date(t * 1000).getHours();
 
     // Variação diurna realista para Estação 1 (Sede)
-    const tempVal1 = Number((22 + 9 * Math.sin(((hour - 7) / 24) * Math.PI * 2) + (i % 7 === 0 ? 5.2 : 0)).toFixed(1));
-    const humVal1 = Number(Math.max(20, Math.min(95, 70 - 30 * Math.sin(((hour - 7) / 24) * Math.PI * 2))).toFixed(1));
+    const tempVal1 = Number(
+      (
+        22 +
+        9 * Math.sin(((hour - 7) / 24) * Math.PI * 2) +
+        (i % 7 === 0 ? 5.2 : 0)
+      ).toFixed(1),
+    );
+    const humVal1 = Number(
+      Math.max(
+        20,
+        Math.min(95, 70 - 30 * Math.sin(((hour - 7) / 24) * Math.PI * 2)),
+      ).toFixed(1),
+    );
     const windVal1 = Number((12 + (i % 7) * 2.5).toFixed(1));
-    const rainVal1 = (i % 6 === 0 ? 4.5 : i % 11 === 0 ? 12.0 : 0);
-    const soilTempVal1 = Number((21.5 + 3 * Math.sin(((hour - 10) / 24) * Math.PI * 2)).toFixed(1));
-    const soilHumVal1 = Number((45 - (i * 0.2)).toFixed(1));
+    const rainVal1 = i % 6 === 0 ? 4.5 : i % 11 === 0 ? 12.0 : 0;
+    const soilTempVal1 = Number(
+      (21.5 + 3 * Math.sin(((hour - 10) / 24) * Math.PI * 2)).toFixed(1),
+    );
+    const soilHumVal1 = Number((45 - i * 0.2).toFixed(1));
 
     // Estação 2 (Pivô Central) - mais quente, pivô com picos ocasionais
     const tempVal2 = Number((tempVal1 + 2.8).toFixed(1));
@@ -123,33 +323,131 @@ export function generateMockReadings(): Reading[] {
     const windVal2 = Number((windVal1 + 3.0).toFixed(1));
     const rainVal2 = rainVal1;
     const soilTempVal2 = Number((soilTempVal1 + 1.2).toFixed(1));
-    const soilHumVal2 = Number(Math.max(25, 42 - (i * 0.35)).toFixed(1));
+    const soilHumVal2 = Number(Math.max(25, 42 - i * 0.35).toFixed(1));
 
     // Inserção da Estação 1
     readings.push(
-      { id: idCounter++, sensor_id: 10, value: tempVal1, unix_time: t, data_consistent: i !== 14, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 11, value: humVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 12, value: windVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 13, value: rainVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 14, value: soilTempVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 15, value: soilHumVal1, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      {
+        id: idCounter++,
+        sensor_id: 10,
+        value: tempVal1,
+        unix_time: t,
+        data_consistent: i !== 14,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 11,
+        value: humVal1,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 12,
+        value: windVal1,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 13,
+        value: rainVal1,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 14,
+        value: soilTempVal1,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 15,
+        value: soilHumVal1,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
     );
 
     // Inserção da Estação 2
     readings.push(
-      { id: idCounter++, sensor_id: 20, value: tempVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 21, value: humVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 22, value: windVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 23, value: rainVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 24, value: soilTempVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-      { id: idCounter++, sensor_id: 25, value: soilHumVal2, unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+      {
+        id: idCounter++,
+        sensor_id: 20,
+        value: tempVal2,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 21,
+        value: humVal2,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 22,
+        value: windVal2,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 23,
+        value: rainVal2,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 24,
+        value: soilTempVal2,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
+      {
+        id: idCounter++,
+        sensor_id: 25,
+        value: soilHumVal2,
+        unix_time: t,
+        data_consistent: true,
+        created_at: new Date(t * 1000).toISOString(),
+      },
     );
 
     // Inserção da Estação 3 (apenas registros anteriores a 6 horas atrás)
     if (i >= 3) {
       readings.push(
-        { id: idCounter++, sensor_id: 30, value: Number((tempVal1 - 1.5).toFixed(1)), unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
-        { id: idCounter++, sensor_id: 31, value: Number((humVal1 + 10).toFixed(1)), unix_time: t, data_consistent: true, created_at: new Date(t * 1000).toISOString() },
+        {
+          id: idCounter++,
+          sensor_id: 30,
+          value: Number((tempVal1 - 1.5).toFixed(1)),
+          unix_time: t,
+          data_consistent: true,
+          created_at: new Date(t * 1000).toISOString(),
+        },
+        {
+          id: idCounter++,
+          sensor_id: 31,
+          value: Number((humVal1 + 10).toFixed(1)),
+          unix_time: t,
+          data_consistent: true,
+          created_at: new Date(t * 1000).toISOString(),
+        },
       );
     }
   }
@@ -344,9 +642,33 @@ export const mockCurrentData: CurrentData = {
       status: "Online",
       last_update: minutesAgo(2),
       readings: [
-        { sensor_id: 10, local_identifier: "temp_ar", sensor_type_id: 1, sensor_type: "Temperatura", unit_of_measure: "°C", value: 24.2, unix_time: nowSeconds() - 120 },
-        { sensor_id: 11, local_identifier: "umid_ar", sensor_type_id: 2, sensor_type: "Umidade", unit_of_measure: "%", value: 58.0, unix_time: nowSeconds() - 120 },
-        { sensor_id: 12, local_identifier: "vento_dir", sensor_type_id: 3, sensor_type: "Velocidade do Vento", unit_of_measure: "km/h", value: 14.5, unix_time: nowSeconds() - 120 },
+        {
+          sensor_id: 10,
+          local_identifier: "temp_ar",
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          value: 24.2,
+          unix_time: nowSeconds() - 120,
+        },
+        {
+          sensor_id: 11,
+          local_identifier: "umid_ar",
+          sensor_type_id: 2,
+          sensor_type: "Umidade",
+          unit_of_measure: "%",
+          value: 58.0,
+          unix_time: nowSeconds() - 120,
+        },
+        {
+          sensor_id: 12,
+          local_identifier: "vento_dir",
+          sensor_type_id: 3,
+          sensor_type: "Velocidade do Vento",
+          unit_of_measure: "km/h",
+          value: 14.5,
+          unix_time: nowSeconds() - 120,
+        },
       ],
     },
     {
@@ -357,8 +679,24 @@ export const mockCurrentData: CurrentData = {
       status: "Com alerta",
       last_update: minutesAgo(5),
       readings: [
-        { sensor_id: 20, local_identifier: "temp_pivo", sensor_type_id: 1, sensor_type: "Temperatura", unit_of_measure: "°C", value: 36.4, unix_time: nowSeconds() - 300 },
-        { sensor_id: 21, local_identifier: "umid_pivo", sensor_type_id: 2, sensor_type: "Umidade", unit_of_measure: "%", value: 28.0, unix_time: nowSeconds() - 300 },
+        {
+          sensor_id: 20,
+          local_identifier: "temp_pivo",
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          value: 36.4,
+          unix_time: nowSeconds() - 300,
+        },
+        {
+          sensor_id: 21,
+          local_identifier: "umid_pivo",
+          sensor_type_id: 2,
+          sensor_type: "Umidade",
+          unit_of_measure: "%",
+          value: 28.0,
+          unix_time: nowSeconds() - 300,
+        },
       ],
     },
     {
@@ -400,8 +738,24 @@ export const mockOverview: Overview = {
       active_alerts: 0,
       status: "Online",
       latest_readings: [
-        { sensor_id: 10, local_identifier: "temp_ar", sensor_type_id: 1, sensor_type: "Temperatura", unit_of_measure: "°C", value: 24.2, unix_time: nowSeconds() - 120 },
-        { sensor_id: 11, local_identifier: "umid_ar", sensor_type_id: 2, sensor_type: "Umidade", unit_of_measure: "%", value: 58.0, unix_time: nowSeconds() - 120 },
+        {
+          sensor_id: 10,
+          local_identifier: "temp_ar",
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          value: 24.2,
+          unix_time: nowSeconds() - 120,
+        },
+        {
+          sensor_id: 11,
+          local_identifier: "umid_ar",
+          sensor_type_id: 2,
+          sensor_type: "Umidade",
+          unit_of_measure: "%",
+          value: 58.0,
+          unix_time: nowSeconds() - 120,
+        },
       ],
     },
     {
@@ -418,7 +772,15 @@ export const mockOverview: Overview = {
       active_alerts: 1,
       status: "Com alerta",
       latest_readings: [
-        { sensor_id: 20, local_identifier: "temp_pivo", sensor_type_id: 1, sensor_type: "Temperatura", unit_of_measure: "°C", value: 36.4, unix_time: nowSeconds() - 300 },
+        {
+          sensor_id: 20,
+          local_identifier: "temp_pivo",
+          sensor_type_id: 1,
+          sensor_type: "Temperatura",
+          unit_of_measure: "°C",
+          value: 36.4,
+          unix_time: nowSeconds() - 300,
+        },
       ],
     },
     {
@@ -578,24 +940,63 @@ export const mockTriggeredAlerts: TriggeredAlert[] = [
 ];
 
 export const mockRoles: Role[] = [
-  { id: 1, name: "Administrador", description: "Acesso total à rede e cadastros" },
-  { id: 2, name: "Técnico Agrônomo", description: "Configuração de regras e telemetria" },
-  { id: 3, name: "Operador de Campo", description: "Consulta e reconhecimento de alertas" },
+  {
+    id: 1,
+    name: "Administrador",
+    description: "Acesso total à rede e cadastros",
+  },
+  {
+    id: 2,
+    name: "Técnico Agrônomo",
+    description: "Configuração de regras e telemetria",
+  },
+  {
+    id: 3,
+    name: "Operador de Campo",
+    description: "Consulta e reconhecimento de alertas",
+  },
 ];
 
 export const mockUsers: User[] = [
-  { id: 1, role_id: 1, name: "Mariana Albuquerque", email: "mariana@agritech.dev", active: true, created_at: minutesAgo(43200) },
-  { id: 2, role_id: 2, name: "Carlos Mendes", email: "carlos@agritech.dev", active: true, created_at: minutesAgo(43200) },
-  { id: 3, role_id: 3, name: "Paulo Dias", email: "paulo@agritech.dev", active: true, created_at: minutesAgo(43200) },
+  {
+    id: 1,
+    role_id: 1,
+    name: "Mariana Albuquerque",
+    email: "mariana@agritech.dev",
+    active: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 2,
+    role_id: 2,
+    name: "Carlos Mendes",
+    email: "carlos@agritech.dev",
+    active: true,
+    created_at: minutesAgo(43200),
+  },
+  {
+    id: 3,
+    role_id: 3,
+    name: "Paulo Dias",
+    email: "paulo@agritech.dev",
+    active: true,
+    created_at: minutesAgo(43200),
+  },
 ];
 
 function paginateList<T>(
   list: T[],
   searchParams: URLSearchParams,
   defaultLimit = 20,
-): { data: T[]; meta: { total_records: number; total_pages: number; current_page: number } } {
+): {
+  data: T[];
+  meta: { total_records: number; total_pages: number; current_page: number };
+} {
   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
-  const limit = Math.max(1, Math.min(100, Number(searchParams.get("limit") ?? defaultLimit)));
+  const limit = Math.max(
+    1,
+    Math.min(100, Number(searchParams.get("limit") ?? defaultLimit)),
+  );
   const total_records = list.length;
   const total_pages = Math.max(1, Math.ceil(total_records / limit));
   const start = (page - 1) * limit;
@@ -614,7 +1015,10 @@ function paginateList<T>(
  * Roteador de mocks OpenAPI 1.5.0: responde endpoints do contrato oficial para permitir
  * desenvolvimento/testes locais imediatos com total fidelidade ao backend.
  */
-export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefined {
+export function getOpenApiMock<T>(
+  rawPath: string,
+  method = "GET",
+): T | undefined {
   if (method !== "GET") return undefined;
 
   const url = new URL(rawPath, "http://localhost");
@@ -655,7 +1059,8 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
   if (path.includes("/forecast")) {
     const match = path.match(/\/api\/stations\/(\d+)\/forecast/);
     const stationId = match ? Number(match[1]) : 1;
-    const station = mockStations.find((s) => s.id === stationId) ?? mockStations[0]!;
+    const station =
+      mockStations.find((s) => s.id === stationId) ?? mockStations[0]!;
     const days = Math.min(7, Math.max(1, Number(search.get("days") ?? 7)));
     return {
       station_id: station.id,
@@ -672,7 +1077,9 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
     const match = path.match(/\/api\/stations\/(\d+)\/current/);
     if (match) {
       const id = Number(match[1]);
-      const stationCurrent = mockCurrentData.stations.find((s) => s.station_id === id);
+      const stationCurrent = mockCurrentData.stations.find(
+        (s) => s.station_id === id,
+      );
       return stationCurrent as unknown as T;
     }
     return mockCurrentData as unknown as T;
@@ -704,7 +1111,11 @@ export function getOpenApiMock<T>(rawPath: string, method = "GET"): T | undefine
   }
 
   // GET /api/stations/properties ou /api/properties (PropertiesPaginated ou Property[])
-  if (path === "/api/stations/properties" || path === "/api/properties" || path === "/properties") {
+  if (
+    path === "/api/stations/properties" ||
+    path === "/api/properties" ||
+    path === "/properties"
+  ) {
     if (search.has("page") || search.has("limit")) {
       return paginateList(mockProperties, search, 100) as unknown as T;
     }

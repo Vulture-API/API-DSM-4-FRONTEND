@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ReactSelect, type ReactSelectOption } from "@/components/ui/ReactSelect";
+import {
+  ReactSelect,
+  type ReactSelectOption,
+} from "@/components/ui/ReactSelect";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
@@ -17,7 +20,12 @@ import { useToast } from "@/components/ui/Toast";
 import { sensorVisual } from "@/features/sensor-visual";
 import { ForecastCalendarCard } from "@/features/stations/ForecastCalendarCard";
 import { stationsApi } from "@/features/stations/api";
-import { stationKeys, useForecast, useOverview, useSeries } from "@/features/stations/hooks";
+import {
+  stationKeys,
+  useForecast,
+  useOverview,
+  useSeries,
+} from "@/features/stations/hooks";
 import { useCan } from "@/features/auth/AuthProvider";
 import { cn } from "@/lib/cn";
 import { formatNumber } from "@/lib/format";
@@ -89,13 +97,15 @@ export function HistoryPage() {
   const [endDate, setEndDate] = useState(() => formatShortDate(new Date()));
   const [clientNow] = useState(() => Math.floor(Date.now() / 1000));
 
-
   // Consultas de dados
   const canRead = useCan("monitoring.read");
   const overview = useOverview();
   const generatedAt = overview.data?.generated_at;
 
-  const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
+  const stations = useMemo(
+    () => overview.data?.stations ?? [],
+    [overview.data],
+  );
 
   const selectedStation = useMemo(
     () => stations.find((s) => s.id === stationId),
@@ -149,7 +159,14 @@ export function HistoryPage() {
 
   // Série agregada de cada estação: a tabela usa só dados reais do período.
   const window = useMemo(
-    () => seriesWindow(timestamps.start, generatedAt ? Math.floor(new Date(generatedAt).getTime() / 1000) : clientNow, grouping),
+    () =>
+      seriesWindow(
+        timestamps.start,
+        generatedAt
+          ? Math.floor(new Date(generatedAt).getTime() / 1000)
+          : clientNow,
+        grouping,
+      ),
     [timestamps.start, generatedAt, clientNow, grouping],
   );
   const tableStations = useMemo(
@@ -173,7 +190,10 @@ export function HistoryPage() {
   const seriesError = stationSeries.error;
   const seriesData = stationSeries.data;
 
-  const availableSeries = useMemo(() => series.data?.series ?? [], [series.data]);
+  const availableSeries = useMemo(
+    () => series.data?.series ?? [],
+    [series.data],
+  );
 
   // Medição selecionada para exibição no gráfico de tendência
   const activeSeries = useMemo(() => {
@@ -183,7 +203,10 @@ export function HistoryPage() {
       );
       if (match) return match;
     }
-    return availableSeries.find((s) => s.sensor_type === "Temperatura") ?? availableSeries[0];
+    return (
+      availableSeries.find((s) => s.sensor_type === "Temperatura") ??
+      availableSeries[0]
+    );
   }, [availableSeries, sensorFilter]);
 
   // Opções formatadas para o ReactSelect
@@ -199,37 +222,64 @@ export function HistoryPage() {
     ];
   }, [stations]);
 
-  const sensorOptions = useMemo<ReactSelectOption<string>[]>(() => [
-    { value: "all", label: "Todos os tipos / variáveis cadastrados" },
-    { value: "Temperatura", label: "Temperatura", badge: "°C" },
-    { value: "Umidade", label: "Umidade do Ar", badge: "%" },
-    { value: "Velocidade do Vento", label: "Velocidade do Vento", badge: "km/h" },
-    { value: "Índice Pluviométrico", label: "Índice Pluviométrico", badge: "mm" },
-    { value: "Pressão", label: "Pressão Atmosférica", badge: "hPa" },
-    { value: "Temperatura do Solo", label: "Temperatura do Solo", badge: "°C" },
-    { value: "Umidade do Solo", label: "Umidade do Solo", badge: "%" },
-  ], []);
+  const sensorOptions = useMemo<ReactSelectOption<string>[]>(
+    () => [
+      { value: "all", label: "Todos os tipos / variáveis cadastrados" },
+      { value: "Temperatura", label: "Temperatura", badge: "°C" },
+      { value: "Umidade", label: "Umidade do Ar", badge: "%" },
+      {
+        value: "Velocidade do Vento",
+        label: "Velocidade do Vento",
+        badge: "km/h",
+      },
+      {
+        value: "Índice Pluviométrico",
+        label: "Índice Pluviométrico",
+        badge: "mm",
+      },
+      { value: "Pressão", label: "Pressão Atmosférica", badge: "hPa" },
+      {
+        value: "Temperatura do Solo",
+        label: "Temperatura do Solo",
+        badge: "°C",
+      },
+      { value: "Umidade do Solo", label: "Umidade do Solo", badge: "%" },
+    ],
+    [],
+  );
 
-  const groupingOptions = useMemo<ReactSelectOption<string>[]>(() => [
-    { value: "1h", label: "Medição horária consolidada", badge: "Padrão" },
-    { value: "10m", label: "A cada 10 min (Leitura bruta)", badge: "Bruto" },
-    { value: "30m", label: "A cada 30 min (Semi-horária)" },
-    { value: "1d", label: "Média diária consolidada", badge: "Diário" },
-  ], []);
+  const groupingOptions = useMemo<ReactSelectOption<string>[]>(
+    () => [
+      { value: "1h", label: "Medição horária consolidada", badge: "Padrão" },
+      { value: "10m", label: "A cada 10 min (Leitura bruta)", badge: "Bruto" },
+      { value: "30m", label: "A cada 30 min (Semi-horária)" },
+      { value: "1d", label: "Média diária consolidada", badge: "Diário" },
+    ],
+    [],
+  );
 
-  const aggregationOptions = useMemo<ReactSelectOption<string>[]>(() => [
-    { value: "avg", label: "Média do intervalo", badge: "Padrão" },
-    { value: "min", label: "Mínima registrada", badge: "Mín" },
-    { value: "max", label: "Máxima registrada", badge: "Máx" },
-    { value: "all", label: "Todas as medições individuais" },
-  ], []);
+  const aggregationOptions = useMemo<ReactSelectOption<string>[]>(
+    () => [
+      { value: "avg", label: "Média do intervalo", badge: "Padrão" },
+      { value: "min", label: "Mínima registrada", badge: "Mín" },
+      { value: "max", label: "Máxima registrada", badge: "Máx" },
+      { value: "all", label: "Todas as medições individuais" },
+    ],
+    [],
+  );
 
   // Linhas consolidadas por estação e intervalo, só com medições reais.
   const telemetryRows = useMemo<TelemetryRow[]>(
-    () => buildHistoryRows(
-      tableStations.map((station, i) => ({ station, series: seriesData[i] })),
-      { start: timestamps.start, end: timestamps.end, aggregation, sensorFilter },
-    ),
+    () =>
+      buildHistoryRows(
+        tableStations.map((station, i) => ({ station, series: seriesData[i] })),
+        {
+          start: timestamps.start,
+          end: timestamps.end,
+          aggregation,
+          sensorFilter,
+        },
+      ),
     [tableStations, seriesData, timestamps, aggregation, sensorFilter],
   );
 
@@ -259,7 +309,8 @@ export function HistoryPage() {
     return telemetryRows.filter((r) => {
       if (onlyAlerts && !r.alertMessage && !r.warnMessage) return false;
       if (startTimestamp !== null && endTimestamp !== null) {
-        if (r.unixTime < startTimestamp || r.unixTime > endTimestamp) return false;
+        if (r.unixTime < startTimestamp || r.unixTime > endTimestamp)
+          return false;
       }
       return true;
     });
@@ -305,7 +356,9 @@ export function HistoryPage() {
       const s = parseDatePart(startDate);
       const e = parseDatePart(endDate);
       if (!s || !e || s > e) {
-        toast.error("Intervalo de datas inválido. A data inicial deve ser anterior ou igual à data final.");
+        toast.error(
+          "Intervalo de datas inválido. A data inicial deve ser anterior ou igual à data final.",
+        );
         return;
       }
     }
@@ -347,18 +400,25 @@ export function HistoryPage() {
       `"${r.alertMessage ?? r.warnMessage ?? "Normal"}"`,
     ]);
 
-    const csvContent = "\uFEFF" + [headers.join(";"), ...lines.map((l) => l.join(";"))].join("\r\n");
+    const csvContent =
+      "\uFEFF" +
+      [headers.join(";"), ...lines.map((l) => l.join(";"))].join("\r\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `historico_dados_meteorologicos_${range}.csv`);
+    link.setAttribute(
+      "download",
+      `historico_dados_meteorologicos_${range}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success(`Exportação CSV concluída (${filteredRows.length} registros).`);
+    toast.success(
+      `Exportação CSV concluída (${filteredRows.length} registros).`,
+    );
   }
 
   const communicatingStations = overview.data?.summary
@@ -366,10 +426,16 @@ export function HistoryPage() {
     : stations.length;
   const totalStations = overview.data?.summary.total ?? stations.length;
 
-  const visual = activeSeries ? sensorVisual(activeSeries.sensor_type) : sensorVisual("Temperatura");
+  const visual = activeSeries
+    ? sensorVisual(activeSeries.sensor_type)
+    : sensorVisual("Temperatura");
   const lastPoint = activeSeries?.points.at(-1);
-  const minVal = activeSeries?.points.length ? Math.min(...activeSeries.points.map((p) => p.min)) : undefined;
-  const maxVal = activeSeries?.points.length ? Math.max(...activeSeries.points.map((p) => p.max)) : undefined;
+  const minVal = activeSeries?.points.length
+    ? Math.min(...activeSeries.points.map((p) => p.min))
+    : undefined;
+  const maxVal = activeSeries?.points.length
+    ? Math.max(...activeSeries.points.map((p) => p.max))
+    : undefined;
 
   const stationLabel = selectedStation
     ? `${selectedStation.name} · ${selectedStation.property_name}`
@@ -398,25 +464,40 @@ export function HistoryPage() {
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-brand-300" />
-            {filteredRows.length} {filteredRows.length === 1 ? "leitura no período" : "leituras no período"}
+            {filteredRows.length}{" "}
+            {filteredRows.length === 1
+              ? "leitura no período"
+              : "leituras no período"}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-brand-300" />
-            Granularidade: {grouping === "10m" ? "10 min" : grouping === "30m" ? "30 min" : grouping === "1d" ? "Diária" : "Horária"}
+            Granularidade:{" "}
+            {grouping === "10m"
+              ? "10 min"
+              : grouping === "30m"
+                ? "30 min"
+                : grouping === "1d"
+                  ? "Diária"
+                  : "Horária"}
           </span>
         </div>
       </PageHeader>
 
       <div className="space-y-6">
-
         {/* ===================================================================
             PREVISÃO METEOROLÓGICA: 7 DIAS & JANELAS AGRÍCOLAS
             =================================================================== */}
         <ForecastCalendarCard
           stationName={activeStation ? activeStation.name : "Rede de Estações"}
           propertyName={activeStation?.property_name ?? "Fazenda Santa Rita"}
-          latitude={activeStation?.latitude ?? forecastQuery.data?.latitude ?? -23.1896}
-          longitude={activeStation?.longitude ?? forecastQuery.data?.longitude ?? -45.8841}
+          latitude={
+            activeStation?.latitude ?? forecastQuery.data?.latitude ?? -23.1896
+          }
+          longitude={
+            activeStation?.longitude ??
+            forecastQuery.data?.longitude ??
+            -45.8841
+          }
           forecast={forecastQuery.data}
           isLoading={forecastQuery.isLoading}
         />
@@ -428,9 +509,12 @@ export function HistoryPage() {
           <div className="p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-ink">Filtros de consulta</h2>
+                <h2 className="text-sm font-semibold text-ink">
+                  Filtros de consulta
+                </h2>
                 <p className="text-xs text-muted">
-                  Selecione a estação, histórico e o período desejado para filtrar os dados coletados das estações.
+                  Selecione a estação, histórico e o período desejado para
+                  filtrar os dados coletados das estações.
                 </p>
               </div>
               <Segmented
@@ -443,7 +527,10 @@ export function HistoryPage() {
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label htmlFor={selectStationId} className="mb-1 block text-xs font-medium text-muted">
+                <label
+                  htmlFor={selectStationId}
+                  className="mb-1 block text-xs font-medium text-muted"
+                >
                   Estação Meteorológica (Identificação)
                 </label>
                 <ReactSelect
@@ -460,7 +547,10 @@ export function HistoryPage() {
               </div>
 
               <div>
-                <label htmlFor={selectSensorId} className="mb-1 block text-xs font-medium text-muted">
+                <label
+                  htmlFor={selectSensorId}
+                  className="mb-1 block text-xs font-medium text-muted"
+                >
                   Tipo Sensor / Variável (Identificação)
                 </label>
                 <ReactSelect
@@ -492,7 +582,10 @@ export function HistoryPage() {
               </div>
 
               <div>
-                <label htmlFor={selectGroupingId} className="mb-1 block text-xs font-medium text-muted">
+                <label
+                  htmlFor={selectGroupingId}
+                  className="mb-1 block text-xs font-medium text-muted"
+                >
                   Agrupamento temporal
                 </label>
                 <ReactSelect
@@ -506,7 +599,10 @@ export function HistoryPage() {
               </div>
 
               <div>
-                <label htmlFor={selectAggregationId} className="mb-1 block text-xs font-medium text-muted">
+                <label
+                  htmlFor={selectAggregationId}
+                  className="mb-1 block text-xs font-medium text-muted"
+                >
                   Direcionamento de Leitura
                 </label>
                 <ReactSelect
@@ -551,7 +647,9 @@ export function HistoryPage() {
                   <span
                     className={cn(
                       "size-2 shrink-0 rounded-full transition-colors",
-                      onlyAlerts ? "bg-brand-500 ring-2 ring-brand-200" : "bg-line-strong",
+                      onlyAlerts
+                        ? "bg-brand-500 ring-2 ring-brand-200"
+                        : "bg-line-strong",
                     )}
                   />
                 </label>
@@ -561,16 +659,36 @@ export function HistoryPage() {
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3.5">
               <p className="text-xs text-muted">
                 {selectedStation ? (
-                  <>Estação ativa: <strong className="font-medium text-ink">{selectedStation.name}</strong> ({selectedStation.property_name})</>
+                  <>
+                    Estação ativa:{" "}
+                    <strong className="font-medium text-ink">
+                      {selectedStation.name}
+                    </strong>{" "}
+                    ({selectedStation.property_name})
+                  </>
                 ) : (
-                  <>Estações ativas: <strong className="font-medium text-ink">{stations.length} estações</strong> na rede</>
+                  <>
+                    Estações ativas:{" "}
+                    <strong className="font-medium text-ink">
+                      {stations.length} estações
+                    </strong>{" "}
+                    na rede
+                  </>
                 )}
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" onClick={handleResetFilters}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleResetFilters}
+                >
                   Limpar filtros
                 </Button>
-                <Button variant="primary" size="sm" onClick={handleApplyFilters}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleApplyFilters}
+                >
                   Filtrar leituras
                 </Button>
               </div>
@@ -584,9 +702,15 @@ export function HistoryPage() {
         <Card className="overflow-hidden">
           <div className="flex flex-col gap-2 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-ink">Dados brutos consolidados de telemetria</h2>
+              <h2 className="text-sm font-semibold text-ink">
+                Dados brutos consolidados de telemetria
+              </h2>
               <p className="text-xs text-muted">
-                {filteredRows.length} {filteredRows.length === 1 ? "leitura obtida" : "leituras obtidas"} no período selecionado ({stationLabel})
+                {filteredRows.length}{" "}
+                {filteredRows.length === 1
+                  ? "leitura obtida"
+                  : "leituras obtidas"}{" "}
+                no período selecionado ({stationLabel})
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -609,7 +733,11 @@ export function HistoryPage() {
             </div>
           ) : overview.error || seriesError ? (
             <ErrorState
-              message={overview.error?.message ?? seriesError?.message ?? "Falha de comunicação com a API meteorológica"}
+              message={
+                overview.error?.message ??
+                seriesError?.message ??
+                "Falha de comunicação com a API meteorológica"
+              }
               onRetry={() => {
                 void overview.refetch();
                 void series.refetch();
@@ -621,7 +749,11 @@ export function HistoryPage() {
               title="Nenhum registro encontrado no período"
               description="Não há leituras meteorológicas para os filtros informados. Tente alterar o período ou limpar os filtros de busca."
               action={
-                <Button variant="primary" size="sm" onClick={handleResetFilters}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleResetFilters}
+                >
                   Ver últimos 7 dias
                 </Button>
               }
@@ -643,28 +775,54 @@ export function HistoryPage() {
                 <tbody>
                   {pageRows.map((row) => (
                     <Tr key={row.id}>
-                      <Td className="font-mono text-xs font-medium text-ink" suppressHydrationWarning>
+                      <Td
+                        className="font-mono text-xs font-medium text-ink"
+                        suppressHydrationWarning
+                      >
                         {row.dateTime}
                       </Td>
                       <Td className="tabular-nums">
-                        <span className={cn("font-medium", row.tempAlert && "font-semibold text-danger")}>
-                          {row.temp !== null ? `${formatNumber(row.temp)} °C` : "—"}
+                        <span
+                          className={cn(
+                            "font-medium",
+                            row.tempAlert && "font-semibold text-danger",
+                          )}
+                        >
+                          {row.temp !== null
+                            ? `${formatNumber(row.temp)} °C`
+                            : "—"}
                         </span>
                       </Td>
                       <Td className="tabular-nums">
-                        <span className={cn("font-medium", row.humidityAlert && "font-semibold text-warn")}>
-                          {row.humidity !== null ? `${formatNumber(row.humidity)} %` : "—"}
+                        <span
+                          className={cn(
+                            "font-medium",
+                            row.humidityAlert && "font-semibold text-warn",
+                          )}
+                        >
+                          {row.humidity !== null
+                            ? `${formatNumber(row.humidity)} %`
+                            : "—"}
                         </span>
                       </Td>
                       <Td className="tabular-nums text-muted">
-                        {row.wind !== null ? `${formatNumber(row.wind)} km/h${row.windDir ? ` · ${row.windDir}` : ""}` : "—"}
+                        {row.wind !== null
+                          ? `${formatNumber(row.wind)} km/h${row.windDir ? ` · ${row.windDir}` : ""}`
+                          : "—"}
                       </Td>
                       <Td className="tabular-nums font-medium text-ink">
-                        {row.rain !== null ? `${formatNumber(row.rain)} mm` : "—"}
+                        {row.rain !== null
+                          ? `${formatNumber(row.rain)} mm`
+                          : "—"}
                       </Td>
                       <Td className="tabular-nums text-xs text-muted">
-                        {row.soilTemp !== null ? `${formatNumber(row.soilTemp)} °C` : "—"} ·{" "}
-                        {row.soilHum !== null ? `${formatNumber(row.soilHum)} %` : "—"}
+                        {row.soilTemp !== null
+                          ? `${formatNumber(row.soilTemp)} °C`
+                          : "—"}{" "}
+                        ·{" "}
+                        {row.soilHum !== null
+                          ? `${formatNumber(row.soilHum)} %`
+                          : "—"}
                       </Td>
                       <Td>
                         {row.alertMessage ? (
@@ -689,8 +847,10 @@ export function HistoryPage() {
               {/* Paginação */}
               <div className="flex items-center justify-between border-t border-line bg-subtle/30 px-5 py-3 text-xs text-muted">
                 <span>
-                  Mostrando {filteredRows.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0} a{" "}
-                  {Math.min(page * PAGE_SIZE, filteredRows.length)} de {filteredRows.length} registros
+                  Mostrando{" "}
+                  {filteredRows.length > 0 ? (page - 1) * PAGE_SIZE + 1 : 0} a{" "}
+                  {Math.min(page * PAGE_SIZE, filteredRows.length)} de{" "}
+                  {filteredRows.length} registros
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Button
@@ -732,16 +892,23 @@ export function HistoryPage() {
                     <div>
                       <dt className="text-xs text-faint">Último</dt>
                       <dd className="text-sm font-semibold tabular-nums text-ink">
-                        {formatNumber(lastPoint.avg)} <span className="text-xs font-medium text-muted">{activeSeries.unit_of_measure}</span>
+                        {formatNumber(lastPoint.avg)}{" "}
+                        <span className="text-xs font-medium text-muted">
+                          {activeSeries.unit_of_measure}
+                        </span>
                       </dd>
                     </div>
                     <div>
                       <dt className="text-xs text-faint">Mínimo</dt>
-                      <dd className="text-sm font-semibold tabular-nums text-info">{formatNumber(minVal)}</dd>
+                      <dd className="text-sm font-semibold tabular-nums text-info">
+                        {formatNumber(minVal)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-xs text-faint">Máximo</dt>
-                      <dd className="text-sm font-semibold tabular-nums text-danger">{formatNumber(maxVal)}</dd>
+                      <dd className="text-sm font-semibold tabular-nums text-danger">
+                        {formatNumber(maxVal)}
+                      </dd>
                     </div>
                   </dl>
                 ) : undefined
@@ -757,7 +924,6 @@ export function HistoryPage() {
             </div>
           </Card>
         )}
-
       </div>
     </>
   );

@@ -14,8 +14,10 @@ const variants: Record<Variant, string> = {
   ghost: "text-muted hover:bg-subtle hover:text-ink",
   danger: "bg-danger text-white shadow-sm hover:brightness-95",
   /* Para a faixa escura do topo. */
-  light: "bg-brand-300 text-forest shadow-sm hover:bg-brand-200 active:bg-brand-100",
-  glass: "bg-white/10 text-white ring-1 ring-inset ring-white/20 hover:bg-white/15",
+  light:
+    "bg-brand-300 text-forest shadow-sm hover:bg-brand-200 active:bg-brand-100",
+  glass:
+    "bg-white/10 text-white ring-1 ring-inset ring-white/20 hover:bg-white/15",
 };
 
 const sizes: Record<Size, string> = {
@@ -24,7 +26,11 @@ const sizes: Record<Size, string> = {
 };
 
 /** Classes do botão, para aplicar em <Link> (âncora com cara de botão). */
-export function buttonClasses(variant: Variant = "primary", size: Size = "md", className?: string) {
+export function buttonClasses(
+  variant: Variant = "primary",
+  size: Size = "md",
+  className?: string,
+) {
   return cn(
     "inline-flex shrink-0 items-center justify-center rounded-lg font-medium transition-colors",
     variants[variant],

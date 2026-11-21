@@ -27,7 +27,10 @@ import { UserFormModal } from "./UserFormModal";
 type StatusFilter = "all" | "active" | "inactive";
 
 /** Cor do selo de cada cargo (os demais ficam neutros). */
-const ROLE_TONE: Record<string, Tone> = { Administrador: "brand", "Gerente Agrícola": "info" };
+const ROLE_TONE: Record<string, Tone> = {
+  Administrador: "brand",
+  "Gerente Agrícola": "info",
+};
 
 export function UsersPage() {
   const canUpdate = useCan("users.update");
@@ -43,19 +46,28 @@ export function UsersPage() {
   const [deleting, setDeleting] = useState<User | null>(null);
 
   const roleById = new Map(roles.data?.map((r) => [r.id, r]));
-  const all = [...(users.data ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const all = [...(users.data ?? [])].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
   const term = search.trim().toLowerCase();
   const visible = all.filter(
     (u) =>
       (!roleId || u.role_id === Number(roleId)) &&
       (status === "all" || (status === "active") === u.active) &&
-      (!term || u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term)),
+      (!term ||
+        u.name.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term)),
   );
 
   async function toggle(user: User) {
     try {
-      await update.mutateAsync({ id: user.id, input: { name: user.name, role_id: user.role_id, active: !user.active } });
-      toast.success(user.active ? `${user.name} desativado.` : `${user.name} ativado.`);
+      await update.mutateAsync({
+        id: user.id,
+        input: { name: user.name, role_id: user.role_id, active: !user.active },
+      });
+      toast.success(
+        user.active ? `${user.name} desativado.` : `${user.name} ativado.`,
+      );
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -79,15 +91,32 @@ export function UsersPage() {
         title="Usuários"
         description="Pessoas com acesso ao portal e seus cargos."
         actions={
-          <Can permission="users.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
-            Novo usuário
-          </Button></Can>
+          <Can permission="users.create">
+            <Button
+              variant="light"
+              icon={<Plus className="size-4" />}
+              onClick={() => setEditing("new")}
+            >
+              Novo usuário
+            </Button>
+          </Can>
         }
       />
       <Card className="shadow-[var(--shadow-lift)]">
         <div className="flex flex-col gap-3 border-b border-line p-4 lg:flex-row lg:items-center">
-          <SearchInput label="Buscar usuário" placeholder="Buscar por nome ou e-mail" value={search} onChange={setSearch} className="lg:w-72" />
-          <Select aria-label="Filtrar por cargo" value={roleId} onChange={(e) => setRoleId(e.target.value)} className="h-9 lg:w-52">
+          <SearchInput
+            label="Buscar usuário"
+            placeholder="Buscar por nome ou e-mail"
+            value={search}
+            onChange={setSearch}
+            className="lg:w-72"
+          />
+          <Select
+            aria-label="Filtrar por cargo"
+            value={roleId}
+            onChange={(e) => setRoleId(e.target.value)}
+            className="h-9 lg:w-52"
+          >
             <option value="">Todos os cargos</option>
             {roles.data?.map((r) => (
               <option key={r.id} value={r.id}>
@@ -102,8 +131,16 @@ export function UsersPage() {
               onChange={setStatus}
               options={[
                 { value: "all", label: "Todos", count: all.length },
-                { value: "active", label: "Ativos", count: all.filter((u) => u.active).length },
-                { value: "inactive", label: "Inativos", count: all.filter((u) => !u.active).length },
+                {
+                  value: "active",
+                  label: "Ativos",
+                  count: all.filter((u) => u.active).length,
+                },
+                {
+                  value: "inactive",
+                  label: "Inativos",
+                  count: all.filter((u) => !u.active).length,
+                },
               ]}
             />
           </div>
@@ -115,9 +152,19 @@ export function UsersPage() {
             ))}
           </div>
         ) : users.error ? (
-          <ErrorState message={users.error.message} onRetry={() => void users.refetch()} />
+          <ErrorState
+            message={users.error.message}
+            onRetry={() => void users.refetch()}
+          />
         ) : visible.length === 0 ? (
-          <EmptyState icon={<Users className="size-5" />} title={all.length ? "Nenhum usuário com esses filtros" : "Nenhum usuário cadastrado"} />
+          <EmptyState
+            icon={<Users className="size-5" />}
+            title={
+              all.length
+                ? "Nenhum usuário com esses filtros"
+                : "Nenhum usuário cadastrado"
+            }
+          />
         ) : (
           <Table>
             <thead>
@@ -136,38 +183,71 @@ export function UsersPage() {
                 <Tr key={user.id}>
                   <Td>
                     <div className="flex items-center gap-3">
-                      <Avatar name={user.name} className={user.active ? undefined : "grayscale"} />
+                      <Avatar
+                        name={user.name}
+                        className={user.active ? undefined : "grayscale"}
+                      />
                       <div className="min-w-0">
                         <p className="flex items-center gap-2 font-medium text-ink">
                           {user.name}
                           {!user.active && (
-                            <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted">Inativo</span>
+                            <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted">
+                              Inativo
+                            </span>
                           )}
                         </p>
-                        <p className="truncate text-xs text-muted">{user.email}</p>
+                        <p className="truncate text-xs text-muted">
+                          {user.email}
+                        </p>
                         <p className="text-xs text-muted sm:hidden">
-                          Cargo: {roleById.get(user.role_id)?.name ?? `#${user.role_id}`}
+                          Cargo:{" "}
+                          {roleById.get(user.role_id)?.name ??
+                            `#${user.role_id}`}
                         </p>
                       </div>
                     </div>
                   </Td>
                   <Td className="hidden sm:table-cell">
-                    <Badge tone={ROLE_TONE[roleById.get(user.role_id)?.name ?? ""] ?? "neutral"}>
-                      {roleById.get(user.role_id)?.name ?? `Cargo #${user.role_id}`}
+                    <Badge
+                      tone={
+                        ROLE_TONE[roleById.get(user.role_id)?.name ?? ""] ??
+                        "neutral"
+                      }
+                    >
+                      {roleById.get(user.role_id)?.name ??
+                        `Cargo #${user.role_id}`}
                     </Badge>
                   </Td>
                   <Td>
-                    <Switch disabled={!canUpdate} label={`${user.name} ativo`} checked={user.active} onChange={() => void toggle(user)} />
+                    <Switch
+                      disabled={!canUpdate}
+                      label={`${user.name} ativo`}
+                      checked={user.active}
+                      onChange={() => void toggle(user)}
+                    />
                   </Td>
-                  <Td className="hidden whitespace-nowrap text-muted md:table-cell">{formatDate(user.created_at)}</Td>
+                  <Td className="hidden whitespace-nowrap text-muted md:table-cell">
+                    {formatDate(user.created_at)}
+                  </Td>
                   <Td>
                     <RowActions>
-                      <Can permission="users.update"><IconButton label={`Editar ${user.name}`} onClick={() => setEditing(user)}>
-                        <Pencil className="size-4" />
-                      </IconButton></Can>
-                      <Can permission="users.delete"><IconButton label={`Excluir ${user.name}`} onClick={() => setDeleting(user)} className="hover:text-danger">
-                        <Trash2 className="size-4" />
-                      </IconButton></Can>
+                      <Can permission="users.update">
+                        <IconButton
+                          label={`Editar ${user.name}`}
+                          onClick={() => setEditing(user)}
+                        >
+                          <Pencil className="size-4" />
+                        </IconButton>
+                      </Can>
+                      <Can permission="users.delete">
+                        <IconButton
+                          label={`Excluir ${user.name}`}
+                          onClick={() => setDeleting(user)}
+                          className="hover:text-danger"
+                        >
+                          <Trash2 className="size-4" />
+                        </IconButton>
+                      </Can>
                     </RowActions>
                   </Td>
                 </Tr>
@@ -176,15 +256,24 @@ export function UsersPage() {
           </Table>
         )}
       </Card>
-      {editing && <Can permission={editing === "new" ? "users.create" : "users.update"}><UserFormModal user={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} /></Can>}
-      <Can permission="users.delete"><ConfirmDialog
-        open={Boolean(deleting)}
-        title="Excluir usuário"
-        message={`${deleting?.name ?? ""} perde o acesso ao portal. Se ele tiver registros vinculados, prefira desativar.`}
-        loading={remove.isPending}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleting(null)}
-      /></Can>
+      {editing && (
+        <Can permission={editing === "new" ? "users.create" : "users.update"}>
+          <UserFormModal
+            user={editing === "new" ? undefined : editing}
+            onClose={() => setEditing(null)}
+          />
+        </Can>
+      )}
+      <Can permission="users.delete">
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          title="Excluir usuário"
+          message={`${deleting?.name ?? ""} perde o acesso ao portal. Se ele tiver registros vinculados, prefira desativar.`}
+          loading={remove.isPending}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      </Can>
     </>
   );
 }

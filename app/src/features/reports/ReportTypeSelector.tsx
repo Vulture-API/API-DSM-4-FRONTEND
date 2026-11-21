@@ -81,7 +81,9 @@ export function ReportTypeSelector({
 
               <div className="mt-4 flex items-center justify-between border-t border-line/70 pt-3 text-[11px] font-medium">
                 <span className={isSelected ? "text-brand-700" : "text-muted"}>
-                  {isSelected ? "Relatório selecionado" : "Clique para selecionar"}
+                  {isSelected
+                    ? "Relatório selecionado"
+                    : "Clique para selecionar"}
                 </span>
                 <span className="font-mono uppercase tracking-wider text-faint">
                   {option.shortLabel}

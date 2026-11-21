@@ -8,7 +8,8 @@ import { type ReadingsQuery, readingsApi } from "./api";
 
 export const readingKeys = {
   all: ["readings"] as const,
-  list: (params: ReadingsQuery) => [...readingKeys.all, "list", params] as const,
+  list: (params: ReadingsQuery) =>
+    [...readingKeys.all, "list", params] as const,
 };
 
 export function useReadings(params: ReadingsQuery = {}) {

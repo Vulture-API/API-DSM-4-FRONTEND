@@ -66,7 +66,12 @@ export function getWeatherVisual(
     };
   }
 
-  if (weatherCode === 80 || weatherCode === 81 || weatherCode === 82 || (rainMm > 4 && rainMm < 15)) {
+  if (
+    weatherCode === 80 ||
+    weatherCode === 81 ||
+    weatherCode === 82 ||
+    (rainMm > 4 && rainMm < 15)
+  ) {
     return {
       label: "Pancadas isoladas",
       Icon: CloudRain,
@@ -75,7 +80,13 @@ export function getWeatherVisual(
     };
   }
 
-  if (weatherCode === 51 || weatherCode === 53 || weatherCode === 55 || weatherCode === 61 || (rainMm > 0 && rainMm <= 4)) {
+  if (
+    weatherCode === 51 ||
+    weatherCode === 53 ||
+    weatherCode === 55 ||
+    weatherCode === 61 ||
+    (rainMm > 0 && rainMm <= 4)
+  ) {
     return {
       label: "Chuva leve",
       Icon: CloudDrizzle,
@@ -126,7 +137,15 @@ function parseForecastDate(dateStr: string, index: number) {
   const day = parts[2] ?? 14;
 
   const dateObj = new Date(year, month - 1, day);
-  const weekdays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  const weekdays = [
+    "Domingo",
+    "Segunda",
+    "Terça",
+    "Quarta",
+    "Quinta",
+    "Sexta",
+    "Sábado",
+  ];
   const weekday = weekdays[dateObj.getDay()] ?? "Dia";
   const dayMonth = `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
 
@@ -152,10 +171,14 @@ export function ForecastCalendarCard({
   // Análise agroclimática e operacional baseada nas métricas dos 7 dias
   const insights = useMemo(() => {
     const today = days[0];
-    const totalRain = days.reduce((sum, d) => sum + (d.precipitation_mm ?? 0), 0);
+    const totalRain = days.reduce(
+      (sum, d) => sum + (d.precipitation_mm ?? 0),
+      0,
+    );
     const heavyRainDay = days.find((d) => (d.precipitation_mm ?? 0) >= 10);
     const maxTempDay = days.reduce(
-      (prev, curr) => ((curr.temperature_max ?? 0) > (prev.temperature_max ?? 0) ? curr : prev),
+      (prev, curr) =>
+        (curr.temperature_max ?? 0) > (prev.temperature_max ?? 0) ? curr : prev,
       days[0] ?? { temperature_max: 30, date: "" },
     );
 
@@ -227,8 +250,16 @@ export function ForecastCalendarCard({
     }
 
     return {
-      spray: { status: sprayStatus, badgeClass: sprayBadgeClass, text: sprayText },
-      irrigation: { status: irrigationStatus, badgeClass: irrigationBadgeClass, text: irrigationText },
+      spray: {
+        status: sprayStatus,
+        badgeClass: sprayBadgeClass,
+        text: sprayText,
+      },
+      irrigation: {
+        status: irrigationStatus,
+        badgeClass: irrigationBadgeClass,
+        text: irrigationText,
+      },
       heat: { status: heatStatus, badgeClass: heatBadgeClass, text: heatText },
       headerAlert,
       alertBg,
@@ -257,7 +288,17 @@ export function ForecastCalendarCard({
     );
   }
 
-  if (!days.length) return <div className={cn("rounded-2xl border border-line bg-surface p-6 text-sm text-muted", className)}>Previsão indisponível no momento.</div>;
+  if (!days.length)
+    return (
+      <div
+        className={cn(
+          "rounded-2xl border border-line bg-surface p-6 text-sm text-muted",
+          className,
+        )}
+      >
+        Previsão indisponível no momento.
+      </div>
+    );
 
   return (
     <div className={cn("pt-2", className)} data-testid="forecast-calendar-card">
@@ -267,9 +308,13 @@ export function ForecastCalendarCard({
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-400 opacity-75" />
           <span className="relative inline-flex size-2 rounded-full bg-brand-600" />
         </span>
-        <span className="font-semibold text-brand-900">Previsão Meteorológica</span>
+        <span className="font-semibold text-brand-900">
+          Previsão Meteorológica
+        </span>
         <span className="text-brand-300">·</span>
-        <span className="text-brand-700">Próximos 7 dias e condições operacionais</span>
+        <span className="text-brand-700">
+          Próximos 7 dias e condições operacionais
+        </span>
       </div>
 
       <div className="overflow-hidden rounded-[16px] border border-line bg-surface shadow-[var(--shadow-card)]">
@@ -290,14 +335,23 @@ export function ForecastCalendarCard({
                 </span>
               </div>
               <p className="mt-0.5 text-[13px] text-muted">
-                Projeção diária para {propertyName} ({latitude?.toFixed(4)}, {longitude?.toFixed(4)}) · Temperatura, precipitação e janelas agrícolas
+                Projeção diária para {propertyName} ({latitude?.toFixed(4)},{" "}
+                {longitude?.toFixed(4)}) · Temperatura, precipitação e janelas
+                agrícolas
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border border-line/60", insights.alertBg)}>
-              <span className={cn("size-1.5 rounded-full", insights.alertDot)} />
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border border-line/60",
+                insights.alertBg,
+              )}
+            >
+              <span
+                className={cn("size-1.5 rounded-full", insights.alertDot)}
+              />
               {insights.headerAlert}
             </span>
           </div>
@@ -306,7 +360,10 @@ export function ForecastCalendarCard({
         {/* Grade de 7 Dias de Previsão */}
         <div className="mt-4 grid grid-cols-2 divide-x divide-y divide-line border-t border-line sm:grid-cols-4 lg:grid-cols-7 lg:divide-y-0">
           {days.map((day, index) => {
-            const { isToday, weekdayLabel, dayMonth } = parseForecastDate(day.date, index);
+            const { isToday, weekdayLabel, dayMonth } = parseForecastDate(
+              day.date,
+              index,
+            );
             const visual = getWeatherVisual(
               day.weather_code,
               day.precipitation_mm ?? 0,
@@ -323,8 +380,24 @@ export function ForecastCalendarCard({
             // Escala visual da barra de temperatura (10°C a 40°C)
             const minScale = 10;
             const maxScale = 40;
-            const leftPct = Math.max(5, Math.min(55, Math.round(((minTemp - minScale) / (maxScale - minScale)) * 100)));
-            const rightPct = Math.max(leftPct + 20, Math.min(95, Math.round(((maxTemp - minScale) / (maxScale - minScale)) * 100)));
+            const leftPct = Math.max(
+              5,
+              Math.min(
+                55,
+                Math.round(
+                  ((minTemp - minScale) / (maxScale - minScale)) * 100,
+                ),
+              ),
+            );
+            const rightPct = Math.max(
+              leftPct + 20,
+              Math.min(
+                95,
+                Math.round(
+                  ((maxTemp - minScale) / (maxScale - minScale)) * 100,
+                ),
+              ),
+            );
             const widthPct = Math.max(22, rightPct - leftPct);
 
             return (
@@ -337,13 +410,17 @@ export function ForecastCalendarCard({
                 data-testid={`forecast-day-${index}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-ink">{weekdayLabel}</span>
+                  <span className="text-xs font-semibold text-ink">
+                    {weekdayLabel}
+                  </span>
                   {isToday ? (
                     <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-600">
                       {dayMonth}
                     </span>
                   ) : (
-                    <span className="text-[11px] tabular-nums text-faint">{dayMonth}</span>
+                    <span className="text-[11px] tabular-nums text-faint">
+                      {dayMonth}
+                    </span>
                   )}
                 </div>
 
@@ -354,11 +431,15 @@ export function ForecastCalendarCard({
                   >
                     <VisualIcon className="size-5" />
                   </span>
-                  <span className="text-xs font-medium leading-tight text-ink">{visual.label}</span>
+                  <span className="text-xs font-medium leading-tight text-ink">
+                    {visual.label}
+                  </span>
                 </div>
 
                 <div className="flex items-baseline justify-between text-xs tabular-nums">
-                  <span className="font-medium text-info">{Math.round(minTemp)}°</span>
+                  <span className="font-medium text-info">
+                    {Math.round(minTemp)}°
+                  </span>
                   <div className="mx-2 h-1.5 flex-1 overflow-hidden rounded-full bg-line">
                     <div
                       className={cn(
@@ -369,14 +450,26 @@ export function ForecastCalendarCard({
                             ? "bg-gradient-to-r from-[#2f6fb3] to-[#d9582b]"
                             : "bg-[#2f6fb3]",
                       )}
-                      style={{ marginLeft: `${leftPct}%`, width: `${widthPct}%` }}
+                      style={{
+                        marginLeft: `${leftPct}%`,
+                        width: `${widthPct}%`,
+                      }}
                     />
                   </div>
-                  <span className="font-semibold text-danger">{Math.round(maxTemp)}°C</span>
+                  <span className="font-semibold text-danger">
+                    {Math.round(maxTemp)}°C
+                  </span>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between border-t border-line/80 pt-2 text-[11px] tabular-nums text-muted">
-                  <span className={cn("font-medium", rainProb >= 75 ? "font-semibold text-[#5b61c9]" : "text-[#2f6fb3]")}>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      rainProb >= 75
+                        ? "font-semibold text-[#5b61c9]"
+                        : "text-[#2f6fb3]",
+                    )}
+                  >
                     {rainProb}% · {formatNumber(rainMm)} mm
                   </span>
                   <span>{Math.round(windKm)} km/h</span>
@@ -390,8 +483,15 @@ export function ForecastCalendarCard({
         <div className="grid gap-4 border-t border-line bg-subtle/35 p-5 sm:grid-cols-3">
           <div className="rounded-xl border border-line bg-surface p-3.5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink">Janela de Pulverização (24h)</span>
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", insights.spray.badgeClass)}>
+              <span className="text-xs font-semibold text-ink">
+                Janela de Pulverização (24h)
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  insights.spray.badgeClass,
+                )}
+              >
                 {insights.spray.status}
               </span>
             </div>
@@ -402,8 +502,15 @@ export function ForecastCalendarCard({
 
           <div className="rounded-xl border border-line bg-surface p-3.5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink">Manejo de Irrigação (Pivô / Geral)</span>
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", insights.irrigation.badgeClass)}>
+              <span className="text-xs font-semibold text-ink">
+                Manejo de Irrigação (Pivô / Geral)
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  insights.irrigation.badgeClass,
+                )}
+              >
                 {insights.irrigation.status}
               </span>
             </div>
@@ -414,8 +521,15 @@ export function ForecastCalendarCard({
 
           <div className="rounded-xl border border-line bg-surface p-3.5 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink">Risco de Estresse Térmico</span>
-              <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", insights.heat.badgeClass)}>
+              <span className="text-xs font-semibold text-ink">
+                Risco de Estresse Térmico
+              </span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  insights.heat.badgeClass,
+                )}
+              >
                 {insights.heat.status}
               </span>
             </div>

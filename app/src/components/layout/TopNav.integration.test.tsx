@@ -1,4 +1,10 @@
-import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -7,7 +13,10 @@ import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
 import { activeItem } from "./nav";
 import { TopNav } from "./TopNav";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/alertas/regras", useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/alertas/regras",
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+}));
 
 describe("TopNav", () => {
   beforeEach(() => {
@@ -18,11 +27,11 @@ describe("TopNav", () => {
     renderWithProviders(<TopNav />);
     const nav = screen.getByRole("navigation", { name: "Navegação principal" });
 
-    expect(within(nav).getAllByRole("button").map((b) => b.textContent)).toEqual([
-      "Monitoramento",
-      "Alertas",
-      "Administração",
-    ]);
+    expect(
+      within(nav)
+        .getAllByRole("button")
+        .map((b) => b.textContent),
+    ).toEqual(["Monitoramento", "Alertas", "Administração"]);
   });
 
   it("abre o mega-menu ao passar o mouse e fecha ao sair", async () => {
@@ -34,7 +43,9 @@ describe("TopNav", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     const current = screen.getByRole("link", { name: /Regras de alerta/ });
     expect(current).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: /Alertas disparados/ })).not.toHaveAttribute("aria-current");
+    expect(
+      screen.getByRole("link", { name: /Alertas disparados/ }),
+    ).not.toHaveAttribute("aria-current");
 
     fireEvent.mouseLeave(trigger.parentElement!);
     act(() => vi.advanceTimersByTime(200));
@@ -49,7 +60,9 @@ describe("TopNav", () => {
 
     trigger.focus();
     await user.keyboard("{ArrowDown}");
-    await waitFor(() => expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus());
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus(),
+    );
     await user.keyboard("{ArrowDown}");
     expect(screen.getByRole("link", { name: /Parâmetros/ })).toHaveFocus();
     await user.keyboard("{ArrowUp}");
@@ -66,11 +79,15 @@ describe("TopNav", () => {
 
     trigger.focus();
     await user.keyboard("{ArrowDown}");
-    await waitFor(() => expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus());
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus(),
+    );
     await user.tab();
     expect(screen.getByRole("link", { name: /Parâmetros/ })).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole("link", { name: /Perfis e permissões/ })).toHaveFocus();
+    expect(
+      screen.getByRole("link", { name: /Perfis e permissões/ }),
+    ).toHaveFocus();
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     await user.tab();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -101,7 +118,9 @@ describe("TopNav", () => {
 
   it("mostra o total de alertas pendentes no sino", async () => {
     renderWithProviders(<TopNav />);
-    expect(await screen.findByRole("link", { name: "2 alertas pendentes" })).toHaveTextContent("2");
+    expect(
+      await screen.findByRole("link", { name: "2 alertas pendentes" }),
+    ).toHaveTextContent("2");
   });
 
   it("abre e fecha o menu de celular", async () => {
@@ -114,7 +133,9 @@ describe("TopNav", () => {
     const mobile = screen.getByRole("navigation", { name: "Menu" });
     expect(within(mobile).getAllByRole("link")).toHaveLength(9);
     await user.click(within(mobile).getByRole("link", { name: "Usuários" }));
-    expect(screen.queryByRole("navigation", { name: "Menu" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "Menu" }),
+    ).not.toBeInTheDocument();
   });
 });
 

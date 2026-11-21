@@ -38,24 +38,46 @@ export function SeriesCard({
   const selectId = useId();
   const [range, setRange] = useState<Range>("24");
   const option = RANGES.find((r) => r.value === range)!;
-  const series = useSeries({ stationId, propertyId, hours: Number(range), bucketMinutes: option.bucket });
+  const series = useSeries({
+    stationId,
+    propertyId,
+    hours: Number(range),
+    bucketMinutes: option.bucket,
+  });
   const types = [...(series.data?.series ?? [])].sort(
     (a, b) => sensorOrder(a.sensor_type) - sensorOrder(b.sensor_type),
   );
   const [typeId, setTypeId] = useState<number | null>(null);
   const selected =
-    types.find((t) => t.sensor_type_id === typeId) ?? types.find((t) => t.sensor_type === defaultType) ?? types[0];
+    types.find((t) => t.sensor_type_id === typeId) ??
+    types.find((t) => t.sensor_type === defaultType) ??
+    types[0];
   const visual = sensorVisual(selected?.sensor_type ?? "");
   const last = selected?.points.at(-1);
-  const low = selected?.points.length ? Math.min(...selected.points.map((p) => p.min)) : undefined;
-  const high = selected?.points.length ? Math.max(...selected.points.map((p) => p.max)) : undefined;
+  const low = selected?.points.length
+    ? Math.min(...selected.points.map((p) => p.min))
+    : undefined;
+  const high = selected?.points.length
+    ? Math.max(...selected.points.map((p) => p.max))
+    : undefined;
 
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader
         title={title}
-        description={selected ? "Média por intervalo, com a faixa entre mínimo e máximo" : "Leituras agregadas"}
-        action={<Segmented label="Período" value={range} onChange={setRange} options={RANGES.map(({ value, label }) => ({ value, label }))} />}
+        description={
+          selected
+            ? "Média por intervalo, com a faixa entre mínimo e máximo"
+            : "Leituras agregadas"
+        }
+        action={
+          <Segmented
+            label="Período"
+            value={range}
+            onChange={setRange}
+            options={RANGES.map(({ value, label }) => ({ value, label }))}
+          />
+        }
       />
       <div className="flex flex-wrap items-end justify-between gap-4 px-5 pt-4">
         <div className="flex items-center gap-3">
@@ -90,16 +112,23 @@ export function SeriesCard({
             <div>
               <dt className="text-xs text-faint">Último</dt>
               <dd className="text-lg font-semibold tabular-nums">
-                {formatNumber(last.avg)} <span className="text-xs font-medium text-muted">{selected.unit_of_measure}</span>
+                {formatNumber(last.avg)}{" "}
+                <span className="text-xs font-medium text-muted">
+                  {selected.unit_of_measure}
+                </span>
               </dd>
             </div>
             <div>
               <dt className="text-xs text-faint">Mínimo</dt>
-              <dd className="text-lg font-semibold tabular-nums text-info">{formatNumber(low)}</dd>
+              <dd className="text-lg font-semibold tabular-nums text-info">
+                {formatNumber(low)}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-faint">Máximo</dt>
-              <dd className="text-lg font-semibold tabular-nums text-danger">{formatNumber(high)}</dd>
+              <dd className="text-lg font-semibold tabular-nums text-danger">
+                {formatNumber(high)}
+              </dd>
             </div>
           </dl>
         )}
@@ -108,7 +137,10 @@ export function SeriesCard({
         {series.isLoading ? (
           <Skeleton className="mx-2 h-64" />
         ) : series.error ? (
-          <ErrorState message={series.error.message} onRetry={() => void series.refetch()} />
+          <ErrorState
+            message={series.error.message}
+            onRetry={() => void series.refetch()}
+          />
         ) : !selected ? (
           <EmptyState title="Sem leituras no período" />
         ) : (
@@ -119,7 +151,12 @@ export function SeriesCard({
                   ? `, último ${formatNumber(last.avg)}, mínimo ${formatNumber(low)} e máximo ${formatNumber(high)} ${selected.unit_of_measure}.`
                   : ".")}
             </p>
-            <TrendChart points={selected.points} unit={selected.unit_of_measure} color={visual.color} height={264} />
+            <TrendChart
+              points={selected.points}
+              unit={selected.unit_of_measure}
+              color={visual.color}
+              height={264}
+            />
           </>
         )}
       </div>

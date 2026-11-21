@@ -83,7 +83,10 @@ describe("ReportsPage", () => {
   it("utiliza o endpoint direto /api/reports quando disponível e exibe erro se falhar com 500", async () => {
     const routes = {
       ...defaultRoutes(),
-      "/api/reports": () => ({ status: 500, body: { message: "Erro interno no motor de relatórios" } }),
+      "/api/reports": () => ({
+        status: 500,
+        body: { message: "Erro interno no motor de relatórios" },
+      }),
     };
     mockApi(routes);
 
@@ -142,7 +145,9 @@ describe("ReportsPage", () => {
           sensor_type: "Temperatura",
           unit_of_measure: "°C",
           value: 25,
-          unix_time: Math.floor(new Date("2026-10-03T12:00:00.000Z").getTime() / 1000),
+          unix_time: Math.floor(
+            new Date("2026-10-03T12:00:00.000Z").getTime() / 1000,
+          ),
           date_time: "2026-10-03T12:00:00.000Z",
           data_consistent: true,
         },
@@ -153,7 +158,9 @@ describe("ReportsPage", () => {
           sensor_type: "Temperatura",
           unit_of_measure: "°C",
           value: 27,
-          unix_time: Math.floor(new Date("2026-10-08T12:00:00.000Z").getTime() / 1000),
+          unix_time: Math.floor(
+            new Date("2026-10-08T12:00:00.000Z").getTime() / 1000,
+          ),
           date_time: "2026-10-08T12:00:00.000Z",
           data_consistent: true,
         },
@@ -284,49 +291,60 @@ describe("ReportsPage", () => {
     const baseFetch = fetchMock.getMockImplementation()!;
     let exportCalls = 0;
     const exportRequests: Array<{ url: string; body: unknown }> = [];
-    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const urlText = String(input);
-      if (urlText.includes("/api/backend/reports/export")) {
-        exportCalls += 1;
-        const parsedBody = init?.body ? JSON.parse(String(init.body)) : null;
-        exportRequests.push({ url: urlText, body: parsedBody });
-        if (exportCalls === 1) {
-          return new Response('\uFEFF"ID Leitura";"Valor"\r\n"10";"25"', {
-            status: 200,
-            headers: {
-              "Content-Type": "text/csv; charset=utf-8",
-              "Content-Disposition":
-                'attachment; filename="relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.csv"',
-            },
-          });
+    fetchMock.mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const urlText = String(input);
+        if (urlText.includes("/api/backend/reports/export")) {
+          exportCalls += 1;
+          const parsedBody = init?.body ? JSON.parse(String(init.body)) : null;
+          exportRequests.push({ url: urlText, body: parsedBody });
+          if (exportCalls === 1) {
+            return new Response('\uFEFF"ID Leitura";"Valor"\r\n"10";"25"', {
+              status: 200,
+              headers: {
+                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Disposition":
+                  'attachment; filename="relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.csv"',
+              },
+            });
+          }
+          if (exportCalls === 2) {
+            return new Response(
+              JSON.stringify({ report_type: "history", total_records: 1 }),
+              {
+                status: 200,
+                headers: {
+                  "Content-Type": "application/json; charset=utf-8",
+                  "Content-Disposition":
+                    'attachment; filename="relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.json"',
+                },
+              },
+            );
+          }
+          return new Response(
+            JSON.stringify({
+              message: "Falha ao gerar arquivo para exportação.",
+            }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
         }
-        if (exportCalls === 2) {
-          return new Response(JSON.stringify({ report_type: "history", total_records: 1 }), {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json; charset=utf-8",
-              "Content-Disposition":
-                'attachment; filename="relatorio-historico-estacao-1-2026-10-07_a_2026-10-14.json"',
-            },
-          });
-        }
-        return new Response(
-          JSON.stringify({ message: "Falha ao gerar arquivo para exportação." }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
-        );
-      }
-      return baseFetch(input, init);
-    });
+        return baseFetch(input, init);
+      },
+    );
 
     renderWithProviders(<ReportsPage />);
 
     const exportCsvBtn = screen.getByRole("button", { name: /Exportar CSV/i });
-    const exportJsonBtn = screen.getByRole("button", { name: /Exportar JSON/i });
+    const exportJsonBtn = screen.getByRole("button", {
+      name: /Exportar JSON/i,
+    });
     await waitFor(() => expect(exportCsvBtn).toBeEnabled());
 
     fireEvent.click(exportCsvBtn);
     await waitFor(() => {
-      expect(screen.getByText("Relatório exportado em formato CSV")).toBeInTheDocument();
+      expect(
+        screen.getByText("Relatório exportado em formato CSV"),
+      ).toBeInTheDocument();
     });
     expect(exportRequests[0]).toMatchObject({
       url: "/api/backend/reports/export",
@@ -335,7 +353,9 @@ describe("ReportsPage", () => {
 
     fireEvent.click(exportJsonBtn);
     await waitFor(() => {
-      expect(screen.getByText("Relatório exportado em formato JSON")).toBeInTheDocument();
+      expect(
+        screen.getByText("Relatório exportado em formato JSON"),
+      ).toBeInTheDocument();
     });
     expect(exportRequests[1]).toMatchObject({
       url: "/api/backend/reports/export",
@@ -416,28 +436,33 @@ describe("ReportsPage", () => {
 
     const baseFetch = fetchMock.getMockImplementation()!;
     const sentBodies: unknown[] = [];
-    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const urlText = String(input);
-      if (urlText.includes("/api/backend/reports/export")) {
-        const parsedBody = init?.body ? JSON.parse(String(init.body)) : null;
-        sentBodies.push(parsedBody);
-        if (parsedBody && "report" in parsedBody) {
-          return new Response(JSON.stringify({ message: "Requisição muito grande." }), {
-            status: 413,
-            headers: { "Content-Type": "application/json" },
+    fetchMock.mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const urlText = String(input);
+        if (urlText.includes("/api/backend/reports/export")) {
+          const parsedBody = init?.body ? JSON.parse(String(init.body)) : null;
+          sentBodies.push(parsedBody);
+          if (parsedBody && "report" in parsedBody) {
+            return new Response(
+              JSON.stringify({ message: "Requisição muito grande." }),
+              {
+                status: 413,
+                headers: { "Content-Type": "application/json" },
+              },
+            );
+          }
+          return new Response('\uFEFF"ID Leitura";"Valor"\r\n"10";"25"', {
+            status: 200,
+            headers: {
+              "Content-Type": "text/csv; charset=utf-8",
+              "Content-Disposition":
+                'attachment; filename="relatorio-historico-geral-2026-10-07_a_2026-10-14.csv"',
+            },
           });
         }
-        return new Response('\uFEFF"ID Leitura";"Valor"\r\n"10";"25"', {
-          status: 200,
-          headers: {
-            "Content-Type": "text/csv; charset=utf-8",
-            "Content-Disposition":
-              'attachment; filename="relatorio-historico-geral-2026-10-07_a_2026-10-14.csv"',
-          },
-        });
-      }
-      return baseFetch(input, init);
-    });
+        return baseFetch(input, init);
+      },
+    );
 
     renderWithProviders(<ReportsPage />);
 
@@ -447,7 +472,9 @@ describe("ReportsPage", () => {
     fireEvent.click(exportCsvBtn);
 
     await waitFor(() => {
-      expect(screen.getByText("Relatório exportado em formato CSV")).toBeInTheDocument();
+      expect(
+        screen.getByText("Relatório exportado em formato CSV"),
+      ).toBeInTheDocument();
     });
     expect(sentBodies).toHaveLength(2);
     expect(sentBodies[0]).toHaveProperty("report");

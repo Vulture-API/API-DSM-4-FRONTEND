@@ -15,9 +15,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         Pular para o conteúdo
       </a>
-      <div className="hero-band on-dark pointer-events-none absolute inset-x-0 top-0 -z-10 h-[304px]" aria-hidden />
+      <div
+        className="hero-band on-dark pointer-events-none absolute inset-x-0 top-0 -z-10 h-[304px]"
+        aria-hidden
+      />
       <TopNav />
-      <main id="conteudo" className="relative mx-auto w-full max-w-7xl flex-1 px-4 pt-8 pb-12 sm:px-6">
+      <main
+        id="conteudo"
+        className="relative mx-auto w-full max-w-7xl flex-1 px-4 pt-8 pb-12 sm:px-6"
+      >
         {children}
       </main>
       <footer className="border-t border-line">

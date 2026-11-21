@@ -34,8 +34,12 @@ export type ReportViewerProps = {
   onRetry?: () => void;
 };
 
-function formatNullableMetric(value: number | null | undefined, unit = ""): string {
-  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+function formatNullableMetric(
+  value: number | null | undefined,
+  unit = "",
+): string {
+  if (value === null || value === undefined || !Number.isFinite(value))
+    return "—";
   const formatted = formatNumber(value);
   return unit ? `${formatted} ${unit}` : formatted;
 }
@@ -50,7 +54,8 @@ function HistoryReportContent({ report }: { report: HistoryReport }) {
           icon={<History className="size-4" />}
           action={
             <Badge tone="brand">
-              {report.summary.length} {report.summary.length === 1 ? "parâmetro" : "parâmetros"}
+              {report.summary.length}{" "}
+              {report.summary.length === 1 ? "parâmetro" : "parâmetros"}
             </Badge>
           }
         />
@@ -72,8 +77,12 @@ function HistoryReportContent({ report }: { report: HistoryReport }) {
               {report.summary.map((item) => (
                 <Tr key={item.sensor_type_id}>
                   <Td className="font-medium text-ink">{item.sensor_type}</Td>
-                  <Td className="font-mono text-xs text-muted">{item.unit_of_measure || "—"}</Td>
-                  <Td className="font-mono tabular-nums text-ink">{item.count}</Td>
+                  <Td className="font-mono text-xs text-muted">
+                    {item.unit_of_measure || "—"}
+                  </Td>
+                  <Td className="font-mono tabular-nums text-ink">
+                    {item.count}
+                  </Td>
                   <Td className="font-mono tabular-nums text-ink">
                     {formatNullableMetric(item.avg, item.unit_of_measure)}
                   </Td>
@@ -87,7 +96,10 @@ function HistoryReportContent({ report }: { report: HistoryReport }) {
                     {formatNullableMetric(item.stddev)}
                   </Td>
                   <Td className="font-mono tabular-nums text-ink">
-                    {formatNullableMetric(item.accumulated, item.unit_of_measure)}
+                    {formatNullableMetric(
+                      item.accumulated,
+                      item.unit_of_measure,
+                    )}
                   </Td>
                 </Tr>
               ))}
@@ -103,7 +115,8 @@ function HistoryReportContent({ report }: { report: HistoryReport }) {
           icon={<FileSpreadsheet className="size-4" />}
           action={
             <Badge tone="neutral">
-              Exibindo {Math.min(report.readings.length, 30)} de {report.total_readings}
+              Exibindo {Math.min(report.readings.length, 30)} de{" "}
+              {report.total_readings}
             </Badge>
           }
         />
@@ -124,10 +137,17 @@ function HistoryReportContent({ report }: { report: HistoryReport }) {
                   <Td className="font-mono text-xs tabular-nums text-muted">
                     {formatDateTime(reading.date_time)}
                   </Td>
-                  <Td className="font-mono text-xs text-muted">#{reading.sensor_id}</Td>
-                  <Td className="font-medium text-ink">{reading.sensor_type}</Td>
+                  <Td className="font-mono text-xs text-muted">
+                    #{reading.sensor_id}
+                  </Td>
+                  <Td className="font-medium text-ink">
+                    {reading.sensor_type}
+                  </Td>
                   <Td className="font-mono font-semibold tabular-nums text-ink">
-                    {formatNullableMetric(reading.value, reading.unit_of_measure)}
+                    {formatNullableMetric(
+                      reading.value,
+                      reading.unit_of_measure,
+                    )}
                   </Td>
                   <Td>
                     <Badge tone={reading.data_consistent ? "ok" : "warn"} dot>
@@ -153,7 +173,8 @@ function ForecastReportContent({ report }: { report: ForecastReport }) {
         icon={<CloudSun className="size-4" />}
         action={
           <Badge tone="info">
-            {report.total_days} {report.total_days === 1 ? "dia previsto" : "dias previstos"}
+            {report.total_days}{" "}
+            {report.total_days === 1 ? "dia previsto" : "dias previstos"}
           </Badge>
         }
       />
@@ -217,7 +238,8 @@ function AlertsReportContent({ report }: { report: AlertsReport }) {
         icon={<BellRing className="size-4" />}
         action={
           <Badge tone={report.total_alerts > 0 ? "danger" : "ok"}>
-            {report.total_alerts} {report.total_alerts === 1 ? "ocorrência" : "ocorrências"}
+            {report.total_alerts}{" "}
+            {report.total_alerts === 1 ? "ocorrência" : "ocorrências"}
           </Badge>
         }
       />
@@ -243,14 +265,19 @@ function AlertsReportContent({ report }: { report: AlertsReport }) {
                 <Td className="font-medium text-ink">{alert.station_name}</Td>
                 <Td className="text-muted">
                   {alert.sensor_type}{" "}
-                  <span className="font-mono text-xs text-faint">(#{alert.sensor_id})</span>
+                  <span className="font-mono text-xs text-faint">
+                    (#{alert.sensor_id})
+                  </span>
                 </Td>
                 <Td className="font-medium text-ink">{alert.rule_name}</Td>
                 <Td className="font-mono text-xs text-muted">
                   {alert.condition} {alert.unit_of_measure}
                 </Td>
                 <Td className="font-mono font-semibold tabular-nums text-ink">
-                  {formatNullableMetric(alert.reading_value, alert.unit_of_measure)}
+                  {formatNullableMetric(
+                    alert.reading_value,
+                    alert.unit_of_measure,
+                  )}
                 </Td>
                 <Td>
                   <Badge
@@ -258,7 +285,9 @@ function AlertsReportContent({ report }: { report: AlertsReport }) {
                     dot
                     pulse={alert.status === "pending"}
                   >
-                    {alert.status === "acknowledged" ? "Reconhecido" : "Pendente"}
+                    {alert.status === "acknowledged"
+                      ? "Reconhecido"
+                      : "Pendente"}
                   </Badge>
                 </Td>
               </Tr>
@@ -312,8 +341,12 @@ export function ReportViewer({
   }
 
   const metrics = computeReportSummaryMetrics(report);
-  const scopeStationLabel = report.station ? report.station.name : "Todas as estações";
-  const scopePropertyLabel = report.property ? report.property.name : "Todas as propriedades";
+  const scopeStationLabel = report.station
+    ? report.station.name
+    : "Todas as estações";
+  const scopePropertyLabel = report.property
+    ? report.property.name
+    : "Todas as propriedades";
 
   return (
     <div className="space-y-6">
@@ -354,9 +387,15 @@ export function ReportViewer({
         />
       </div>
 
-      {report.report_type === "history" && <HistoryReportContent report={report} />}
-      {report.report_type === "forecast" && <ForecastReportContent report={report} />}
-      {report.report_type === "alerts" && <AlertsReportContent report={report} />}
+      {report.report_type === "history" && (
+        <HistoryReportContent report={report} />
+      )}
+      {report.report_type === "forecast" && (
+        <ForecastReportContent report={report} />
+      )}
+      {report.report_type === "alerts" && (
+        <AlertsReportContent report={report} />
+      )}
     </div>
   );
 }

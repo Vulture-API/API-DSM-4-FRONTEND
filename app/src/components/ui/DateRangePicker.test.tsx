@@ -4,7 +4,11 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { DateRangePicker } from "./DateRangePicker";
 
-function ControlledPicker({ onChange }: { onChange?: (s: string, e: string) => void }) {
+function ControlledPicker({
+  onChange,
+}: {
+  onChange?: (s: string, e: string) => void;
+}) {
   const [start, setStart] = useState("06/10/2026");
   const [end, setEnd] = useState("13/10/2026");
   return (
@@ -22,9 +26,7 @@ function ControlledPicker({ onChange }: { onChange?: (s: string, e: string) => v
 
 describe("DateRangePicker", () => {
   it("renderiza o botão com o intervalo selecionado e inputs acessíveis", () => {
-    render(
-      <ControlledPicker />
-    );
+    render(<ControlledPicker />);
 
     expect(screen.getByText(/06\/10\/2026 — 13\/10\/2026/)).toBeInTheDocument();
     expect(screen.getByLabelText("Data inicial")).toBeInTheDocument();
@@ -35,9 +37,7 @@ describe("DateRangePicker", () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
 
-    render(
-      <ControlledPicker onChange={handleChange} />
-    );
+    render(<ControlledPicker onChange={handleChange} />);
 
     const startInput = screen.getByLabelText("Data inicial");
     await user.clear(startInput);
@@ -50,14 +50,14 @@ describe("DateRangePicker", () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
 
-    render(
-      <ControlledPicker onChange={handleChange} />
-    );
+    render(<ControlledPicker onChange={handleChange} />);
 
     // Clica no botão para abrir o popover
     await user.click(screen.getByText(/06\/10\/2026 — 13\/10\/2026/));
 
-    expect(screen.getByRole("dialog", { name: "Selecionar período" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Selecionar período" }),
+    ).toBeInTheDocument();
 
     // Navega meses
     await user.click(screen.getByLabelText("Mês anterior"));
@@ -72,9 +72,7 @@ describe("DateRangePicker", () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
 
-    render(
-      <ControlledPicker onChange={handleChange} />
-    );
+    render(<ControlledPicker onChange={handleChange} />);
 
     await user.click(screen.getByText(/06\/10\/2026 — 13\/10\/2026/));
 
@@ -91,9 +89,7 @@ describe("DateRangePicker", () => {
   it("fecha o popover ao clicar em Fechar", async () => {
     const user = userEvent.setup();
 
-    render(
-      <ControlledPicker />
-    );
+    render(<ControlledPicker />);
 
     await user.click(screen.getByText(/06\/10\/2026 — 13\/10\/2026/));
     expect(screen.getByRole("dialog")).toBeInTheDocument();

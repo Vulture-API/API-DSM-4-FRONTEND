@@ -1,7 +1,12 @@
 import type { AlertRule, TriggeredAlert } from "@/features/alerts/api";
 import type { Sensor, SensorType } from "@/features/parameters/api";
 import type { Reading } from "@/features/readings/api";
-import type { ForecastDay, Property, Station, StationForecast } from "@/features/stations/api";
+import type {
+  ForecastDay,
+  Property,
+  Station,
+  StationForecast,
+} from "@/features/stations/api";
 
 export type CanonicalReportType = "history" | "forecast" | "alerts";
 
@@ -146,21 +151,24 @@ export const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
     type: "history",
     label: "Relatório de Histórico de Leituras",
     shortLabel: "Histórico",
-    description: "Consolida leituras brutas, médias, extremos, desvios e acumulados por tipo de sensor.",
+    description:
+      "Consolida leituras brutas, médias, extremos, desvios e acumulados por tipo de sensor.",
     badgeText: "Telemetria e Consistência",
   },
   {
     type: "forecast",
     label: "Relatório de Previsão Meteorológica",
     shortLabel: "Previsão",
-    description: "Apresenta a tendência climática diária com extremos térmicos, chuva esperada e rajadas de vento.",
+    description:
+      "Apresenta a tendência climática diária com extremos térmicos, chuva esperada e rajadas de vento.",
     badgeText: "Planejamento Agrícola",
   },
   {
     type: "alerts",
     label: "Relatório de Alertas e Ocorrências",
     shortLabel: "Alertas",
-    description: "Reúne alertas críticos disparados por sensor, limites violados e status de reconhecimento.",
+    description:
+      "Reúne alertas críticos disparados por sensor, limites violados e status de reconhecimento.",
     badgeText: "Risco e Auditoria",
   },
 ];
@@ -168,10 +176,10 @@ export const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
 const REPORT_TYPE_ALIASES: Record<string, CanonicalReportType> = {
   history: "history",
   historico: "history",
-  "histórico": "history",
+  histórico: "history",
   forecast: "forecast",
   previsao: "forecast",
-  "previsão": "forecast",
+  previsão: "forecast",
   alerts: "alerts",
   alerta: "alerts",
   alertas: "alerts",
@@ -199,14 +207,21 @@ const WEATHER_CODE_DESCRIPTIONS: Record<number, string> = {
   99: "Tempestade severa com granizo",
 };
 
-export function normalizeReportType(value: string | null | undefined): CanonicalReportType | null {
+export function normalizeReportType(
+  value: string | null | undefined,
+): CanonicalReportType | null {
   if (!value || typeof value !== "string") return null;
   const cleaned = value.trim().toLowerCase();
   return REPORT_TYPE_ALIASES[cleaned] ?? null;
 }
 
-export function getReportTypeOption(type: CanonicalReportType): ReportTypeOption {
-  return REPORT_TYPE_OPTIONS.find((opt) => opt.type === type) ?? REPORT_TYPE_OPTIONS[0]!;
+export function getReportTypeOption(
+  type: CanonicalReportType,
+): ReportTypeOption {
+  return (
+    REPORT_TYPE_OPTIONS.find((opt) => opt.type === type) ??
+    REPORT_TYPE_OPTIONS[0]!
+  );
 }
 
 export function describeWeatherCode(code: number | null | undefined): string {
@@ -216,7 +231,10 @@ export function describeWeatherCode(code: number | null | undefined): string {
   return WEATHER_CODE_DESCRIPTIONS[code] ?? `Código meteorológico ${code}`;
 }
 
-export function parseFlexibleDate(value: string | undefined, isEndOfDay = false): Date | null {
+export function parseFlexibleDate(
+  value: string | undefined,
+  isEndOfDay = false,
+): Date | null {
   if (!value || typeof value !== "string") return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -230,7 +248,9 @@ export function parseFlexibleDate(value: string | undefined, isEndOfDay = false)
     const minutes = isEndOfDay ? 59 : 0;
     const seconds = isEndOfDay ? 59 : 0;
     const ms = isEndOfDay ? 999 : 0;
-    const candidate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, ms));
+    const candidate = new Date(
+      Date.UTC(year, month - 1, day, hours, minutes, seconds, ms),
+    );
     if (
       candidate.getUTCFullYear() !== year ||
       candidate.getUTCMonth() !== month - 1 ||
@@ -250,7 +270,9 @@ export function parseFlexibleDate(value: string | undefined, isEndOfDay = false)
     const minutes = isEndOfDay ? 59 : 0;
     const seconds = isEndOfDay ? 59 : 0;
     const ms = isEndOfDay ? 999 : 0;
-    const candidate = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds, ms));
+    const candidate = new Date(
+      Date.UTC(year, month - 1, day, hours, minutes, seconds, ms),
+    );
     if (
       candidate.getUTCFullYear() !== year ||
       candidate.getUTCMonth() !== month - 1 ||
@@ -266,7 +288,10 @@ export function parseFlexibleDate(value: string | undefined, isEndOfDay = false)
   return parsed;
 }
 
-function parsePositiveId(raw: number | string | null | undefined): { value: number | null; invalid: boolean } {
+function parsePositiveId(raw: number | string | null | undefined): {
+  value: number | null;
+  invalid: boolean;
+} {
   if (raw === null || raw === undefined || raw === "" || raw === "all") {
     return { value: null, invalid: false };
   }
@@ -277,11 +302,15 @@ function parsePositiveId(raw: number | string | null | undefined): { value: numb
   return { value: num, invalid: false };
 }
 
-export function validateReportFilters(input: ReportFilterInput): ValidatedReportFilters {
+export function validateReportFilters(
+  input: ReportFilterInput,
+): ValidatedReportFilters {
   const errors: string[] = [];
   const normalizedType = normalizeReportType(input.reportType);
   if (!normalizedType) {
-    errors.push("Selecione um tipo de relatório válido (Histórico, Previsão ou Alertas).");
+    errors.push(
+      "Selecione um tipo de relatório válido (Histórico, Previsão ou Alertas).",
+    );
   }
   const reportType: CanonicalReportType = normalizedType ?? "history";
 
@@ -295,8 +324,14 @@ export function validateReportFilters(input: ReportFilterInput): ValidatedReport
     errors.push("O identificador da propriedade informada é inválido.");
   }
 
-  if (reportType === "forecast" && stationParsed.value === null && !stationParsed.invalid) {
-    errors.push("Selecione uma estação meteorológica para gerar o relatório de previsão.");
+  if (
+    reportType === "forecast" &&
+    stationParsed.value === null &&
+    !stationParsed.invalid
+  ) {
+    errors.push(
+      "Selecione uma estação meteorológica para gerar o relatório de previsão.",
+    );
   }
 
   let days = 7;
@@ -316,23 +351,32 @@ export function validateReportFilters(input: ReportFilterInput): ValidatedReport
     const hasStart = Boolean(input.startDate && input.startDate.trim());
     const hasEnd = Boolean(input.endDate && input.endDate.trim());
 
-    const startDate = hasStart ? parseFlexibleDate(input.startDate, false) : null;
+    const startDate = hasStart
+      ? parseFlexibleDate(input.startDate, false)
+      : null;
     const endDate = hasEnd ? parseFlexibleDate(input.endDate, true) : null;
 
     if (hasStart && !startDate) {
-      errors.push("A data inicial informada é inválida. Use o formato DD/MM/AAAA.");
+      errors.push(
+        "A data inicial informada é inválida. Use o formato DD/MM/AAAA.",
+      );
     }
     if (hasEnd && !endDate) {
-      errors.push("A data final informada é inválida. Use o formato DD/MM/AAAA.");
+      errors.push(
+        "A data final informada é inválida. Use o formato DD/MM/AAAA.",
+      );
     }
 
     if (startDate && endDate) {
       if (startDate.getTime() > endDate.getTime()) {
         errors.push("A data inicial não pode ser posterior à data final.");
       } else {
-        const diffDays = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+        const diffDays =
+          (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
         if (diffDays > 366) {
-          errors.push("O período máximo permitido para consulta de relatório é de 366 dias.");
+          errors.push(
+            "O período máximo permitido para consulta de relatório é de 366 dias.",
+          );
         }
       }
     }
@@ -353,7 +397,9 @@ export function validateReportFilters(input: ReportFilterInput): ValidatedReport
   };
 }
 
-export function buildReportQueryParams(filters: ValidatedReportFilters): string {
+export function buildReportQueryParams(
+  filters: ValidatedReportFilters,
+): string {
   const params = new URLSearchParams();
   params.set("type", filters.reportType);
   if (filters.stationId !== null) {
@@ -386,7 +432,12 @@ export type TelemetryComposeSources = {
 function isAccumulatedSensorType(name: string, unit: string): boolean {
   const lower = name.toLowerCase();
   const unitLower = unit.toLowerCase();
-  return lower.includes("pluv") || lower.includes("chuva") || lower.includes("precip") || unitLower === "mm";
+  return (
+    lower.includes("pluv") ||
+    lower.includes("chuva") ||
+    lower.includes("precip") ||
+    unitLower === "mm"
+  );
 }
 
 function roundToTwo(value: number): number {
@@ -397,32 +448,39 @@ export function buildReportFromTelemetry(
   filters: ValidatedReportFilters,
   sources: TelemetryComposeSources,
 ): GeneratedReport {
-  const generatedAt = sources.generatedAt ?? new Date(1791936000 * 1000).toISOString();
+  const generatedAt =
+    sources.generatedAt ?? new Date(1791936000 * 1000).toISOString();
   const stationObj = filters.stationId
-    ? sources.stations.find((s) => s.id === filters.stationId) ?? null
+    ? (sources.stations.find((s) => s.id === filters.stationId) ?? null)
     : null;
-  const resolvedPropertyId = filters.propertyId ?? stationObj?.property_id ?? null;
+  const resolvedPropertyId =
+    filters.propertyId ?? stationObj?.property_id ?? null;
   const propertyObj = resolvedPropertyId
-    ? sources.properties.find((p) => p.id === resolvedPropertyId) ?? null
+    ? (sources.properties.find((p) => p.id === resolvedPropertyId) ?? null)
     : null;
 
   const defaultTo = filters.toIso ?? generatedAt;
   const defaultFrom =
-    filters.fromIso ?? new Date(new Date(defaultTo).getTime() - 7 * 86_400_000).toISOString();
+    filters.fromIso ??
+    new Date(new Date(defaultTo).getTime() - 7 * 86_400_000).toISOString();
 
   if (filters.reportType === "forecast") {
-    const targetStation = stationObj ?? sources.stations[0] ?? {
-      id: filters.stationId ?? 1,
-      property_id: resolvedPropertyId ?? 1,
-      name: `Estação #${filters.stationId ?? 1}`,
-      mac_address: "00:00:00:00:00:00",
-      latitude: -23.1896,
-      longitude: -45.8841,
-      last_communication_at: null,
-      created_at: generatedAt,
-    };
+    const targetStation = stationObj ??
+      sources.stations[0] ?? {
+        id: filters.stationId ?? 1,
+        property_id: resolvedPropertyId ?? 1,
+        name: `Estação #${filters.stationId ?? 1}`,
+        mac_address: "00:00:00:00:00:00",
+        latitude: -23.1896,
+        longitude: -45.8841,
+        last_communication_at: null,
+        created_at: generatedAt,
+      };
 
-    const rawDays: ForecastDay[] = (sources.forecast?.days ?? []).slice(0, filters.days);
+    const rawDays: ForecastDay[] = (sources.forecast?.days ?? []).slice(
+      0,
+      filters.days,
+    );
     const days: ForecastDayItem[] = rawDays.map((day) => ({
       date: day.date,
       temperature_max: day.temperature_max,
@@ -447,10 +505,14 @@ export function buildReportFromTelemetry(
       station: {
         id: targetStation.id,
         name: targetStation.name,
-        latitude: targetStation.latitude ?? sources.forecast?.latitude ?? -23.1896,
-        longitude: targetStation.longitude ?? sources.forecast?.longitude ?? -45.8841,
+        latitude:
+          targetStation.latitude ?? sources.forecast?.latitude ?? -23.1896,
+        longitude:
+          targetStation.longitude ?? sources.forecast?.longitude ?? -45.8841,
       },
-      property: propertyObj ? { id: propertyObj.id, name: propertyObj.name } : null,
+      property: propertyObj
+        ? { id: propertyObj.id, name: propertyObj.name }
+        : null,
       source: sources.forecast?.source ?? "open-meteo",
       total_days: days.length,
       days,
@@ -460,8 +522,10 @@ export function buildReportFromTelemetry(
   const allowedStationIds = new Set(
     sources.stations
       .filter((s) => {
-        if (filters.stationId !== null && s.id !== filters.stationId) return false;
-        if (filters.propertyId !== null && s.property_id !== filters.propertyId) return false;
+        if (filters.stationId !== null && s.id !== filters.stationId)
+          return false;
+        if (filters.propertyId !== null && s.property_id !== filters.propertyId)
+          return false;
         return true;
       })
       .map((s) => s.id),
@@ -493,14 +557,17 @@ export function buildReportFromTelemetry(
         const rule = ruleById.get(alert.alert_config_id);
         const sensor = rule ? sensorById.get(rule.sensor_id) : undefined;
         const station = sensor ? stationById.get(sensor.station_id) : undefined;
-        const sType = sensor ? sensorTypeById.get(sensor.sensor_type_id) : undefined;
+        const sType = sensor
+          ? sensorTypeById.get(sensor.sensor_type_id)
+          : undefined;
         const operator = rule?.comparison_operator ?? ">";
         const threshold = rule?.reference_value ?? 0;
 
         return {
           id: alert.id,
           station_id: station?.id ?? filters.stationId ?? 1,
-          station_name: station?.name ?? stationObj?.name ?? "Estação Monitorada",
+          station_name:
+            station?.name ?? stationObj?.name ?? "Estação Monitorada",
           sensor_id: sensor?.id ?? rule?.sensor_id ?? 0,
           sensor_type: sType?.name ?? "Sensor",
           rule_name: rule?.message ?? `Alerta #${alert.alert_config_id}`,
@@ -521,7 +588,9 @@ export function buildReportFromTelemetry(
         to: defaultTo,
       },
       station: stationObj ? { id: stationObj.id, name: stationObj.name } : null,
-      property: propertyObj ? { id: propertyObj.id, name: propertyObj.name } : null,
+      property: propertyObj
+        ? { id: propertyObj.id, name: propertyObj.name }
+        : null,
       total_alerts: alertItems.length,
       alerts: alertItems,
     };
@@ -540,7 +609,9 @@ export function buildReportFromTelemetry(
 
   const readingItems: HistoryReadingItem[] = filteredReadings.map((reading) => {
     const sensor = sensorById.get(reading.sensor_id);
-    const sType = sensor ? sensorTypeById.get(sensor.sensor_type_id) : undefined;
+    const sType = sensor
+      ? sensorTypeById.get(sensor.sensor_type_id)
+      : undefined;
     return {
       id: reading.id,
       sensor_id: reading.sensor_id,
@@ -565,7 +636,9 @@ export function buildReportFromTelemetry(
     .sort(([a], [b]) => a - b)
     .map(([typeId, items]) => {
       const first = items[0]!;
-      const values = items.map((i) => i.value).filter((v) => Number.isFinite(v));
+      const values = items
+        .map((i) => i.value)
+        .filter((v) => Number.isFinite(v));
       const count = values.length;
       if (count === 0) {
         return {
@@ -584,9 +657,13 @@ export function buildReportFromTelemetry(
       const avg = roundToTwo(sum / count);
       const min = roundToTwo(Math.min(...values));
       const max = roundToTwo(Math.max(...values));
-      const variance = values.reduce((acc, v) => acc + (v - sum / count) ** 2, 0) / count;
+      const variance =
+        values.reduce((acc, v) => acc + (v - sum / count) ** 2, 0) / count;
       const stddev = roundToTwo(Math.sqrt(variance));
-      const accumulated = isAccumulatedSensorType(first.sensor_type, first.unit_of_measure)
+      const accumulated = isAccumulatedSensorType(
+        first.sensor_type,
+        first.unit_of_measure,
+      )
         ? roundToTwo(sum)
         : null;
 
@@ -611,17 +688,25 @@ export function buildReportFromTelemetry(
       to: defaultTo,
     },
     station: stationObj ? { id: stationObj.id, name: stationObj.name } : null,
-    property: propertyObj ? { id: propertyObj.id, name: propertyObj.name } : null,
+    property: propertyObj
+      ? { id: propertyObj.id, name: propertyObj.name }
+      : null,
     total_readings: readingItems.length,
     summary,
     readings: readingItems,
   };
 }
 
-export function isReportEmpty(report: GeneratedReport | null | undefined): boolean {
+export function isReportEmpty(
+  report: GeneratedReport | null | undefined,
+): boolean {
   if (!report) return true;
   if (report.report_type === "history") {
-    return report.total_readings === 0 && report.summary.length === 0 && report.readings.length === 0;
+    return (
+      report.total_readings === 0 &&
+      report.summary.length === 0 &&
+      report.readings.length === 0
+    );
   }
   if (report.report_type === "forecast") {
     return report.days.length === 0;
@@ -629,7 +714,9 @@ export function isReportEmpty(report: GeneratedReport | null | undefined): boole
   return report.alerts.length === 0;
 }
 
-export function computeReportSummaryMetrics(report: GeneratedReport | null | undefined): ReportSummaryMetrics {
+export function computeReportSummaryMetrics(
+  report: GeneratedReport | null | undefined,
+): ReportSummaryMetrics {
   if (!report) {
     return {
       totalItems: 0,
@@ -643,7 +730,9 @@ export function computeReportSummaryMetrics(report: GeneratedReport | null | und
   }
 
   if (report.report_type === "history") {
-    const consistentCount = report.readings.filter((r) => r.data_consistent).length;
+    const consistentCount = report.readings.filter(
+      (r) => r.data_consistent,
+    ).length;
     const consistencyPct =
       report.readings.length > 0
         ? `${Math.round((consistentCount / report.readings.length) * 100)}%`
@@ -665,21 +754,31 @@ export function computeReportSummaryMetrics(report: GeneratedReport | null | und
       report.days.length > 0
         ? Math.max(...report.days.map((d) => d.temperature_max ?? -Infinity))
         : null;
-    const totalRain = report.days.reduce((acc, d) => acc + (d.precipitation_mm ?? 0), 0);
+    const totalRain = report.days.reduce(
+      (acc, d) => acc + (d.precipitation_mm ?? 0),
+      0,
+    );
 
     return {
       totalItems: report.total_days,
       primaryMetricLabel: "Dias Previstos",
       primaryMetricValue: String(report.total_days),
       secondaryMetricLabel: "Pico Térmico Previsto",
-      secondaryMetricValue: maxTemp !== null && Number.isFinite(maxTemp) ? `${maxTemp.toFixed(1)} °C` : "—",
+      secondaryMetricValue:
+        maxTemp !== null && Number.isFinite(maxTemp)
+          ? `${maxTemp.toFixed(1)} °C`
+          : "—",
       tertiaryMetricLabel: "Chuva Acumulada Prevista",
       tertiaryMetricValue: `${totalRain.toFixed(1)} mm`,
     };
   }
 
-  const pendingCount = report.alerts.filter((a) => a.status === "pending").length;
-  const acknowledgedCount = report.alerts.filter((a) => a.status === "acknowledged").length;
+  const pendingCount = report.alerts.filter(
+    (a) => a.status === "pending",
+  ).length;
+  const acknowledgedCount = report.alerts.filter(
+    (a) => a.status === "acknowledged",
+  ).length;
 
   return {
     totalItems: report.total_alerts,
@@ -692,13 +791,17 @@ export function computeReportSummaryMetrics(report: GeneratedReport | null | und
   };
 }
 
-function escapeCsvCell(value: string | number | boolean | null | undefined): string {
+function escapeCsvCell(
+  value: string | number | boolean | null | undefined,
+): string {
   if (value === null || value === undefined) return '""';
   const text = String(value).replace(/"/g, '""');
   return `"${text}"`;
 }
 
-export function buildReportCsv(report: GeneratedReport | null | undefined): string {
+export function buildReportCsv(
+  report: GeneratedReport | null | undefined,
+): string {
   if (!report || isReportEmpty(report)) return "";
 
   if (report.report_type === "history") {
@@ -842,7 +945,9 @@ export function buildExportRequestPayload(
   maxInlineBytes = MAX_INLINE_REPORT_EXPORT_BYTES,
 ): ExportRequestPayload {
   const inlinePayload: ExportRequestPayload = { report, format };
-  const byteLength = new TextEncoder().encode(JSON.stringify(inlinePayload)).byteLength;
+  const byteLength = new TextEncoder().encode(
+    JSON.stringify(inlinePayload),
+  ).byteLength;
   if (byteLength > maxInlineBytes) {
     return buildFilterExportPayload(report, format, filters);
   }
@@ -962,8 +1067,8 @@ export function buildReportJson(report: GeneratedReport): string {
   const data = [...report.alerts]
     .sort(
       (a, b) =>
-        new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime() ||
-        b.id - a.id,
+        new Date(b.triggered_at).getTime() -
+          new Date(a.triggered_at).getTime() || b.id - a.id,
     )
     .map((alert) => ({
       "ID Alerta": alert.id,
@@ -999,13 +1104,17 @@ export function buildLocalExportArtifact(
   format: ReportExportFormat,
 ): ReportExportArtifact {
   if (!report || isReportEmpty(report)) {
-    throw new Error("Não existem dados disponíveis no relatório para exportar.");
+    throw new Error(
+      "Não existem dados disponíveis no relatório para exportar.",
+    );
   }
 
   if (format === "csv") {
     const csv = buildReportCsv(report);
     if (!csv) {
-      throw new Error("Não existem dados disponíveis no relatório para exportar.");
+      throw new Error(
+        "Não existem dados disponíveis no relatório para exportar.",
+      );
     }
     return {
       content: `\uFEFF${csv}`,

@@ -3,7 +3,15 @@
 import { useCan } from "@/features/auth/AuthProvider";
 import { Can } from "@/features/auth/Can";
 
-import { ArrowLeft, Clock, Cpu, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Clock,
+  Cpu,
+  MapPin,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 
@@ -16,13 +24,30 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { RowActions, Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import type { Sensor, SensorInput } from "@/features/parameters/api";
-import { calibrationParts, calibrationText, effectiveCalibration, multiplierError, offsetError, parseCalibration } from "@/features/parameters/calibration";
-import { useDeleteSensor, useSaveSensor, useSensors, useSensorTypes } from "@/features/parameters/hooks";
+import {
+  calibrationParts,
+  calibrationText,
+  effectiveCalibration,
+  multiplierError,
+  offsetError,
+  parseCalibration,
+} from "@/features/parameters/calibration";
+import {
+  useDeleteSensor,
+  useSaveSensor,
+  useSensors,
+  useSensorTypes,
+} from "@/features/parameters/hooks";
 import { sensorOrder, sensorVisual } from "@/features/sensor-visual";
 import { formatDateTime, formatNumber, formatRelative } from "@/lib/format";
 
 import type { CurrentReading, StationOverview } from "./api";
-import { availableChannels, channelHint, channelLabel, findChannel } from "./board-channels";
+import {
+  availableChannels,
+  channelHint,
+  channelLabel,
+  findChannel,
+} from "./board-channels";
 import { ReadingTile } from "./ReadingTile";
 import { LastUpdate } from "./LastUpdate";
 import { CurrentReadingsState } from "./CurrentReadingsState";
@@ -42,7 +67,10 @@ export function StationDetailPage({ id }: { id: number }) {
   const [editing, setEditing] = useState(false);
 
   const back = (
-    <Link href="/estacoes" className="inline-flex items-center gap-1.5 rounded text-sm text-white/75 hover:text-white">
+    <Link
+      href="/estacoes"
+      className="inline-flex items-center gap-1.5 rounded text-sm text-white/75 hover:text-white"
+    >
       <ArrowLeft className="size-4" aria-hidden /> Estações
     </Link>
   );
@@ -63,7 +91,10 @@ export function StationDetailPage({ id }: { id: number }) {
       <>
         <PageHeader title="Estação" back={back} />
         <Card>
-          <ErrorState message={overview.error.message} onRetry={() => void overview.refetch()} />
+          <ErrorState
+            message={overview.error.message}
+            onRetry={() => void overview.refetch()}
+          />
         </Card>
       </>
     );
@@ -77,7 +108,10 @@ export function StationDetailPage({ id }: { id: number }) {
             title="Estação não encontrada"
             description="Ela pode ter sido excluída."
             action={
-              <Link href="/estacoes" className="text-sm font-medium text-brand-700 hover:underline">
+              <Link
+                href="/estacoes"
+                className="text-sm font-medium text-brand-700 hover:underline"
+              >
                 Voltar para estações
               </Link>
             }
@@ -87,21 +121,34 @@ export function StationDetailPage({ id }: { id: number }) {
     );
   }
 
-  const currentStation = current.data?.stations.find((s) => s.station_id === id);
-  const readings = [...(currentStation?.readings ?? [])].sort((a, b) => sensorOrder(a.sensor_type) - sensorOrder(b.sensor_type));
+  const currentStation = current.data?.stations.find(
+    (s) => s.station_id === id,
+  );
+  const readings = [...(currentStation?.readings ?? [])].sort(
+    (a, b) => sensorOrder(a.sensor_type) - sensorOrder(b.sensor_type),
+  );
 
   return (
     <>
       <PageHeader
         back={back}
         title={station.name}
-        badge={<StationStatusBadge status={station.status} alerts={station.active_alerts} />}
+        badge={
+          <StationStatusBadge
+            status={station.status}
+            alerts={station.active_alerts}
+          />
+        }
         description={
           <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span>{station.property_name}</span>
             <span
               className="inline-flex items-center gap-1"
-              title={station.last_communication_at ? formatDateTime(station.last_communication_at) : undefined}
+              title={
+                station.last_communication_at
+                  ? formatDateTime(station.last_communication_at)
+                  : undefined
+              }
             >
               <Clock className="size-3.5" aria-hidden />
               Última comunicação {formatRelative(station.last_communication_at)}
@@ -109,44 +156,88 @@ export function StationDetailPage({ id }: { id: number }) {
           </span>
         }
         actions={
-          <Can permission="stations.update"><Button variant="glass" icon={<Pencil className="size-4" />} onClick={() => setEditing(true)}>
-            Editar
-          </Button></Can>
+          <Can permission="stations.update">
+            <Button
+              variant="glass"
+              icon={<Pencil className="size-4" />}
+              onClick={() => setEditing(true)}
+            >
+              Editar
+            </Button>
+          </Can>
         }
       />
 
       <div className="space-y-6">
         <Card className="overflow-hidden shadow-[var(--shadow-lift)]">
-          <CurrentReadingsState connection={current.connection} error={current.error} updatedAt={current.dataUpdatedAt}
-            now={current.now} onRetry={() => void current.refetch()} />
+          <CurrentReadingsState
+            connection={current.connection}
+            error={current.error}
+            updatedAt={current.dataUpdatedAt}
+            now={current.now}
+            onRetry={() => void current.refetch()}
+          />
           <div className="px-5 pb-3">
-            <LastUpdate lastUpdate={currentStation?.last_update} stationName={station.name} />
+            <LastUpdate
+              lastUpdate={currentStation?.last_update}
+              stationName={station.name}
+            />
           </div>
-          {current.error && !current.data ? <ErrorState message={current.error.message} onRetry={() => void current.refetch()} /> : (
-            <section aria-label="Leituras atuais" className="-mb-px -ml-px flex flex-wrap">
+          {current.error && !current.data ? (
+            <ErrorState
+              message={current.error.message}
+              onRetry={() => void current.refetch()}
+            />
+          ) : (
+            <section
+              aria-label="Leituras atuais"
+              className="-mb-px -ml-px flex flex-wrap"
+            >
               {current.isLoading && <Skeleton className="m-5 h-24 w-full" />}
               {!current.isLoading && readings.length === 0 && (
                 <div className="flex-1">
-                  <EmptyState title="Sem leituras ainda" description="A estação ainda não enviou dados." />
+                  <EmptyState
+                    title="Sem leituras ainda"
+                    description="A estação ainda não enviou dados."
+                  />
                 </div>
               )}
               {readings.map((reading) => (
-                <ReadingTile key={reading.sensor_id} reading={reading} now={current.now} />
+                <ReadingTile
+                  key={reading.sensor_id}
+                  reading={reading}
+                  now={current.now}
+                />
               ))}
             </section>
           )}
         </Card>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 [&>*]:min-w-0">
-          <SeriesCard title="Histórico" stationId={station.id} className="lg:col-span-8" />
+          <SeriesCard
+            title="Histórico"
+            stationId={station.id}
+            className="lg:col-span-8"
+          />
           <LocationCard station={station} />
         </div>
 
         <SensorsCard station={station} readings={readings} />
-        <CollectionSettingsCard stationId={station.id} stationName={station.name} />
+        <CollectionSettingsCard
+          stationId={station.id}
+          stationName={station.name}
+        />
       </div>
 
-      {editing && <Can permission="stations.update"><StationFormModal open station={toStation(station)} onClose={() => setEditing(false)} /></Can>}
+      {editing && (
+        <Can permission="stations.update">
+          <StationFormModal
+            open
+            station={toStation(station)}
+            onClose={() => setEditing(false)}
+          />
+        </Can>
+      )}
     </>
   );
 }
@@ -168,22 +259,39 @@ function LocationCard({ station }: { station: StationOverview }) {
         <div className="col-span-2">
           <dt className="text-xs text-faint">Coordenadas</dt>
           <dd className="tabular-nums">
-            {located ? `${station.latitude!.toFixed(4)}, ${station.longitude!.toFixed(4)}` : "Não informadas"}
+            {located
+              ? `${station.latitude!.toFixed(4)}, ${station.longitude!.toFixed(4)}`
+              : "Não informadas"}
           </dd>
         </div>
       </dl>
       <div className="mt-auto border-t border-line">
         {located ? (
-          <StationsMapLazy stations={[station]} selectedId={station.id} height={240} zoom={14} label={`Mapa com a localização de ${station.name}`} />
+          <StationsMapLazy
+            stations={[station]}
+            selectedId={station.id}
+            height={240}
+            zoom={14}
+            label={`Mapa com a localização de ${station.name}`}
+          />
         ) : (
-          <EmptyState title="Sem coordenadas" description="Edite a estação para informar latitude e longitude." />
+          <EmptyState
+            title="Sem coordenadas"
+            description="Edite a estação para informar latitude e longitude."
+          />
         )}
       </div>
     </Card>
   );
 }
 
-function SensorsCard({ station, readings }: { station: StationOverview; readings: CurrentReading[] }) {
+function SensorsCard({
+  station,
+  readings,
+}: {
+  station: StationOverview;
+  readings: CurrentReading[];
+}) {
   const canUpdate = useCan("sensors.update");
   const sensors = useSensors(station.id);
   const types = useSensorTypes();
@@ -192,8 +300,14 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
   const toast = useToast();
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Sensor | null>(null);
-  const typeById = useMemo(() => new Map(types.data?.map((t) => [t.id, t])), [types.data]);
-  const usedIdentifiers = useMemo(() => sensors.data?.map((s) => s.local_identifier) ?? [], [sensors.data]);
+  const typeById = useMemo(
+    () => new Map(types.data?.map((t) => [t.id, t])),
+    [types.data],
+  );
+  const usedIdentifiers = useMemo(
+    () => sensors.data?.map((s) => s.local_identifier) ?? [],
+    [sensors.data],
+  );
   const readingBySensor = useMemo(
     () => new Map(readings.map((r) => [r.sensor_id, r])),
     [readings],
@@ -210,7 +324,9 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
           operational_status: !sensor.operational_status,
         },
       });
-      toast.success(sensor.operational_status ? "Sensor desativado." : "Sensor ativado.");
+      toast.success(
+        sensor.operational_status ? "Sensor desativado." : "Sensor ativado.",
+      );
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -232,9 +348,16 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
         description="O identificador é o canal da placa que o datalogger usa no payload (ex.: temp, an34, pu26)."
         icon={<Cpu className="size-4" />}
         action={
-          <Can permission="sensors.create"><Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
-            Adicionar sensor
-          </Button></Can>
+          <Can permission="sensors.create">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Plus className="size-4" />}
+              onClick={() => setAdding(true)}
+            >
+              Adicionar sensor
+            </Button>
+          </Can>
         }
       />
       <div className="mt-4 border-t border-line">
@@ -244,9 +367,15 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
             <Skeleton className="h-9" />
           </div>
         ) : sensors.error ? (
-          <ErrorState message={sensors.error.message} onRetry={() => void sensors.refetch()} />
+          <ErrorState
+            message={sensors.error.message}
+            onRetry={() => void sensors.refetch()}
+          />
         ) : !sensors.data?.length ? (
-          <EmptyState title="Nenhum sensor vinculado" description="Adicione os sensores presentes no datalogger desta estação." />
+          <EmptyState
+            title="Nenhum sensor vinculado"
+            description="Adicione os sensores presentes no datalogger desta estação."
+          />
         ) : (
           <Table>
             <thead>
@@ -280,45 +409,72 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                         <span className="inline-flex items-center gap-2.5">
                           <span
                             className="inline-flex size-8 items-center justify-center rounded-lg"
-                            style={{ background: visual.soft, color: visual.color }}
+                            style={{
+                              background: visual.soft,
+                              color: visual.color,
+                            }}
                             aria-hidden
                           >
                             <visual.icon className="size-4" />
                           </span>
                           <span>
-                            <span className="block font-medium text-ink">{type ? type.name : `Tipo #${sensor.sensor_type_id}`}</span>
-                            <span className="block font-mono text-xs text-faint sm:hidden">{sensor.local_identifier}</span>
+                            <span className="block font-medium text-ink">
+                              {type
+                                ? type.name
+                                : `Tipo #${sensor.sensor_type_id}`}
+                            </span>
+                            <span className="block font-mono text-xs text-faint sm:hidden">
+                              {sensor.local_identifier}
+                            </span>
                           </span>
                         </span>
                       </Td>
                       <Td className="hidden sm:table-cell">
-                        <span className="rounded-md bg-subtle px-1.5 py-0.5 font-mono text-[13px]">{sensor.local_identifier}</span>
-                        {sensor.model && <span className="mt-1 block text-xs text-faint">{sensor.model}</span>}
+                        <span className="rounded-md bg-subtle px-1.5 py-0.5 font-mono text-[13px]">
+                          {sensor.local_identifier}
+                        </span>
+                        {sensor.model && (
+                          <span className="mt-1 block text-xs text-faint">
+                            {sensor.model}
+                          </span>
+                        )}
                       </Td>
                       <Td className="hidden text-sm text-muted md:table-cell">
                         {parts.length ? (
                           <>
-                            <span className="tabular-nums">{parts.join(" · ")}</span>
-                            <span className="block text-xs text-faint">{calibration.fromSensor ? "do sensor" : "do tipo"}</span>
+                            <span className="tabular-nums">
+                              {parts.join(" · ")}
+                            </span>
+                            <span className="block text-xs text-faint">
+                              {calibration.fromSensor ? "do sensor" : "do tipo"}
+                            </span>
                           </>
                         ) : (
                           <span className="text-faint">Sem calibração</span>
                         )}
                       </Td>
                       <Td className="whitespace-nowrap text-right tabular-nums">
-                        {reading && reading.value !== null && reading.unix_time !== null ? (
+                        {reading &&
+                        reading.value !== null &&
+                        reading.unix_time !== null ? (
                           <>
                             <span className="font-medium">
-                              {formatNumber(reading.value)} {reading.unit_of_measure}
+                              {formatNumber(reading.value)}{" "}
+                              {reading.unit_of_measure}
                             </span>
-                            <span className="block text-xs text-faint">{formatRelative(new Date(reading.unix_time * 1000))}</span>
+                            <span className="block text-xs text-faint">
+                              {formatRelative(
+                                new Date(reading.unix_time * 1000),
+                              )}
+                            </span>
                           </>
                         ) : (
                           <span className="text-faint">—</span>
                         )}
                       </Td>
                       <Td>
-                        <Switch disabled={!canUpdate}
+                        <Switch
+                          disabled={!canUpdate}
                           label={`Sensor ${sensor.local_identifier} operacional`}
                           checked={sensor.operational_status}
                           onChange={() => void toggle(sensor)}
@@ -326,16 +482,23 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
                       </Td>
                       <Td>
                         <RowActions>
-                          <Can permission="sensors.update"><IconButton label={`Editar sensor ${sensor.local_identifier}`} onClick={() => setEditing(sensor)}>
-                            <Pencil className="size-4" />
-                          </IconButton></Can>
-                          <Can permission="sensors.delete"><IconButton
-                            label={`Remover sensor ${sensor.local_identifier}`}
-                            onClick={() => void removeSensor(sensor)}
-                            className="hover:text-danger"
-                          >
-                            <Trash2 className="size-4" />
-                          </IconButton></Can>
+                          <Can permission="sensors.update">
+                            <IconButton
+                              label={`Editar sensor ${sensor.local_identifier}`}
+                              onClick={() => setEditing(sensor)}
+                            >
+                              <Pencil className="size-4" />
+                            </IconButton>
+                          </Can>
+                          <Can permission="sensors.delete">
+                            <IconButton
+                              label={`Remover sensor ${sensor.local_identifier}`}
+                              onClick={() => void removeSensor(sensor)}
+                              className="hover:text-danger"
+                            >
+                              <Trash2 className="size-4" />
+                            </IconButton>
+                          </Can>
                         </RowActions>
                       </Td>
                     </Tr>
@@ -345,13 +508,35 @@ function SensorsCard({ station, readings }: { station: StationOverview; readings
           </Table>
         )}
       </div>
-      {adding && <Can permission="sensors.create"><SensorFormModal stationId={station.id} used={usedIdentifiers} onClose={() => setAdding(false)} /></Can>}
-      {editing && <Can permission="sensors.update"><SensorFormModal stationId={station.id} sensor={editing} used={usedIdentifiers} onClose={() => setEditing(null)} /></Can>}
+      {adding && (
+        <Can permission="sensors.create">
+          <SensorFormModal
+            stationId={station.id}
+            used={usedIdentifiers}
+            onClose={() => setAdding(false)}
+          />
+        </Can>
+      )}
+      {editing && (
+        <Can permission="sensors.update">
+          <SensorFormModal
+            stationId={station.id}
+            sensor={editing}
+            used={usedIdentifiers}
+            onClose={() => setEditing(null)}
+          />
+        </Can>
+      )}
     </Card>
   );
 }
 
-type SensorFormErrors = { type?: string; identifier?: string; gain?: string; offset?: string };
+type SensorFormErrors = {
+  type?: string;
+  identifier?: string;
+  gain?: string;
+  offset?: string;
+};
 
 function SensorFormModal({
   stationId,
@@ -367,7 +552,9 @@ function SensorFormModal({
   const types = useSensorTypes();
   const save = useSaveSensor();
   const toast = useToast();
-  const [typeId, setTypeId] = useState(sensor ? String(sensor.sensor_type_id) : "");
+  const [typeId, setTypeId] = useState(
+    sensor ? String(sensor.sensor_type_id) : "",
+  );
   const [identifier, setIdentifier] = useState(sensor?.local_identifier ?? "");
   const [gain, setGain] = useState(calibrationText(sensor?.gain));
   const [offset, setOffset] = useState(calibrationText(sensor?.offset_value));
@@ -406,7 +593,9 @@ function SensorFormModal({
 
     try {
       await save.mutateAsync({ id: sensor?.id, input });
-      toast.success(sensor ? "Sensor atualizado." : "Sensor vinculado à estação.");
+      toast.success(
+        sensor ? "Sensor atualizado." : "Sensor vinculado à estação.",
+      );
       onClose();
     } catch (error) {
       toast.error((error as Error).message);
@@ -419,7 +608,11 @@ function SensorFormModal({
       open
       onClose={onClose}
       title={title}
-      description={sensor ? "Altere o identificador, o modelo ou a calibração deste sensor." : "Vincule um sensor do datalogger a esta estação."}
+      description={
+        sensor
+          ? "Altere o identificador, o modelo ou a calibração deste sensor."
+          : "Vincule um sensor do datalogger a esta estação."
+      }
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -431,10 +624,23 @@ function SensorFormModal({
         </>
       }
     >
-      <form id="sensor-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
-        <Field label="Tipo de medição" error={errors.type} className="sm:col-span-2">
+      <form
+        id="sensor-form"
+        onSubmit={submit}
+        noValidate
+        className="grid gap-4 sm:grid-cols-2"
+      >
+        <Field
+          label="Tipo de medição"
+          error={errors.type}
+          className="sm:col-span-2"
+        >
           {(p) => (
-            <Select {...p} value={typeId} onChange={(e) => setTypeId(e.target.value)}>
+            <Select
+              {...p}
+              value={typeId}
+              onChange={(e) => setTypeId(e.target.value)}
+            >
               <option value="">Selecione…</option>
               {types.data?.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -446,11 +652,21 @@ function SensorFormModal({
         </Field>
         <Field
           label="Canal da placa"
-          hint={channel ? channelHint(channel) : "Canal em que o sensor mudou o valor (no payload ou no comando \"canais\" da serial do datalogger); outro identificador pode ser digitado abaixo."}
+          hint={
+            channel
+              ? channelHint(channel)
+              : 'Canal em que o sensor mudou o valor (no payload ou no comando "canais" da serial do datalogger); outro identificador pode ser digitado abaixo.'
+          }
           className="sm:col-span-2"
         >
           {(p) => (
-            <Select {...p} value={channel?.id ?? ""} onChange={(e) => setIdentifier(e.target.value || (channel ? "" : identifier))}>
+            <Select
+              {...p}
+              value={channel?.id ?? ""}
+              onChange={(e) =>
+                setIdentifier(e.target.value || (channel ? "" : identifier))
+              }
+            >
               <option value="">Outro identificador</option>
               {channels.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -460,7 +676,12 @@ function SensorFormModal({
             </Select>
           )}
         </Field>
-        <Field label="Identificador" error={errors.identifier} hint="Mesma chave usada no payload MQTT, ex.: temp" className="sm:col-span-2">
+        <Field
+          label="Identificador"
+          error={errors.identifier}
+          hint="Mesma chave usada no payload MQTT, ex.: temp"
+          className="sm:col-span-2"
+        >
           {(p) => (
             <Input
               {...p}
@@ -472,18 +693,47 @@ function SensorFormModal({
             />
           )}
         </Field>
-        <Field label="Modelo" hint="Opcional, ex.: DHT22" className="sm:col-span-2">
-          {(p) => <Input {...p} value={model} maxLength={100} onChange={(e) => setModel(e.target.value)} />}
+        <Field
+          label="Modelo"
+          hint="Opcional, ex.: DHT22"
+          className="sm:col-span-2"
+        >
+          {(p) => (
+            <Input
+              {...p}
+              value={model}
+              maxLength={100}
+              onChange={(e) => setModel(e.target.value)}
+            />
+          )}
         </Field>
         <p className="text-sm text-muted sm:col-span-2">
-          Calibração deste sensor, opcional: valor = leitura × fator × ganho + offset. Em branco, vale a do tipo
-          {type ? ` (${typeCalibration.length ? typeCalibration.join(" · ") : "sem calibração"})` : ""}.
+          Calibração deste sensor, opcional: valor = leitura × fator × ganho +
+          offset. Em branco, vale a do tipo
+          {type
+            ? ` (${typeCalibration.length ? typeCalibration.join(" · ") : "sem calibração"})`
+            : ""}
+          .
         </p>
         <Field label="Ganho" error={errors.gain} hint="Multiplica a leitura">
-          {(p) => <Input {...p} inputMode="decimal" value={gain} onChange={(e) => setGain(e.target.value)} />}
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={gain}
+              onChange={(e) => setGain(e.target.value)}
+            />
+          )}
         </Field>
         <Field label="Offset" error={errors.offset} hint="Somado à leitura">
-          {(p) => <Input {...p} inputMode="decimal" value={offset} onChange={(e) => setOffset(e.target.value)} />}
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={offset}
+              onChange={(e) => setOffset(e.target.value)}
+            />
+          )}
         </Field>
       </form>
     </Modal>

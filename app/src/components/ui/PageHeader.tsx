@@ -27,15 +27,23 @@ export function PageHeader({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           {eyebrow && (
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-brand-300">{eyebrow}</p>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-brand-300">
+              {eyebrow}
+            </p>
           )}
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-[28px] leading-tight font-semibold tracking-tight">{title}</h1>
+            <h1 className="text-[28px] leading-tight font-semibold tracking-tight">
+              {title}
+            </h1>
             {badge}
           </div>
-          {description && <div className="mt-1.5 text-sm text-white/75">{description}</div>}
+          {description && (
+            <div className="mt-1.5 text-sm text-white/75">{description}</div>
+          )}
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+        {actions && (
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        )}
       </div>
       {children}
     </div>

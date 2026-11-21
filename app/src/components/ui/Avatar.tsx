@@ -18,7 +18,15 @@ export function avatarTone(name: string): string {
   return PALETTE[hash % PALETTE.length]!;
 }
 
-export function Avatar({ name, size = "md", className }: { name: string; size?: "sm" | "md"; className?: string }) {
+export function Avatar({
+  name,
+  size = "md",
+  className,
+}: {
+  name: string;
+  size?: "sm" | "md";
+  className?: string;
+}) {
   return (
     <span
       aria-hidden

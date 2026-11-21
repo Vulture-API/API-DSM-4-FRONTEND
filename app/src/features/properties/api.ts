@@ -21,7 +21,9 @@ export type PropertyInput = {
 export const propertiesApi = {
   list: async (): Promise<Property[]> => {
     try {
-      const res = await request<Property[] | Paginated<Property>>("/api/properties");
+      const res = await request<Property[] | Paginated<Property>>(
+        "/api/properties",
+      );
       if (Array.isArray(res)) return res;
       if (res && Array.isArray((res as Paginated<Property>).data)) {
         return (res as Paginated<Property>).data;

@@ -18,11 +18,15 @@ describe("ForecastCalendarCard", () => {
 
     // Badge de identificação da previsão
     expect(screen.getByText("Previsão Meteorológica")).toBeInTheDocument();
-    expect(screen.getByText("Próximos 7 dias e condições operacionais")).toBeInTheDocument();
+    expect(
+      screen.getByText("Próximos 7 dias e condições operacionais"),
+    ).toBeInTheDocument();
 
     // Título e subtítulo
     expect(
-      screen.getByRole("heading", { name: "Previsão meteorológica — Estação Sede" }),
+      screen.getByRole("heading", {
+        name: "Previsão meteorológica — Estação Sede",
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Fazenda Santa Rita/)).toBeInTheDocument();
 
@@ -32,14 +36,20 @@ describe("ForecastCalendarCard", () => {
     expect(screen.getByText("Hoje")).toBeInTheDocument();
 
     // Recomendações agrícolas do rodapé
-    expect(screen.getByText("Janela de Pulverização (24h)")).toBeInTheDocument();
-    expect(screen.getByText("Manejo de Irrigação (Pivô / Geral)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Janela de Pulverização (24h)"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Manejo de Irrigação (Pivô / Geral)"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Risco de Estresse Térmico")).toBeInTheDocument();
   });
 
   it("renderiza o estado skeleton quando isLoading é true", () => {
     render(<ForecastCalendarCard isLoading />);
-    expect(screen.queryByText("Previsão meteorológica — Estação Sede")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Previsão meteorológica — Estação Sede"),
+    ).not.toBeInTheDocument();
   });
 
   it("classifica corretamente as condições meteorológicas em getWeatherVisual", () => {

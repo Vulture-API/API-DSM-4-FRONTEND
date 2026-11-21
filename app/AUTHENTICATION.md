@@ -28,11 +28,11 @@ A instalação inicial do backend concede permissões ao Administrador; Gerente 
 
 As concessões abaixo são a configuração a aplicar no backend, não uma suposição automática por nome ou ID no frontend. Não há separação de acesso por propriedade.
 
-| Perfil | Concessões |
-| --- | --- |
-| ADMIN | Todo o catálogo de permissões existente do backend. |
+| Perfil  | Concessões                                                                                                                                                                                                                                                                                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ADMIN   | Todo o catálogo de permissões existente do backend.                                                                                                                                                                                                                                                                                   |
 | GERENTE | `monitoring.read`, `stations.read`, `sensors.read`, `sensor-types.read`, `properties.create`, `properties.read`, `properties.update`, `properties.delete`, `alert-configs.create`, `alert-configs.read`, `alert-configs.update`, `alert-configs.delete`, `triggered-alerts.read`, `triggered-alerts.acknowledge`, `occurrences.read`. |
-| CLIENTE | `monitoring.read`, `stations.read`, `sensors.read`, `sensor-types.read`, `properties.read`. |
+| CLIENTE | `monitoring.read`, `stations.read`, `sensors.read`, `sensor-types.read`, `properties.read`.                                                                                                                                                                                                                                           |
 
 O backend disponibiliza `GET /api/permissions`, `GET /api/roles/:id/permissions` e `PUT /api/roles/:id/permissions` para conferir/configurar as concessões com uma sessão administrativa. O PUT recebe `{ "permissions": ["código", "outro.código"] }` e substitui a lista completa. Consultar os IDs reais dos cargos antes de usar esses endpoints. Não foram adicionadas telas para criar cargos: os três cargos existentes continuam sendo utilizados.
 

@@ -1,10 +1,17 @@
 import type { AlertRule, TriggeredAlert } from "@/features/alerts/api";
 import type { Sensor, SensorType } from "@/features/parameters/api";
-import type { CurrentData, Overview, Property, Station, StationOverview } from "@/features/stations/api";
+import type {
+  CurrentData,
+  Overview,
+  Property,
+  Station,
+  StationOverview,
+} from "@/features/stations/api";
 import type { Role, User } from "@/features/users/api";
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
-const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+const minutesAgo = (m: number) =>
+  new Date(Date.now() - m * 60_000).toISOString();
 
 export const properties: Property[] = [
   { id: 1, name: "Fazenda Santa Rita", location: "SJC" },
@@ -12,20 +19,74 @@ export const properties: Property[] = [
 ];
 
 export const stations: Station[] = [
-  { id: 1, property_id: 1, mac_address: "00:1A:2B:3C:4D:01", name: "Estação Sede", latitude: -23.1, longitude: -45.8, last_communication_at: minutesAgo(1), created_at: minutesAgo(9999) },
-  { id: 2, property_id: 1, mac_address: "00:1A:2B:3C:4D:02", name: "Estação Pivô", latitude: null, longitude: null, last_communication_at: minutesAgo(2), created_at: minutesAgo(9999) },
-  { id: 3, property_id: 2, mac_address: "00:1A:2B:3C:4D:03", name: "Estação Brejo", latitude: null, longitude: null, last_communication_at: minutesAgo(300), created_at: minutesAgo(9999) },
+  {
+    id: 1,
+    property_id: 1,
+    mac_address: "00:1A:2B:3C:4D:01",
+    name: "Estação Sede",
+    latitude: -23.1,
+    longitude: -45.8,
+    last_communication_at: minutesAgo(1),
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 2,
+    property_id: 1,
+    mac_address: "00:1A:2B:3C:4D:02",
+    name: "Estação Pivô",
+    latitude: null,
+    longitude: null,
+    last_communication_at: minutesAgo(2),
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 3,
+    property_id: 2,
+    mac_address: "00:1A:2B:3C:4D:03",
+    name: "Estação Brejo",
+    latitude: null,
+    longitude: null,
+    last_communication_at: minutesAgo(300),
+    created_at: minutesAgo(9999),
+  },
 ];
 
 export const sensorTypes: SensorType[] = [
-  { id: 1, name: "Temperatura", unit_of_measure: "°C", factor: null, gain: null },
+  {
+    id: 1,
+    name: "Temperatura",
+    unit_of_measure: "°C",
+    factor: null,
+    gain: null,
+  },
   { id: 2, name: "Umidade", unit_of_measure: "%", factor: 1.5, gain: 2 },
 ];
 
 export const sensors: Sensor[] = [
-  { id: 10, station_id: 1, sensor_type_id: 1, local_identifier: "temp", operational_status: true, created_at: minutesAgo(9999) },
-  { id: 11, station_id: 1, sensor_type_id: 2, local_identifier: "umid", operational_status: false, created_at: minutesAgo(9999) },
-  { id: 20, station_id: 2, sensor_type_id: 1, local_identifier: "temp", operational_status: true, created_at: minutesAgo(9999) },
+  {
+    id: 10,
+    station_id: 1,
+    sensor_type_id: 1,
+    local_identifier: "temp",
+    operational_status: true,
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 11,
+    station_id: 1,
+    sensor_type_id: 2,
+    local_identifier: "umid",
+    operational_status: false,
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 20,
+    station_id: 2,
+    sensor_type_id: 1,
+    local_identifier: "temp",
+    operational_status: true,
+    created_at: minutesAgo(9999),
+  },
 ];
 
 function overviewStation(
@@ -68,7 +129,9 @@ export const overview: Overview = {
       [10, "Temperatura", "°C", 24],
       [11, "Umidade", "%", 60],
     ]),
-    overviewStation(stations[1]!, "Com alerta", 2, [[20, "Temperatura", "°C", 30]]),
+    overviewStation(stations[1]!, "Com alerta", 2, [
+      [20, "Temperatura", "°C", 30],
+    ]),
     overviewStation(stations[2]!, "Offline", 0, []),
   ],
 };
@@ -77,9 +140,13 @@ export const current: CurrentData = {
   generated_at: overview.generated_at,
   offline_threshold_minutes: overview.offline_threshold_minutes,
   stations: overview.stations.map((s) => ({
-    station_id: s.id, name: s.name, property_id: s.property_id,
-    property_name: s.property_name, status: s.status,
-    last_update: s.last_communication_at, readings: s.latest_readings,
+    station_id: s.id,
+    name: s.name,
+    property_id: s.property_id,
+    property_name: s.property_name,
+    status: s.status,
+    last_update: s.last_communication_at,
+    readings: s.latest_readings,
   })),
 };
 
@@ -88,8 +155,21 @@ export const series = {
   to: minutesAgo(0),
   bucket_minutes: 30,
   series: [
-    { sensor_type_id: 1, sensor_type: "Temperatura", unit_of_measure: "°C", points: [{ t: nowSeconds() - 3600, avg: 22, min: 20, max: 24 }, { t: nowSeconds(), avg: 25, min: 24, max: 26 }] },
-    { sensor_type_id: 2, sensor_type: "Umidade", unit_of_measure: "%", points: [{ t: nowSeconds(), avg: 60, min: 55, max: 65 }] },
+    {
+      sensor_type_id: 1,
+      sensor_type: "Temperatura",
+      unit_of_measure: "°C",
+      points: [
+        { t: nowSeconds() - 3600, avg: 22, min: 20, max: 24 },
+        { t: nowSeconds(), avg: 25, min: 24, max: 26 },
+      ],
+    },
+    {
+      sensor_type_id: 2,
+      sensor_type: "Umidade",
+      unit_of_measure: "%",
+      points: [{ t: nowSeconds(), avg: 60, min: 55, max: 65 }],
+    },
   ],
 };
 
@@ -99,23 +179,89 @@ export const roles: Role[] = [
 ];
 
 export const users: User[] = [
-  { id: 1, role_id: 1, name: "Mariana Albuquerque", email: "mariana@agritech.dev", active: true, created_at: minutesAgo(9999) },
-  { id: 2, role_id: 2, name: "Carlos Mendes", email: "carlos@agritech.dev", active: true, created_at: minutesAgo(9999) },
-  { id: 3, role_id: 2, name: "Paulo Dias", email: "paulo@agritech.dev", active: false, created_at: minutesAgo(9999) },
+  {
+    id: 1,
+    role_id: 1,
+    name: "Mariana Albuquerque",
+    email: "mariana@agritech.dev",
+    active: true,
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 2,
+    role_id: 2,
+    name: "Carlos Mendes",
+    email: "carlos@agritech.dev",
+    active: true,
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 3,
+    role_id: 2,
+    name: "Paulo Dias",
+    email: "paulo@agritech.dev",
+    active: false,
+    created_at: minutesAgo(9999),
+  },
 ];
 
 export const rules: AlertRule[] = [
-  { id: 1, manager_user_id: 2, sensor_id: 10, reference_value: 28.5, comparison_operator: ">", message: "Temperatura alta na sede", active: true, created_at: minutesAgo(9999) },
-  { id: 2, manager_user_id: null, sensor_id: 11, reference_value: 40, comparison_operator: "<", message: "Ar seco", active: false, created_at: minutesAgo(9999) },
+  {
+    id: 1,
+    manager_user_id: 2,
+    sensor_id: 10,
+    reference_value: 28.5,
+    comparison_operator: ">",
+    message: "Temperatura alta na sede",
+    active: true,
+    created_at: minutesAgo(9999),
+  },
+  {
+    id: 2,
+    manager_user_id: null,
+    sensor_id: 11,
+    reference_value: 40,
+    comparison_operator: "<",
+    message: "Ar seco",
+    active: false,
+    created_at: minutesAgo(9999),
+  },
 ];
 
 export const triggered: TriggeredAlert[] = [
-  { id: 100, alert_config_id: 1, reading_id: 5, acknowledged_by: null, triggered_at: minutesAgo(5), acknowledged_at: null, reading_value: 30.2, reading_unix_time: nowSeconds() - 300 },
-  { id: 101, alert_config_id: 2, reading_id: 6, acknowledged_by: null, triggered_at: minutesAgo(90), acknowledged_at: null, reading_value: null, reading_unix_time: null },
+  {
+    id: 100,
+    alert_config_id: 1,
+    reading_id: 5,
+    acknowledged_by: null,
+    triggered_at: minutesAgo(5),
+    acknowledged_at: null,
+    reading_value: 30.2,
+    reading_unix_time: nowSeconds() - 300,
+  },
+  {
+    id: 101,
+    alert_config_id: 2,
+    reading_id: 6,
+    acknowledged_by: null,
+    triggered_at: minutesAgo(90),
+    acknowledged_at: null,
+    reading_value: null,
+    reading_unix_time: null,
+  },
 ];
 
 export const acknowledgedAlerts: TriggeredAlert[] = [
-  { id: 90, alert_config_id: 1, reading_id: 4, acknowledged_by: 1, triggered_at: minutesAgo(600), acknowledged_at: minutesAgo(570), reading_value: 29, reading_unix_time: nowSeconds() - 36000 },
+  {
+    id: 90,
+    alert_config_id: 1,
+    reading_id: 4,
+    acknowledged_by: 1,
+    triggered_at: minutesAgo(600),
+    acknowledged_at: minutesAgo(570),
+    reading_value: 29,
+    reading_unix_time: nowSeconds() - 36000,
+  },
 ];
 
 export {
@@ -129,5 +275,9 @@ import { mockReadings } from "@/lib/api/mocks";
 
 export const readingsPaginated = {
   data: mockReadings.slice(0, 20),
-  meta: { total_records: mockReadings.length, total_pages: Math.ceil(mockReadings.length / 20), current_page: 1 },
+  meta: {
+    total_records: mockReadings.length,
+    total_pages: Math.ceil(mockReadings.length / 20),
+    current_page: 1,
+  },
 };

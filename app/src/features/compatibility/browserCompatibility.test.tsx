@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -25,7 +31,10 @@ import { RolesPage } from "@/features/roles/RolesPage";
 import { ForecastCalendarCard } from "@/features/stations/ForecastCalendarCard";
 import { StationDetailPage } from "@/features/stations/StationDetailPage";
 import { StationsPage } from "@/features/stations/StationsPage";
-import { AlertThresholdChart, isThresholdViolated } from "@/features/stats/AlertThresholdChart";
+import {
+  AlertThresholdChart,
+  isThresholdViolated,
+} from "@/features/stats/AlertThresholdChart";
 import { DashboardStats } from "@/features/stats/DashboardStats";
 import { StationExtremesChart } from "@/features/stats/StationExtremesChart";
 import { UsersPage } from "@/features/users/UsersPage";
@@ -34,7 +43,12 @@ import { SESSION_EXPIRED } from "@/lib/auth/policy";
 import { sameOrigin } from "@/lib/auth/session.server";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { forecast } from "@/test/fixtures";
-import { defaultRoutes, mockApi, renderWithProviders, testUser } from "@/test/utils";
+import {
+  defaultRoutes,
+  mockApi,
+  renderWithProviders,
+  testUser,
+} from "@/test/utils";
 
 const navigationState = vi.hoisted(() => ({
   path: "/dashboard",
@@ -44,7 +58,10 @@ const navigationState = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationState.path,
-  useRouter: () => ({ replace: navigationState.replace, refresh: navigationState.refresh }),
+  useRouter: () => ({
+    replace: navigationState.replace,
+    refresh: navigationState.refresh,
+  }),
 }));
 
 type SupportedBrowser = {
@@ -72,12 +89,17 @@ const SUPPORTED_BROWSERS: SupportedBrowser[] = [
   {
     id: "firefox",
     name: "Mozilla Firefox",
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
     secFetchSite: "same-origin",
   },
 ];
 
-function applyBrowserEnvironment(browser: SupportedBrowser, width = 1280, height = 800) {
+function applyBrowserEnvironment(
+  browser: SupportedBrowser,
+  width = 1280,
+  height = 800,
+) {
   Object.defineProperty(window.navigator, "userAgent", {
     value: browser.userAgent,
     configurable: true,
@@ -92,7 +114,9 @@ function applyBrowserEnvironment(browser: SupportedBrowser, width = 1280, height
     configurable: true,
     writable: true,
   });
-  window.URL.createObjectURL = vi.fn(() => `blob:https://agritech.local/${browser.id}-export`);
+  window.URL.createObjectURL = vi.fn(
+    () => `blob:https://agritech.local/${browser.id}-export`,
+  );
   window.URL.revokeObjectURL = vi.fn();
 }
 
@@ -117,12 +141,18 @@ describe.each(SUPPORTED_BROWSERS)(
       expect(window.navigator.userAgent).toBe(browser.userAgent);
 
       const loginView = render(<LoginPage onLogin={vi.fn()} />);
-      expect(screen.getByRole("heading", { name: "Bem-vindo de volta" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Bem-vindo de volta" }),
+      ).toBeInTheDocument();
       loginView.unmount();
 
       const dashboardView = renderWithProviders(<DashboardPage />);
-      expect(await screen.findByRole("region", { name: "Resumo" })).toBeInTheDocument();
-      expect(await screen.findByRole("region", { name: "Condições agora" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("region", { name: "Resumo" }),
+      ).toBeInTheDocument();
+      expect(
+        await screen.findByRole("region", { name: "Condições agora" }),
+      ).toBeInTheDocument();
       dashboardView.unmount();
 
       const stationsView = renderWithProviders(<StationsPage />);
@@ -130,27 +160,43 @@ describe.each(SUPPORTED_BROWSERS)(
       stationsView.unmount();
 
       const detailView = renderWithProviders(<StationDetailPage id={1} />);
-      expect(await screen.findByRole("heading", { name: "Estação Sede" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("heading", { name: "Estação Sede" }),
+      ).toBeInTheDocument();
       detailView.unmount();
 
       const historyView = renderWithProviders(<HistoryPage />);
-      expect(await screen.findByRole("heading", { name: "Histórico de dados meteorológicos" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("heading", {
+          name: "Histórico de dados meteorológicos",
+        }),
+      ).toBeInTheDocument();
       historyView.unmount();
 
       const statsView = renderWithProviders(<DashboardStats />);
-      expect(await screen.findByRole("heading", { name: "Estatísticas meteorológicas" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("heading", {
+          name: "Estatísticas meteorológicas",
+        }),
+      ).toBeInTheDocument();
       statsView.unmount();
 
       const alertsView = renderWithProviders(<AlertsPage />);
-      expect(await screen.findByText("Temperatura alta na sede")).toBeInTheDocument();
+      expect(
+        await screen.findByText("Temperatura alta na sede"),
+      ).toBeInTheDocument();
       alertsView.unmount();
 
       const rulesView = renderWithProviders(<RulesPage />);
-      expect(await screen.findByRole("button", { name: "Nova regra" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("button", { name: "Nova regra" }),
+      ).toBeInTheDocument();
       rulesView.unmount();
 
       const propertiesView = renderWithProviders(<PropertiesPage />);
-      expect((await screen.findAllByText("Fazenda Santa Rita")).length).toBeGreaterThan(0);
+      expect(
+        (await screen.findAllByText("Fazenda Santa Rita")).length,
+      ).toBeGreaterThan(0);
       propertiesView.unmount();
 
       const usersView = renderWithProviders(<UsersPage />);
@@ -158,7 +204,9 @@ describe.each(SUPPORTED_BROWSERS)(
       usersView.unmount();
 
       const rolesView = renderWithProviders(<RolesPage />);
-      expect(await screen.findByRole("button", { name: "Novo perfil" })).toBeInTheDocument();
+      expect(
+        await screen.findByRole("button", { name: "Novo perfil" }),
+      ).toBeInTheDocument();
       rolesView.unmount();
 
       const parametersView = renderWithProviders(<ParametersPage />);
@@ -176,23 +224,33 @@ describe.each(SUPPORTED_BROWSERS)(
         </AppShell>,
       );
 
-      const skipLink = screen.getByRole("link", { name: "Pular para o conteúdo" });
+      const skipLink = screen.getByRole("link", {
+        name: "Pular para o conteúdo",
+      });
       expect(skipLink).toHaveAttribute("href", "#conteudo");
       expect(screen.getByRole("main")).toHaveAttribute("id", "conteudo");
 
       const alertsTrigger = screen.getByRole("button", { name: "Alertas" });
       fireEvent.mouseEnter(alertsTrigger.parentElement!);
       expect(alertsTrigger).toHaveAttribute("aria-expanded", "true");
-      expect(screen.getByRole("link", { name: /Regras de alerta/ })).toHaveAttribute("aria-current", "page");
-      expect(screen.getByRole("link", { name: /Alertas disparados/ })).toHaveAttribute("href", "/alertas");
+      expect(
+        screen.getByRole("link", { name: /Regras de alerta/ }),
+      ).toHaveAttribute("aria-current", "page");
+      expect(
+        screen.getByRole("link", { name: /Alertas disparados/ }),
+      ).toHaveAttribute("href", "/alertas");
 
       fireEvent.pointerDown(document.body);
       expect(alertsTrigger).toHaveAttribute("aria-expanded", "false");
 
-      const adminTrigger = screen.getByRole("button", { name: "Administração" });
+      const adminTrigger = screen.getByRole("button", {
+        name: "Administração",
+      });
       adminTrigger.focus();
       await user.keyboard("{ArrowDown}");
-      await waitFor(() => expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus());
+      await waitFor(() =>
+        expect(screen.getByRole("link", { name: /Usuários/ })).toHaveFocus(),
+      );
       await user.keyboard("{ArrowDown}");
       expect(screen.getByRole("link", { name: /Parâmetros/ })).toHaveFocus();
       await user.keyboard("{Escape}");
@@ -204,35 +262,72 @@ describe.each(SUPPORTED_BROWSERS)(
       const onLogin = vi.fn().mockResolvedValue(undefined);
 
       const loginView = render(<LoginPage onLogin={onLogin} />);
-      await user.click(screen.getByRole("button", { name: "Entrar na plataforma" }));
+      await user.click(
+        screen.getByRole("button", { name: "Entrar na plataforma" }),
+      );
 
-      expect(screen.getByLabelText("E-mail")).toHaveAttribute("aria-invalid", "true");
-      expect(screen.getByLabelText("Senha")).toHaveAttribute("aria-invalid", "true");
+      expect(screen.getByLabelText("E-mail")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
+      expect(screen.getByLabelText("Senha")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
       expect(screen.getByText("Informe um e-mail válido.")).toBeInTheDocument();
 
       await user.type(screen.getByLabelText("E-mail"), "operador@agritech.dev");
       await user.type(screen.getByLabelText("Senha"), "senha-valida-123");
-      await user.click(screen.getByRole("button", { name: "Entrar na plataforma" }));
-      expect(onLogin).toHaveBeenCalledWith({ email: "operador@agritech.dev", password: "senha-valida-123" });
+      await user.click(
+        screen.getByRole("button", { name: "Entrar na plataforma" }),
+      );
+      expect(onLogin).toHaveBeenCalledWith({
+        email: "operador@agritech.dev",
+        password: "senha-valida-123",
+      });
       loginView.unmount();
 
-      const { calls } = mockApi({ ...defaultRoutes(), "POST /api/stations": { id: 15 } });
+      const { calls } = mockApi({
+        ...defaultRoutes(),
+        "POST /api/stations": { id: 15 },
+      });
       renderWithProviders(<StationsPage />);
       await screen.findByText("Estação Sede");
 
       await user.click(screen.getByRole("button", { name: "Nova estação" }));
       const dialog = screen.getByRole("dialog", { name: "Nova estação" });
-      await user.click(within(dialog).getByRole("button", { name: "Cadastrar" }));
+      await user.click(
+        within(dialog).getByRole("button", { name: "Cadastrar" }),
+      );
 
-      expect(within(dialog).getByLabelText("Nome")).toHaveAttribute("aria-invalid", "true");
-      expect(within(dialog).getByText("Use pelo menos 3 caracteres.")).toBeInTheDocument();
+      expect(within(dialog).getByLabelText("Nome")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
+      expect(
+        within(dialog).getByText("Use pelo menos 3 caracteres."),
+      ).toBeInTheDocument();
 
       await user.type(within(dialog).getByLabelText("Nome"), "Estação Sul");
-      await user.selectOptions(within(dialog).getByLabelText("Propriedade"), "1");
-      await user.type(within(dialog).getByLabelText("Endereço MAC"), "AA:BB:CC:DD:EE:15");
-      await user.click(within(dialog).getByRole("button", { name: "Cadastrar" }));
+      await user.selectOptions(
+        within(dialog).getByLabelText("Propriedade"),
+        "1",
+      );
+      await user.type(
+        within(dialog).getByLabelText("Endereço MAC"),
+        "AA:BB:CC:DD:EE:15",
+      );
+      await user.click(
+        within(dialog).getByRole("button", { name: "Cadastrar" }),
+      );
 
-      await waitFor(() => expect(calls.some((call) => call.method === "POST" && call.path === "/api/stations")).toBe(true));
+      await waitFor(() =>
+        expect(
+          calls.some(
+            (call) => call.method === "POST" && call.path === "/api/stations",
+          ),
+        ).toBe(true),
+      );
     });
 
     it("deve renderizar tabelas de dados com estrutura semantica, filtros, paginacao e rolagem horizontal", async () => {
@@ -249,23 +344,39 @@ describe.each(SUPPORTED_BROWSERS)(
                 }) => { data: unknown[] }
               )({ url, method: "GET", body: undefined }).data
             : [],
-          meta: { total_records: 30, total_pages: 2, current_page: Number(url.searchParams.get("page") ?? 1) },
+          meta: {
+            total_records: 30,
+            total_pages: 2,
+            current_page: Number(url.searchParams.get("page") ?? 1),
+          },
         }),
       });
 
       const alertsView = renderWithProviders(<AlertsPage />);
       const table = await screen.findByRole("table");
       expect(table.parentElement).toHaveClass("overflow-x-auto");
-      expect(within(table).getAllByRole("columnheader").length).toBeGreaterThanOrEqual(4);
+      expect(
+        within(table).getAllByRole("columnheader").length,
+      ).toBeGreaterThanOrEqual(4);
 
-      await user.click(await screen.findByRole("button", { name: "Próxima página" }));
-      await waitFor(() => expect(calls.some((call) => call.path.includes("page=2"))).toBe(true));
+      await user.click(
+        await screen.findByRole("button", { name: "Próxima página" }),
+      );
+      await waitFor(() =>
+        expect(calls.some((call) => call.path.includes("page=2"))).toBe(true),
+      );
       alertsView.unmount();
 
       const historyView = renderWithProviders(<HistoryPage />);
-      expect(await screen.findByText("DATA / HORA (REGISTRO)")).toBeInTheDocument();
-      const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-      const exportButton = screen.getAllByRole("button", { name: "Exportar CSV" })[0]!;
+      expect(
+        await screen.findByText("DATA / HORA (REGISTRO)"),
+      ).toBeInTheDocument();
+      const clickSpy = vi
+        .spyOn(HTMLAnchorElement.prototype, "click")
+        .mockImplementation(() => {});
+      const exportButton = screen.getAllByRole("button", {
+        name: "Exportar CSV",
+      })[0]!;
       await user.click(exportButton);
       expect(window.URL.createObjectURL).toHaveBeenCalled();
       expect(clickSpy).toHaveBeenCalled();
@@ -287,8 +398,24 @@ describe.each(SUPPORTED_BROWSERS)(
           />
           <StationExtremesChart
             data={[
-              { stationId: 1, stationName: "Estação Sede", min: 18.2, avg: 24.1, max: 29.8, stddev: 1.2, count: 48 },
-              { stationId: 2, stationName: "Estação Pivô", min: 19.0, avg: 25.4, max: 31.0, stddev: 1.5, count: 48 },
+              {
+                stationId: 1,
+                stationName: "Estação Sede",
+                min: 18.2,
+                avg: 24.1,
+                max: 29.8,
+                stddev: 1.2,
+                count: 48,
+              },
+              {
+                stationId: 2,
+                stationName: "Estação Pivô",
+                min: 19.0,
+                avg: 25.4,
+                max: 31.0,
+                stddev: 1.5,
+                count: 48,
+              },
             ]}
             unit="°C"
           />
@@ -299,7 +426,12 @@ describe.each(SUPPORTED_BROWSERS)(
             ]}
             unit="°C"
             hours={24}
-            rule={{ id: 1, operator: ">", referenceValue: 30, message: "Temperatura crítica" }}
+            rule={{
+              id: 1,
+              operator: ">",
+              referenceValue: 30,
+              message: "Temperatura crítica",
+            }}
           />
           <ForecastCalendarCard
             stationName="Estação Sede"
@@ -311,8 +443,14 @@ describe.each(SUPPORTED_BROWSERS)(
         </div>,
       );
 
-      expect(isThresholdViolated(31.2, { id: 1, operator: ">", referenceValue: 30 })).toBe(true);
-      expect(screen.getByRole("heading", { name: "Previsão meteorológica — Estação Sede" })).toBeInTheDocument();
+      expect(
+        isThresholdViolated(31.2, { id: 1, operator: ">", referenceValue: 30 }),
+      ).toBe(true);
+      expect(
+        screen.getByRole("heading", {
+          name: "Previsão meteorológica — Estação Sede",
+        }),
+      ).toBeInTheDocument();
       expect(formatNumber(24.5)).toBe("24,5");
       expect(formatDateTime("2026-10-17T15:00:00Z")).toContain("17/10");
     });
@@ -346,7 +484,11 @@ describe.each(SUPPORTED_BROWSERS)(
               { value: "2", label: "Sensor 2", badge: "Offline" },
             ]}
           />
-          <DateRangePicker startDate="01/10/2026" endDate="07/10/2026" onChange={onRangeChange} />
+          <DateRangePicker
+            startDate="01/10/2026"
+            endDate="07/10/2026"
+            onChange={onRangeChange}
+          />
           <Segmented
             label="Modo de visualização"
             value="all"
@@ -356,7 +498,11 @@ describe.each(SUPPORTED_BROWSERS)(
               { value: "online", label: "Online", count: 2 },
             ]}
           />
-          <Switch checked={false} onChange={onSwitchChange} label="Ativar sensor" />
+          <Switch
+            checked={false}
+            onChange={onSwitchChange}
+            label="Ativar sensor"
+          />
           <Modal open onClose={onCloseModal} title="Detalhes técnicos">
             <Input aria-label="Campo interno" defaultValue="Valor inicial" />
           </Modal>
@@ -370,7 +516,9 @@ describe.each(SUPPORTED_BROWSERS)(
         </div>,
       );
 
-      expect(screen.getByRole("dialog", { name: "Detalhes técnicos" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("dialog", { name: "Detalhes técnicos" }),
+      ).toBeInTheDocument();
       await user.keyboard("{Escape}");
       expect(onCloseModal).toHaveBeenCalledTimes(1);
 
@@ -419,38 +567,49 @@ describe.each(SUPPORTED_BROWSERS)(
       expect(within(mobileMenu).getAllByRole("link").length).toBeGreaterThan(0);
 
       await user.click(screen.getByRole("button", { name: "Fechar menu" }));
-      expect(screen.queryByRole("navigation", { name: "Menu" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("navigation", { name: "Menu" }),
+      ).not.toBeInTheDocument();
     });
 
     it("deve integrar as interfaces com a API validando headers do navegador, sessao e permissoes", async () => {
-      const originRequest = new Request("http://localhost:3010/api/auth/login", {
-        method: "POST",
-        headers: {
-          Origin: "https://agritech.example.com",
-          "X-Forwarded-Host": "agritech.example.com",
-          "X-Forwarded-Proto": "https",
-          "Sec-Fetch-Site": browser.secFetchSite,
-          "User-Agent": browser.userAgent,
+      const originRequest = new Request(
+        "http://localhost:3010/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            Origin: "https://agritech.example.com",
+            "X-Forwarded-Host": "agritech.example.com",
+            "X-Forwarded-Proto": "https",
+            "Sec-Fetch-Site": browser.secFetchSite,
+            "User-Agent": browser.userAgent,
+          },
         },
-      });
+      );
       expect(sameOrigin(originRequest)).toBe(true);
 
-      const crossSiteRequest = new Request("http://localhost:3010/api/auth/login", {
-        method: "POST",
-        headers: {
-          Origin: "https://agritech.example.com",
-          "X-Forwarded-Host": "agritech.example.com",
-          "X-Forwarded-Proto": "https",
-          "Sec-Fetch-Site": "cross-site",
-          "User-Agent": browser.userAgent,
+      const crossSiteRequest = new Request(
+        "http://localhost:3010/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            Origin: "https://agritech.example.com",
+            "X-Forwarded-Host": "agritech.example.com",
+            "X-Forwarded-Proto": "https",
+            "Sec-Fetch-Site": "cross-site",
+            "User-Agent": browser.userAgent,
+          },
         },
-      });
+      );
       expect(sameOrigin(crossSiteRequest)).toBe(false);
 
       const expiredHandler = vi.fn();
       const permissionsHandler = vi.fn();
       window.addEventListener(SESSION_EXPIRED, expiredHandler);
-      window.addEventListener("agritech:permissions-changed", permissionsHandler);
+      window.addEventListener(
+        "agritech:permissions-changed",
+        permissionsHandler,
+      );
 
       mockApi({
         "/api/stations": { status: 401, body: { message: "Sessão expirada" } },
@@ -460,19 +619,27 @@ describe.each(SUPPORTED_BROWSERS)(
       await expect(request("/api/stations")).rejects.toBeInstanceOf(ApiError);
       expect(expiredHandler).toHaveBeenCalledTimes(1);
 
-      await expect(request("/api/users")).rejects.toMatchObject({ status: 403, message: "Acesso negado" });
+      await expect(request("/api/users")).rejects.toMatchObject({
+        status: 403,
+        message: "Acesso negado",
+      });
       expect(permissionsHandler).toHaveBeenCalledTimes(1);
 
       window.removeEventListener(SESSION_EXPIRED, expiredHandler);
-      window.removeEventListener("agritech:permissions-changed", permissionsHandler);
+      window.removeEventListener(
+        "agritech:permissions-changed",
+        permissionsHandler,
+      );
 
       mockApi(defaultRoutes());
-      renderWithProviders(
-        <StationsPage />,
-        { ...testUser, permissions: ["stations.read", "monitoring.read", "properties.read"] },
-      );
+      renderWithProviders(<StationsPage />, {
+        ...testUser,
+        permissions: ["stations.read", "monitoring.read", "properties.read"],
+      });
       expect(await screen.findByText("Estação Sede")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "Nova estação" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Nova estação" }),
+      ).not.toBeInTheDocument();
     });
 
     it("deve exibir mensagens de erro, estados vazios e notificacoes de sucesso de forma consistente", async () => {
@@ -483,8 +650,16 @@ describe.each(SUPPORTED_BROWSERS)(
         const toast = useToast();
         return (
           <div>
-            <button onClick={() => toast.success("Operação concluída com sucesso.")}>Disparar sucesso</button>
-            <button onClick={() => toast.error("Falha ao processar solicitação.")}>Disparar erro</button>
+            <button
+              onClick={() => toast.success("Operação concluída com sucesso.")}
+            >
+              Disparar sucesso
+            </button>
+            <button
+              onClick={() => toast.error("Falha ao processar solicitação.")}
+            >
+              Disparar erro
+            </button>
           </div>
         );
       }
@@ -492,24 +667,42 @@ describe.each(SUPPORTED_BROWSERS)(
       render(
         <ToastProvider>
           <ToastHarness />
-          <ErrorState message="Não foi possível conectar ao servidor." onRetry={onRetry} />
-          <EmptyState title="Sem registros" description="Nenhuma leitura encontrada para o filtro." />
+          <ErrorState
+            message="Não foi possível conectar ao servidor."
+            onRetry={onRetry}
+          />
+          <EmptyState
+            title="Sem registros"
+            description="Nenhuma leitura encontrada para o filtro."
+          />
         </ToastProvider>,
       );
 
-      await user.click(screen.getByRole("button", { name: "Disparar sucesso" }));
-      expect(await screen.findByRole("status")).toHaveTextContent("Operação concluída com sucesso.");
+      await user.click(
+        screen.getByRole("button", { name: "Disparar sucesso" }),
+      );
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        "Operação concluída com sucesso.",
+      );
 
       await user.click(screen.getByRole("button", { name: "Disparar erro" }));
       const statuses = await screen.findAllByRole("status");
-      expect(statuses.some((el) => el.textContent?.includes("Falha ao processar solicitação."))).toBe(true);
+      expect(
+        statuses.some((el) =>
+          el.textContent?.includes("Falha ao processar solicitação."),
+        ),
+      ).toBe(true);
 
-      expect(screen.getByRole("alert")).toHaveTextContent("Não foi possível conectar ao servidor.");
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Não foi possível conectar ao servidor.",
+      );
       await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
       expect(onRetry).toHaveBeenCalledTimes(1);
 
       expect(screen.getByText("Sem registros")).toBeInTheDocument();
-      expect(screen.getByText("Nenhuma leitura encontrada para o filtro.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Nenhuma leitura encontrada para o filtro."),
+      ).toBeInTheDocument();
     });
   },
 );

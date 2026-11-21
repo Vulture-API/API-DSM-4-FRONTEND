@@ -34,7 +34,10 @@ export const formatWeekdayHour = (value: string | number | Date) =>
   weekdayHour.format(new Date(value));
 
 /** "agora", "há 5 min", "há 3 h", "há 2 dias". */
-export function formatRelative(value: string | Date | null, now = new Date()): string {
+export function formatRelative(
+  value: string | Date | null,
+  now = new Date(),
+): string {
   if (!value) return "nunca";
   const diff = Math.max(0, now.getTime() - new Date(value).getTime());
   const minutes = Math.floor(diff / 60_000);
@@ -46,7 +49,9 @@ export function formatRelative(value: string | Date | null, now = new Date()): s
   return `há ${days} ${days === 1 ? "dia" : "dias"}`;
 }
 
-const numberFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
+const numberFormat = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 1,
+});
 export const formatNumber = (value: number) => numberFormat.format(value);
 
 export function initials(name: string): string {

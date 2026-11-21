@@ -32,12 +32,19 @@ export const parametersApi = {
   createSensorType: (input: SensorTypeInput) =>
     request<SensorType>("/api/sensor-types", { method: "POST", json: input }),
   updateSensorType: (id: number, input: SensorTypeInput) =>
-    request<SensorType>(`/api/sensor-types/${id}`, { method: "PUT", json: input }),
-  removeSensorType: (id: number) => request<void>(`/api/sensor-types/${id}`, { method: "DELETE" }),
+    request<SensorType>(`/api/sensor-types/${id}`, {
+      method: "PUT",
+      json: input,
+    }),
+  removeSensorType: (id: number) =>
+    request<void>(`/api/sensor-types/${id}`, { method: "DELETE" }),
 
-  sensors: (stationId?: number) => requestAll<Sensor>(`/api/sensors${query({ station_id: stationId })}`),
-  createSensor: (input: SensorInput) => request<Sensor>("/api/sensors", { method: "POST", json: input }),
+  sensors: (stationId?: number) =>
+    requestAll<Sensor>(`/api/sensors${query({ station_id: stationId })}`),
+  createSensor: (input: SensorInput) =>
+    request<Sensor>("/api/sensors", { method: "POST", json: input }),
   updateSensor: (id: number, input: SensorInput) =>
     request<Sensor>(`/api/sensors/${id}`, { method: "PUT", json: input }),
-  removeSensor: (id: number) => request<void>(`/api/sensors/${id}`, { method: "DELETE" }),
+  removeSensor: (id: number) =>
+    request<void>(`/api/sensors/${id}`, { method: "DELETE" }),
 };

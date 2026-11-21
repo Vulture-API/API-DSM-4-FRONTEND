@@ -30,7 +30,8 @@ import { useDeleteProperty, usePropertiesList } from "./hooks";
 import { PropertyFormModal } from "./PropertyFormModal";
 import { PropertyStationsModal } from "./PropertyStationsModal";
 
-type CoverageFilter = "all" | "with_stations" | "with_alerts" | "without_stations";
+type CoverageFilter =
+  "all" | "with_stations" | "with_alerts" | "without_stations";
 
 export function PropertiesPage() {
   const propertiesQuery = usePropertiesList();
@@ -46,13 +47,26 @@ export function PropertiesPage() {
   const [onlyWithStations, setOnlyWithStations] = useState(false);
   const [coverageFilter, setCoverageFilter] = useState<CoverageFilter>("all");
 
-  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(null);
-  const [formProperty, setFormProperty] = useState<Property | "new" | null>(null);
-  const [associatingProperty, setAssociatingProperty] = useState<Property | null>(null);
-  const [deletingProperty, setDeletingProperty] = useState<Property | null>(null);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<number | null>(
+    null,
+  );
+  const [formProperty, setFormProperty] = useState<Property | "new" | null>(
+    null,
+  );
+  const [associatingProperty, setAssociatingProperty] =
+    useState<Property | null>(null);
+  const [deletingProperty, setDeletingProperty] = useState<Property | null>(
+    null,
+  );
 
-  const properties = useMemo(() => propertiesQuery.data ?? [], [propertiesQuery.data]);
-  const stations = useMemo(() => overviewQuery.data?.stations ?? [], [overviewQuery.data]);
+  const properties = useMemo(
+    () => propertiesQuery.data ?? [],
+    [propertiesQuery.data],
+  );
+  const stations = useMemo(
+    () => overviewQuery.data?.stations ?? [],
+    [overviewQuery.data],
+  );
 
   // Mapa de estações por propriedade
   const stationsByProperty = useMemo(() => {
@@ -66,7 +80,10 @@ export function PropertiesPage() {
   }, [stations]);
 
   const users = useMemo(() => usersQuery.data ?? [], [usersQuery.data]);
-  const usersMap = useMemo(() => new Map(users.map((u) => [u.id, u.name])), [users]);
+  const usersMap = useMemo(
+    () => new Map(users.map((u) => [u.id, u.name])),
+    [users],
+  );
 
   // Opções únicas de localização e proprietários para os Selects
   const uniqueLocations = useMemo(() => {
@@ -80,7 +97,9 @@ export function PropertiesPage() {
   const uniqueOwners = useMemo(() => {
     const set = new Set<string>();
     properties.forEach((p) => {
-      const owner = p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
+      const owner =
+        p.owner ??
+        (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
       if (owner) set.add(owner);
     });
     return Array.from(set).sort();
@@ -94,8 +113,12 @@ export function PropertiesPage() {
     return properties.filter((p) => {
       const pStations = stationsByProperty.get(p.id) ?? [];
       const hasStations = pStations.length > 0;
-      const hasAlerts = pStations.some((s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0);
-      const owner = p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
+      const hasAlerts = pStations.some(
+        (s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0,
+      );
+      const owner =
+        p.owner ??
+        (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined);
 
       if (onlyWithStations && !hasStations) return false;
       if (coverageFilter === "with_stations" && !hasStations) return false;
@@ -156,19 +179,27 @@ export function PropertiesPage() {
   // Métricas para o cabeçalho
   const totalProperties = properties.length;
   const totalLinkedStations = stations.length;
-  const onlineStationsCount = stations.filter((s) => s.status === "Online").length;
-  const offlineStationsCount = stations.filter((s) => s.status === "Offline").length;
+  const onlineStationsCount = stations.filter(
+    (s) => s.status === "Online",
+  ).length;
+  const offlineStationsCount = stations.filter(
+    (s) => s.status === "Offline",
+  ).length;
 
   // Contagens para os botões segmentados
   const countWithStations = useMemo(
-    () => properties.filter((p) => (stationsByProperty.get(p.id) ?? []).length > 0).length,
+    () =>
+      properties.filter((p) => (stationsByProperty.get(p.id) ?? []).length > 0)
+        .length,
     [properties, stationsByProperty],
   );
   const countWithAlerts = useMemo(
     () =>
       properties.filter((p) => {
         const pStations = stationsByProperty.get(p.id) ?? [];
-        return pStations.some((s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0);
+        return pStations.some(
+          (s) => s.status === "Com alerta" || (s.active_alerts ?? 0) > 0,
+        );
       }).length,
     [properties, stationsByProperty],
   );
@@ -193,14 +224,18 @@ export function PropertiesPage() {
       }
       setDeletingProperty(null);
     } catch (error) {
-      toast.error(error instanceof ApiError && error.status === 409
-        ? "A propriedade possui estações associadas. Desassocie as estações antes de excluir."
-        : (error as Error).message);
+      toast.error(
+        error instanceof ApiError && error.status === 409
+          ? "A propriedade possui estações associadas. Desassocie as estações antes de excluir."
+          : (error as Error).message,
+      );
     }
   }
 
   // O backend recusa excluir propriedade com estações (integridade, US13 CA5).
-  const deletingStations = deletingProperty ? (stationsByProperty.get(deletingProperty.id) ?? []).length : 0;
+  const deletingStations = deletingProperty
+    ? (stationsByProperty.get(deletingProperty.id) ?? []).length
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -216,7 +251,9 @@ export function PropertiesPage() {
             <Button
               variant="glass"
               icon={<LinkIcon className="size-4" />}
-              onClick={() => setAssociatingProperty(activeProperty ?? properties[0] ?? null)}
+              onClick={() =>
+                setAssociatingProperty(activeProperty ?? properties[0] ?? null)
+              }
               disabled={properties.length === 0}
             >
               Associar estações
@@ -234,7 +271,10 @@ export function PropertiesPage() {
         <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-brand-300">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-brand-300" />
-            {totalProperties} {totalProperties === 1 ? "propriedade cadastrada" : "propriedades cadastradas"}
+            {totalProperties}{" "}
+            {totalProperties === 1
+              ? "propriedade cadastrada"
+              : "propriedades cadastradas"}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-brand-300" />
@@ -253,9 +293,12 @@ export function PropertiesPage() {
       <Card className="p-5 shadow-[var(--shadow-lift)]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-ink">Filtros de consulta</h2>
+            <h2 className="text-sm font-semibold text-ink">
+              Filtros de consulta
+            </h2>
             <p className="text-xs text-muted">
-              Consulte as propriedades por identificação, município, responsável ou cobertura de estações.
+              Consulte as propriedades por identificação, município, responsável
+              ou cobertura de estações.
             </p>
           </div>
           <Segmented
@@ -264,16 +307,28 @@ export function PropertiesPage() {
             onChange={(val) => setCoverageFilter(val as CoverageFilter)}
             options={[
               { value: "all", label: `Todas (${totalProperties})` },
-              { value: "with_stations", label: `Com estações (${countWithStations})` },
-              { value: "with_alerts", label: `Com alerta (${countWithAlerts})` },
-              { value: "without_stations", label: `Sem estações (${countWithoutStations})` },
+              {
+                value: "with_stations",
+                label: `Com estações (${countWithStations})`,
+              },
+              {
+                value: "with_alerts",
+                label: `Com alerta (${countWithAlerts})`,
+              },
+              {
+                value: "without_stations",
+                label: `Sem estações (${countWithoutStations})`,
+              },
             ]}
           />
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label htmlFor="filter-prop-search" className="mb-1 block text-xs font-medium text-muted">
+            <label
+              htmlFor="filter-prop-search"
+              className="mb-1 block text-xs font-medium text-muted"
+            >
               Propriedade (Identificação)
             </label>
             <Input
@@ -286,7 +341,10 @@ export function PropertiesPage() {
           </div>
 
           <div>
-            <label htmlFor="filter-prop-location" className="mb-1 block text-xs font-medium text-muted">
+            <label
+              htmlFor="filter-prop-location"
+              className="mb-1 block text-xs font-medium text-muted"
+            >
               Localização (Município - UF)
             </label>
             <Select
@@ -305,7 +363,10 @@ export function PropertiesPage() {
           </div>
 
           <div>
-            <label htmlFor="filter-prop-owner" className="mb-1 block text-xs font-medium text-muted">
+            <label
+              htmlFor="filter-prop-owner"
+              className="mb-1 block text-xs font-medium text-muted"
+            >
               Responsável
             </label>
             <Select
@@ -324,7 +385,10 @@ export function PropertiesPage() {
           </div>
 
           <div>
-            <label htmlFor="filter-prop-station" className="mb-1 block text-xs font-medium text-muted">
+            <label
+              htmlFor="filter-prop-station"
+              className="mb-1 block text-xs font-medium text-muted"
+            >
               Estação associada
             </label>
             <Input
@@ -361,11 +425,15 @@ export function PropertiesPage() {
       <Card className="overflow-hidden shadow-[var(--shadow-card)]">
         <div className="flex flex-col gap-2 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-ink">Listagem de propriedades agrícolas</h2>
+            <h2 className="text-sm font-semibold text-ink">
+              Listagem de propriedades agrícolas
+            </h2>
             <p className="text-xs text-muted">
               {filteredProperties.length}{" "}
-              {filteredProperties.length === 1 ? "propriedade encontrada" : "propriedades encontradas"} · Clique em
-              uma linha para visualizar o detalhamento abaixo
+              {filteredProperties.length === 1
+                ? "propriedade encontrada"
+                : "propriedades encontradas"}{" "}
+              · Clique em uma linha para visualizar o detalhamento abaixo
             </p>
           </div>
           <Button
@@ -409,7 +477,9 @@ export function PropertiesPage() {
             <Table>
               <thead>
                 <Tr className="border-b border-line bg-subtle/40 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                  <Th className="py-3 pr-3 pl-5">Propriedade (Identificação)</Th>
+                  <Th className="py-3 pr-3 pl-5">
+                    Propriedade (Identificação)
+                  </Th>
                   <Th className="px-3 py-3">Localização</Th>
                   <Th className="px-3 py-3">Responsável</Th>
                   <Th className="px-3 py-3">Estações Associadas</Th>
@@ -422,9 +492,13 @@ export function PropertiesPage() {
                 {filteredProperties.map((p) => {
                   const pStations = stationsByProperty.get(p.id) ?? [];
                   const isSelected = activeProperty?.id === p.id;
-                  const offlineCount = pStations.filter((s) => s.status === "Offline").length;
+                  const offlineCount = pStations.filter(
+                    (s) => s.status === "Offline",
+                  ).length;
                   const activeAlertsCount = pStations.reduce(
-                    (acc, s) => acc + (s.active_alerts ?? (s.status === "Com alerta" ? 1 : 0)),
+                    (acc, s) =>
+                      acc +
+                      (s.active_alerts ?? (s.status === "Com alerta" ? 1 : 0)),
                     0,
                   );
                   const statusColor =
@@ -446,26 +520,44 @@ export function PropertiesPage() {
                     >
                       <Td className="py-3 pr-3 pl-5 font-medium text-ink">
                         <div className="flex items-center gap-2.5">
-                          <span className={`size-2 rounded-full ${statusColor}`} />
+                          <span
+                            className={`size-2 rounded-full ${statusColor}`}
+                          />
                           <div>
-                            <span className="font-semibold text-ink">{p.name}</span>
-                            <span className="block text-[11px] text-faint">ID #{String(p.id).padStart(3, "0")}</span>
+                            <span className="font-semibold text-ink">
+                              {p.name}
+                            </span>
+                            <span className="block text-[11px] text-faint">
+                              ID #{String(p.id).padStart(3, "0")}
+                            </span>
                           </div>
                         </div>
                       </Td>
 
-                      <Td className="px-3 py-3 text-muted">{p.location ?? "—"}</Td>
+                      <Td className="px-3 py-3 text-muted">
+                        {p.location ?? "—"}
+                      </Td>
 
                       <Td className="px-3 py-3 text-muted">
-                        {p.owner ?? (p.owner_user_id ? usersMap.get(p.owner_user_id) : undefined) ?? "—"}
+                        {p.owner ??
+                          (p.owner_user_id
+                            ? usersMap.get(p.owner_user_id)
+                            : undefined) ??
+                          "—"}
                       </Td>
 
                       <Td className="px-3 py-3">
                         {pStations.length > 0 ? (
                           <span>
-                            <strong className="font-semibold text-ink">{pStations.length}</strong>{" "}
+                            <strong className="font-semibold text-ink">
+                              {pStations.length}
+                            </strong>{" "}
                             <span className="text-[11px] text-faint">
-                              ({pStations.map((s) => s.name.replace("Estação ", "")).join(", ")})
+                              (
+                              {pStations
+                                .map((s) => s.name.replace("Estação ", ""))
+                                .join(", ")}
+                              )
                             </span>
                           </span>
                         ) : (
@@ -478,7 +570,8 @@ export function PropertiesPage() {
                           <Badge tone="neutral">Sem estações</Badge>
                         ) : offlineCount > 0 ? (
                           <Badge tone="warn" dot>
-                            {offlineCount} {offlineCount === 1 ? "offline" : "offlines"}
+                            {offlineCount}{" "}
+                            {offlineCount === 1 ? "offline" : "offlines"}
                           </Badge>
                         ) : (
                           <Badge tone="ok" dot pulse>
@@ -490,14 +583,20 @@ export function PropertiesPage() {
                       <Td className="px-3 py-3">
                         {activeAlertsCount > 0 ? (
                           <Badge tone="danger" dot pulse>
-                            {activeAlertsCount} {activeAlertsCount === 1 ? "alerta ativo" : "alertas ativos"}
+                            {activeAlertsCount}{" "}
+                            {activeAlertsCount === 1
+                              ? "alerta ativo"
+                              : "alertas ativos"}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted/60">—</span>
                         )}
                       </Td>
 
-                      <Td className="py-3 pr-5 pl-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <Td
+                        className="py-3 pr-5 pl-3 text-right"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="inline-flex items-center gap-1.5">
                           <Button
                             size="sm"
@@ -541,15 +640,29 @@ export function PropertiesPage() {
             <div>
               <div className="flex items-center gap-2.5">
                 <Building2 className="size-5 text-brand-600" />
-                <h3 className="text-base font-semibold text-ink">{activeProperty.name}</h3>
+                <h3 className="text-base font-semibold text-ink">
+                  {activeProperty.name}
+                </h3>
                 <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800">
                   {activePropertyStations.length}{" "}
-                  {activePropertyStations.length === 1 ? "estação associada" : "estações associadas"}
+                  {activePropertyStations.length === 1
+                    ? "estação associada"
+                    : "estações associadas"}
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted">
-                Localização: <strong className="font-medium text-ink">{activeProperty.location ?? "Não informada"}</strong>{" "}
-                · Responsável: <strong className="font-medium text-ink">{activeProperty.owner ?? (activeProperty.owner_user_id ? usersMap.get(activeProperty.owner_user_id) : undefined) ?? "Não definido"}</strong>
+                Localização:{" "}
+                <strong className="font-medium text-ink">
+                  {activeProperty.location ?? "Não informada"}
+                </strong>{" "}
+                · Responsável:{" "}
+                <strong className="font-medium text-ink">
+                  {activeProperty.owner ??
+                    (activeProperty.owner_user_id
+                      ? usersMap.get(activeProperty.owner_user_id)
+                      : undefined) ??
+                    "Não definido"}
+                </strong>
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -576,7 +689,11 @@ export function PropertiesPage() {
             {/* Mapa conceitual e espacial da propriedade */}
             <div className="lg:col-span-5">
               <div className="relative h-56 w-full overflow-hidden rounded-xl border border-line bg-subtle/30 p-3">
-                <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 220" fill="none">
+                <svg
+                  className="absolute inset-0 h-full w-full"
+                  viewBox="0 0 400 220"
+                  fill="none"
+                >
                   <path
                     d="M60 45 L320 35 L360 165 L180 195 L50 150 Z"
                     fill="#2f8050"
@@ -606,7 +723,9 @@ export function PropertiesPage() {
                       className="absolute -translate-x-1/2 -translate-y-1/2"
                       style={{ top: pos.top, left: pos.left }}
                     >
-                      <span className={`relative flex size-3 items-center justify-center rounded-full border-2 border-white shadow ${color}`} />
+                      <span
+                        className={`relative flex size-3 items-center justify-center rounded-full border-2 border-white shadow ${color}`}
+                      />
                       <div className="mt-1 whitespace-nowrap rounded border border-line bg-surface/95 px-1.5 py-0.5 text-[10px] font-medium text-ink shadow-2xs">
                         {st.name}
                       </div>
@@ -616,7 +735,10 @@ export function PropertiesPage() {
 
                 <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md border border-line bg-surface/90 px-2 py-1 text-[11px] text-muted">
                   <MapPin className="size-3.5 text-brand-600" />
-                  <span>Localização territorial · {activeProperty.location ?? activeProperty.name}</span>
+                  <span>
+                    Localização territorial ·{" "}
+                    {activeProperty.location ?? activeProperty.name}
+                  </span>
                 </div>
               </div>
             </div>
@@ -636,15 +758,23 @@ export function PropertiesPage() {
                   <tbody className="divide-y divide-line text-xs">
                     {activePropertyStations.length === 0 ? (
                       <Tr>
-                        <Td colSpan={4} className="py-8 text-center text-xs text-muted">
-                          Nenhuma estação meteorológica associada a esta propriedade.
+                        <Td
+                          colSpan={4}
+                          className="py-8 text-center text-xs text-muted"
+                        >
+                          Nenhuma estação meteorológica associada a esta
+                          propriedade.
                         </Td>
                       </Tr>
                     ) : (
                       activePropertyStations.map((st) => (
                         <Tr key={st.id} className="hover:bg-subtle/30">
-                          <Td className="py-2.5 pr-2 pl-3.5 font-medium text-ink">{st.name}</Td>
-                          <Td className="px-2 py-2.5 font-mono text-faint">{st.mac_address}</Td>
+                          <Td className="py-2.5 pr-2 pl-3.5 font-medium text-ink">
+                            {st.name}
+                          </Td>
+                          <Td className="px-2 py-2.5 font-mono text-faint">
+                            {st.mac_address}
+                          </Td>
                           <Td className="px-2 py-2.5 font-mono text-muted">
                             {st.latitude !== null && st.longitude !== null
                               ? `${st.latitude.toFixed(4)}, ${st.longitude.toFixed(4)}`
@@ -680,7 +810,11 @@ export function PropertiesPage() {
       {Boolean(formProperty) && (
         <PropertyFormModal
           open
-          property={typeof formProperty === "object" && formProperty !== null ? formProperty : undefined}
+          property={
+            typeof formProperty === "object" && formProperty !== null
+              ? formProperty
+              : undefined
+          }
           onClose={() => setFormProperty(null)}
         />
       )}
@@ -696,9 +830,11 @@ export function PropertiesPage() {
       <ConfirmDialog
         open={Boolean(deletingProperty)}
         title="Excluir propriedade agrícola"
-        message={deletingStations
-          ? `A propriedade "${deletingProperty?.name}" possui ${deletingStations} estação(ões) associada(s). Desassocie as estações antes de excluir.`
-          : `Deseja realmente excluir a propriedade "${deletingProperty?.name}"? Esta ação removerá o registro.`}
+        message={
+          deletingStations
+            ? `A propriedade "${deletingProperty?.name}" possui ${deletingStations} estação(ões) associada(s). Desassocie as estações antes de excluir.`
+            : `Deseja realmente excluir a propriedade "${deletingProperty?.name}"? Esta ação removerá o registro.`
+        }
         confirmLabel="Excluir"
         confirmDisabled={deletingStations > 0}
         loading={deleteProperty.isPending}

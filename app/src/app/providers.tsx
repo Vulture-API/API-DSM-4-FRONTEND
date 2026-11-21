@@ -15,7 +15,9 @@ export function makeQueryClient() {
         // segundo plano, em vez de piscar "carregando".
         staleTime: 30_000,
         gcTime: 10 * 60_000,
-        retry: (failureCount, error) => !("status" in error && [401, 403].includes(Number(error.status))) && failureCount < 1,
+        retry: (failureCount, error) =>
+          !("status" in error && [401, 403].includes(Number(error.status))) &&
+          failureCount < 1,
         refetchOnWindowFocus: false,
       },
     },
@@ -26,7 +28,9 @@ export function Providers({ children }: { children: ReactNode }) {
   const [client] = useState(makeQueryClient);
   return (
     <QueryClientProvider client={client}>
-      <AuthProvider><ToastProvider>{children}</ToastProvider></AuthProvider>
+      <AuthProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

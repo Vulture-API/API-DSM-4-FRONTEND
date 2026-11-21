@@ -21,26 +21,36 @@ import {
 
 const EXPORT_TIMEOUT_MS = 25_000;
 
-async function postExportRequest(payload: ExportRequestPayload): Promise<Response> {
+async function postExportRequest(
+  payload: ExportRequestPayload,
+): Promise<Response> {
   try {
     return await fetch("/api/backend/reports/export", {
       method: "POST",
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
-        Accept: payload.format === "csv" ? "text/csv, application/json" : "application/json",
+        Accept:
+          payload.format === "csv"
+            ? "text/csv, application/json"
+            : "application/json",
       },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(EXPORT_TIMEOUT_MS),
     });
   } catch {
-    throw new ApiError(0, "Serviço indisponível para exportar o relatório. Tente novamente.");
+    throw new ApiError(
+      0,
+      "Serviço indisponível para exportar o relatório. Tente novamente.",
+    );
   }
 }
 
 function extractExportErrorMessage(bodyText: string, status: number): string {
   try {
-    const parsed = bodyText ? (JSON.parse(bodyText) as { message?: unknown }) : null;
+    const parsed = bodyText
+      ? (JSON.parse(bodyText) as { message?: unknown })
+      : null;
     if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
       return parsed.message;
     }
@@ -53,7 +63,9 @@ function extractExportErrorMessage(bodyText: string, status: number): string {
 }
 
 export const reportsApi = {
-  generate: async (filters: ValidatedReportFilters): Promise<GeneratedReport> => {
+  generate: async (
+    filters: ValidatedReportFilters,
+  ): Promise<GeneratedReport> => {
     const qs = buildReportQueryParams(filters);
     try {
       const result = await request<GeneratedReport>(`/api/reports?${qs}`);
@@ -75,7 +87,10 @@ export const reportsApi = {
 
     if (filters.reportType === "forecast") {
       const targetStationId = filters.stationId ?? stations[0]?.id ?? 1;
-      const forecast = await stationsApi.forecast(targetStationId, filters.days);
+      const forecast = await stationsApi.forecast(
+        targetStationId,
+        filters.days,
+      );
       return buildReportFromTelemetry(filters, {
         stations,
         properties,
@@ -137,14 +152,19 @@ export const reportsApi = {
     filters?: ValidatedReportFilters,
   ): Promise<ReportExportArtifact> => {
     if (!report || isReportEmpty(report)) {
-      throw new ApiError(422, "Não existem dados disponíveis no relatório para exportar.");
+      throw new ApiError(
+        422,
+        "Não existem dados disponíveis no relatório para exportar.",
+      );
     }
 
     const primaryPayload = buildExportRequestPayload(report, format, filters);
     let response = await postExportRequest(primaryPayload);
 
     if (response.status === 413 && "report" in primaryPayload) {
-      response = await postExportRequest(buildFilterExportPayload(report, format, filters));
+      response = await postExportRequest(
+        buildFilterExportPayload(report, format, filters),
+      );
     }
 
     if (response.status === 404) {
@@ -159,15 +179,21 @@ export const reportsApi = {
       if (response.status === 403 && typeof window !== "undefined") {
         window.dispatchEvent(new Event("agritech:permissions-changed"));
       }
-      throw new ApiError(response.status, extractExportErrorMessage(text, response.status));
+      throw new ApiError(
+        response.status,
+        extractExportErrorMessage(text, response.status),
+      );
     }
 
     const contentType =
       response.headers.get("content-type") ??
-      (format === "csv" ? "text/csv; charset=utf-8" : "application/json; charset=utf-8");
+      (format === "csv"
+        ? "text/csv; charset=utf-8"
+        : "application/json; charset=utf-8");
     const filename =
-      extractFilenameFromContentDisposition(response.headers.get("content-disposition")) ??
-      buildLocalExportArtifact(report, format).filename;
+      extractFilenameFromContentDisposition(
+        response.headers.get("content-disposition"),
+      ) ?? buildLocalExportArtifact(report, format).filename;
 
     return {
       content: text,

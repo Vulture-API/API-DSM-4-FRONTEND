@@ -4,7 +4,8 @@ import type { ValidatedReportFilters } from "./reportRules";
 
 export const reportKeys = {
   all: ["reports"] as const,
-  generate: (filters: ValidatedReportFilters) => ["reports", "generate", filters] as const,
+  generate: (filters: ValidatedReportFilters) =>
+    ["reports", "generate", filters] as const,
 };
 
 export function useReport(filters: ValidatedReportFilters) {

@@ -25,9 +25,12 @@ describe("parseCalibration", () => {
     expect(parseCalibration(text)).toBe(expected);
   });
 
-  it.each(["x", "1,2,3", "1e3", "--1", "1 2", ",", "Infinity"])("devolve NaN para %j", (text) => {
-    expect(parseCalibration(text)).toBeNaN();
-  });
+  it.each(["x", "1,2,3", "1e3", "--1", "1 2", ",", "Infinity"])(
+    "devolve NaN para %j",
+    (text) => {
+      expect(parseCalibration(text)).toBeNaN();
+    },
+  );
 });
 
 describe("multiplierError", () => {
@@ -67,41 +70,75 @@ describe("effectiveCalibration", () => {
   const type = { factor: 3.6, gain: 2, offset_value: 1 };
 
   it("usa a calibração do tipo quando o sensor não tem", () => {
-    expect(effectiveCalibration({}, type)).toEqual({ factor: 3.6, gain: 2, offset_value: 1, fromSensor: false });
-    expect(effectiveCalibration({ gain: null, offset_value: null }, type).fromSensor).toBe(false);
+    expect(effectiveCalibration({}, type)).toEqual({
+      factor: 3.6,
+      gain: 2,
+      offset_value: 1,
+      fromSensor: false,
+    });
+    expect(
+      effectiveCalibration({ gain: null, offset_value: null }, type).fromSensor,
+    ).toBe(false);
   });
 
   it("ganho e offset do sensor valem no lugar dos do tipo, e o fator continua", () => {
-    expect(effectiveCalibration({ gain: 0.5 }, type)).toEqual({ factor: 3.6, gain: 0.5, offset_value: 1, fromSensor: true });
-    expect(effectiveCalibration({ offset_value: 0 }, type)).toEqual({ factor: 3.6, gain: 2, offset_value: 0, fromSensor: true });
+    expect(effectiveCalibration({ gain: 0.5 }, type)).toEqual({
+      factor: 3.6,
+      gain: 0.5,
+      offset_value: 1,
+      fromSensor: true,
+    });
+    expect(effectiveCalibration({ offset_value: 0 }, type)).toEqual({
+      factor: 3.6,
+      gain: 2,
+      offset_value: 0,
+      fromSensor: true,
+    });
   });
 
   it("fica sem calibração quando nem sensor nem tipo têm", () => {
-    expect(effectiveCalibration({}, undefined)).toEqual({ factor: null, gain: null, offset_value: null, fromSensor: false });
-    expect(effectiveCalibration({}, { factor: null, gain: null })).toMatchObject({ factor: null, gain: null, offset_value: null });
+    expect(effectiveCalibration({}, undefined)).toEqual({
+      factor: null,
+      gain: null,
+      offset_value: null,
+      fromSensor: false,
+    });
+    expect(
+      effectiveCalibration({}, { factor: null, gain: null }),
+    ).toMatchObject({ factor: null, gain: null, offset_value: null });
   });
 });
 
 describe("calibrationParts", () => {
   it("lista só os campos preenchidos, na ordem da conta", () => {
-    expect(calibrationParts({ factor: 1.5, gain: 2, offset_value: -3 })).toEqual(["fator 1,5", "ganho 2", "offset -3"]);
-    expect(calibrationParts({ factor: null, gain: 0.5 })).toEqual(["ganho 0,5"]);
+    expect(
+      calibrationParts({ factor: 1.5, gain: 2, offset_value: -3 }),
+    ).toEqual(["fator 1,5", "ganho 2", "offset -3"]);
+    expect(calibrationParts({ factor: null, gain: 0.5 })).toEqual([
+      "ganho 0,5",
+    ]);
     expect(calibrationParts({ offset_value: 0 })).toEqual(["offset 0"]);
     expect(calibrationParts({})).toEqual([]);
   });
 
   it("não arredonda um ganho com muitas casas", () => {
-    expect(calibrationParts({ gain: 0.000805860805 })).toEqual(["ganho 0,000805860805"]);
+    expect(calibrationParts({ gain: 0.000805860805 })).toEqual([
+      "ganho 0,000805860805",
+    ]);
   });
 });
 
 describe("convertReading", () => {
   it("calcula leitura × fator × ganho + offset", () => {
-    expect(convertReading(10, { factor: 3.6, gain: 0.5, offset_value: -2 })).toBe(16);
+    expect(
+      convertReading(10, { factor: 3.6, gain: 0.5, offset_value: -2 }),
+    ).toBe(16);
   });
 
   it("não altera a leitura sem calibração", () => {
     expect(convertReading(23.4, {})).toBe(23.4);
-    expect(convertReading(23.4, { factor: null, gain: null, offset_value: null })).toBe(23.4);
+    expect(
+      convertReading(23.4, { factor: null, gain: null, offset_value: null }),
+    ).toBe(23.4);
   });
 });

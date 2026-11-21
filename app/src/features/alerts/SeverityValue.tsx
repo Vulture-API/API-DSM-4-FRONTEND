@@ -18,14 +18,20 @@ export function SeverityValue({
   muted?: boolean;
 }) {
   if (muted || !severity) {
-    return <span className="inline-flex rounded-md px-1.5 py-0.5 font-semibold text-muted">{children}</span>;
+    return (
+      <span className="inline-flex rounded-md px-1.5 py-0.5 font-semibold text-muted">
+        {children}
+      </span>
+    );
   }
   const Icon = severity === "alta" ? TriangleAlert : CircleAlert;
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums whitespace-nowrap",
-        severity === "alta" ? "bg-danger-soft text-danger" : "bg-warn-soft text-warn",
+        severity === "alta"
+          ? "bg-danger-soft text-danger"
+          : "bg-warn-soft text-warn",
       )}
     >
       <Icon className="size-3.5 shrink-0" aria-hidden />

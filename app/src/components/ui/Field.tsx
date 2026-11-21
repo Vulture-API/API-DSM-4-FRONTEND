@@ -17,7 +17,11 @@ type FieldProps = {
   label: string;
   error?: string | undefined;
   hint?: string;
-  children: (props: { id: string; "aria-invalid": boolean; "aria-describedby"?: string }) => ReactNode;
+  children: (props: {
+    id: string;
+    "aria-invalid": boolean;
+    "aria-describedby"?: string;
+  }) => ReactNode;
   className?: string;
 };
 
@@ -48,7 +52,10 @@ export function Field({ label, error, hint, children, className }: FieldProps) {
   );
 }
 
-export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+export function Input({
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(control, "h-10", className)} {...props} />;
 }
 
@@ -60,7 +67,9 @@ export function Select({
   className,
   variant = "default",
   ...props
-}: SelectHTMLAttributes<HTMLSelectElement> & { variant?: "default" | "glass" }) {
+}: SelectHTMLAttributes<HTMLSelectElement> & {
+  variant?: "default" | "glass";
+}) {
   return (
     <select
       className={cn(
@@ -76,8 +85,13 @@ export function Select({
   );
 }
 
-export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn(control, "min-h-20 py-2", className)} {...props} />;
+export function Textarea({
+  className,
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea className={cn(control, "min-h-20 py-2", className)} {...props} />
+  );
 }
 
 /**

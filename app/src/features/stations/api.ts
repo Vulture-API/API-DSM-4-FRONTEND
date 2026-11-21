@@ -54,7 +54,11 @@ export type CurrentData = {
   offline_threshold_minutes: number;
   stations: CurrentStation[];
 };
-export type LiveReading = LatestReading & { type: "reading"; reading_id: number; station_id: number };
+export type LiveReading = LatestReading & {
+  type: "reading";
+  reading_id: number;
+  station_id: number;
+};
 
 export type StationStatus = "Online" | "Com alerta" | "Offline";
 
@@ -77,7 +81,12 @@ export type StationOverview = {
 export type Overview = {
   generated_at: string;
   offline_threshold_minutes: number;
-  summary: { total: number; online: number; with_alert: number; offline: number };
+  summary: {
+    total: number;
+    online: number;
+    with_alert: number;
+    offline: number;
+  };
   stations: StationOverview[];
 };
 
@@ -95,7 +104,11 @@ export type ReadingSeries = {
   series: SensorTypeSeries[];
 };
 
-export type SeriesOptions = { hours: number; bucketMinutes: number; propertyId?: number | undefined };
+export type SeriesOptions = {
+  hours: number;
+  bucketMinutes: number;
+  propertyId?: number | undefined;
+};
 
 export type SensorTypeStatistics = {
   sensor_type_id: number;
@@ -163,10 +176,13 @@ export type StationCollectionSettings = {
 };
 
 export const stationsApi = {
-  collection: (id: number) => request<StationCollectionSettings>(`/api/stations/${id}/collection`),
-  updateCollection: (id: number, seconds: number) => request<StationCollectionSettings>(`/api/stations/${id}/collection`, {
-    method: "PUT", json: { collection_interval_seconds: seconds },
-  }),
+  collection: (id: number) =>
+    request<StationCollectionSettings>(`/api/stations/${id}/collection`),
+  updateCollection: (id: number, seconds: number) =>
+    request<StationCollectionSettings>(`/api/stations/${id}/collection`, {
+      method: "PUT",
+      json: { collection_interval_seconds: seconds },
+    }),
   current: (
     arg1?: number | { station_id?: number; property_id?: number },
     arg2?: number,
@@ -188,7 +204,9 @@ export const stationsApi = {
   get: (id: number) => request<Station>(`/api/stations/${id}`),
   properties: () => request<Property[]>("/api/stations/properties"),
   overview: (propertyId?: number) =>
-    request<Overview>(`/api/stations/overview${query({ property_id: propertyId })}`),
+    request<Overview>(
+      `/api/stations/overview${query({ property_id: propertyId })}`,
+    ),
   networkSeries: ({ hours, bucketMinutes, propertyId }: SeriesOptions) =>
     request<ReadingSeries>(
       `/api/stations/readings/series${query({ hours, bucket_minutes: bucketMinutes, property_id: propertyId })}`,
@@ -199,14 +217,18 @@ export const stationsApi = {
     ),
   statistics: (options: StatisticsQuery = {}) =>
     request<Statistics>(`/api/stations/statistics${query(options)}`),
-  stationStatistics: (id: number, options: { from?: string; to?: string } = {}) =>
-    request<Statistics>(`/api/stations/${id}/statistics${query(options)}`),
+  stationStatistics: (
+    id: number,
+    options: { from?: string; to?: string } = {},
+  ) => request<Statistics>(`/api/stations/${id}/statistics${query(options)}`),
   forecast: (id: number, days = 7) =>
     request<StationForecast>(`/api/stations/${id}/forecast${query({ days })}`),
   status: (id: number) =>
     request<StationStatusResponse>(`/api/stations/${id}/status`),
-  create: (input: StationInput) => request<Station>("/api/stations", { method: "POST", json: input }),
+  create: (input: StationInput) =>
+    request<Station>("/api/stations", { method: "POST", json: input }),
   update: (id: number, input: StationInput) =>
     request<Station>(`/api/stations/${id}`, { method: "PUT", json: input }),
-  remove: (id: number) => request<void>(`/api/stations/${id}`, { method: "DELETE" }),
+  remove: (id: number) =>
+    request<void>(`/api/stations/${id}`, { method: "DELETE" }),
 };

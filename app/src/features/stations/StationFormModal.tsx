@@ -12,18 +12,28 @@ import { useProperties, useSaveStation } from "./hooks";
 
 const MAC = /^[0-9A-Fa-f]{2}([:-])(?:[0-9A-Fa-f]{2}\1){4}[0-9A-Fa-f]{2}$/;
 
-type Values = { property_id: string; name: string; mac_address: string; latitude: string; longitude: string };
+type Values = {
+  property_id: string;
+  name: string;
+  mac_address: string;
+  latitude: string;
+  longitude: string;
+};
 type Errors = Partial<Record<keyof Values, string>>;
 
 function validate(values: Values): Errors {
   const errors: Errors = {};
   if (!values.property_id) errors.property_id = "Escolha a propriedade.";
-  if (values.name.trim().length < 3) errors.name = "Use pelo menos 3 caracteres.";
-  if (!MAC.test(values.mac_address.trim())) errors.mac_address = "Formato: AA:BB:CC:DD:EE:FF";
+  if (values.name.trim().length < 3)
+    errors.name = "Use pelo menos 3 caracteres.";
+  if (!MAC.test(values.mac_address.trim()))
+    errors.mac_address = "Formato: AA:BB:CC:DD:EE:FF";
   const lat = values.latitude === "" ? null : Number(values.latitude);
   const lon = values.longitude === "" ? null : Number(values.longitude);
-  if (lat !== null && (Number.isNaN(lat) || lat < -90 || lat > 90)) errors.latitude = "Entre -90 e 90.";
-  if (lon !== null && (Number.isNaN(lon) || lon < -180 || lon > 180)) errors.longitude = "Entre -180 e 180.";
+  if (lat !== null && (Number.isNaN(lat) || lat < -90 || lat > 90))
+    errors.latitude = "Entre -90 e 90.";
+  if (lon !== null && (Number.isNaN(lon) || lon < -180 || lon > 180))
+    errors.longitude = "Entre -180 e 180.";
   return errors;
 }
 
@@ -48,7 +58,8 @@ export function StationFormModal({
   }));
   const [errors, setErrors] = useState<Errors>({});
 
-  const set = (key: keyof Values) => (value: string) => setValues((v) => ({ ...v, [key]: value }));
+  const set = (key: keyof Values) => (value: string) =>
+    setValues((v) => ({ ...v, [key]: value }));
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -88,13 +99,29 @@ export function StationFormModal({
         </>
       }
     >
-      <form id="station-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
+      <form
+        id="station-form"
+        onSubmit={submit}
+        noValidate
+        className="grid gap-4 sm:grid-cols-2"
+      >
         <Field label="Nome" error={errors.name} className="sm:col-span-2">
-          {(p) => <Input {...p} value={values.name} onChange={(e) => set("name")(e.target.value)} placeholder="Estação Sede" />}
+          {(p) => (
+            <Input
+              {...p}
+              value={values.name}
+              onChange={(e) => set("name")(e.target.value)}
+              placeholder="Estação Sede"
+            />
+          )}
         </Field>
         <Field label="Propriedade" error={errors.property_id}>
           {(p) => (
-            <Select {...p} value={values.property_id} onChange={(e) => set("property_id")(e.target.value)}>
+            <Select
+              {...p}
+              value={values.property_id}
+              onChange={(e) => set("property_id")(e.target.value)}
+            >
               <option value="">Selecione…</option>
               {properties.data?.map((property) => (
                 <option key={property.id} value={property.id}>
@@ -116,10 +143,26 @@ export function StationFormModal({
           )}
         </Field>
         <Field label="Latitude" error={errors.latitude} hint="Opcional">
-          {(p) => <Input {...p} inputMode="decimal" value={values.latitude} onChange={(e) => set("latitude")(e.target.value)} placeholder="-23.1791" />}
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.latitude}
+              onChange={(e) => set("latitude")(e.target.value)}
+              placeholder="-23.1791"
+            />
+          )}
         </Field>
         <Field label="Longitude" error={errors.longitude} hint="Opcional">
-          {(p) => <Input {...p} inputMode="decimal" value={values.longitude} onChange={(e) => set("longitude")(e.target.value)} placeholder="-45.8872" />}
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.longitude}
+              onChange={(e) => set("longitude")(e.target.value)}
+              placeholder="-45.8872"
+            />
+          )}
         </Field>
       </form>
     </Modal>

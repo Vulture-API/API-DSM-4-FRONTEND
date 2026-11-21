@@ -26,10 +26,14 @@ describe("limitsErrors", () => {
 
   it("recusa número inválido", () => {
     expect(limitsErrors("x", "")).toEqual({ min_value: "Número inválido." });
-    expect(limitsErrors("", "1,2,3")).toEqual({ max_value: "Número inválido." });
+    expect(limitsErrors("", "1,2,3")).toEqual({
+      max_value: "Número inválido.",
+    });
   });
 
   it("recusa mínimo maior que o máximo", () => {
-    expect(limitsErrors("100", "0")).toEqual({ min_value: "O mínimo não pode ser maior que o máximo." });
+    expect(limitsErrors("100", "0")).toEqual({
+      min_value: "O mínimo não pode ser maior que o máximo.",
+    });
   });
 });

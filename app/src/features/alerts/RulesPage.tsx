@@ -97,16 +97,33 @@ export function RulesPage() {
         title="Regras de alerta"
         description="Condições que disparam um aviso quando uma leitura passa do limite."
         actions={
-          <Can permission="alert-configs.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
-            Nova regra
-          </Button></Can>
+          <Can permission="alert-configs.create">
+            <Button
+              variant="light"
+              icon={<Plus className="size-4" />}
+              onClick={() => setEditing("new")}
+            >
+              Nova regra
+            </Button>
+          </Can>
         }
       />
 
       <Card className="shadow-[var(--shadow-lift)]">
         <div className="flex flex-col gap-3 border-b border-line p-4 lg:flex-row lg:items-center">
-          <SearchInput label="Buscar regra" placeholder="Buscar regra" value={search} onChange={setSearch} className="lg:w-80" />
-          <Select aria-label="Filtrar por estação" value={stationId} onChange={(e) => setStationId(e.target.value)} className="h-9 lg:w-56">
+          <SearchInput
+            label="Buscar regra"
+            placeholder="Buscar regra"
+            value={search}
+            onChange={setSearch}
+            className="lg:w-80"
+          />
+          <Select
+            aria-label="Filtrar por estação"
+            value={stationId}
+            onChange={(e) => setStationId(e.target.value)}
+            className="h-9 lg:w-56"
+          >
             <option value="">Todas as estações</option>
             {catalog.stations.map((s) => (
               <option key={s.id} value={s.id}>
@@ -121,8 +138,16 @@ export function RulesPage() {
               onChange={setActiveFilter}
               options={[
                 { value: "all", label: "Todas", count: all.length },
-                { value: "active", label: "Ativas", count: all.filter((r) => r.active).length },
-                { value: "inactive", label: "Inativas", count: all.filter((r) => !r.active).length },
+                {
+                  value: "active",
+                  label: "Ativas",
+                  count: all.filter((r) => r.active).length,
+                },
+                {
+                  value: "inactive",
+                  label: "Inativas",
+                  count: all.filter((r) => !r.active).length,
+                },
               ]}
             />
           </div>
@@ -145,8 +170,20 @@ export function RulesPage() {
         ) : visible.length === 0 ? (
           <EmptyState
             icon={<SlidersHorizontal className="size-5" />}
-            title={all.length ? "Nenhuma regra com esses filtros" : "Nenhuma regra cadastrada"}
-            action={!all.length && <Can permission="alert-configs.create"><Button onClick={() => setEditing("new")}>Criar a primeira regra</Button></Can>}
+            title={
+              all.length
+                ? "Nenhuma regra com esses filtros"
+                : "Nenhuma regra cadastrada"
+            }
+            action={
+              !all.length && (
+                <Can permission="alert-configs.create">
+                  <Button onClick={() => setEditing("new")}>
+                    Criar a primeira regra
+                  </Button>
+                </Can>
+              )
+            }
           />
         ) : (
           <Table>
@@ -167,53 +204,79 @@ export function RulesPage() {
                 const entry = catalog.bySensorId.get(rule.sensor_id);
                 const visual = sensorVisual(entry?.type?.name ?? "");
                 return (
-                  <Tr key={rule.id} className={rule.active ? undefined : "bg-canvas/60"}>
+                  <Tr
+                    key={rule.id}
+                    className={rule.active ? undefined : "bg-canvas/60"}
+                  >
                     <Td>
                       <span className="flex items-center gap-3">
                         <span
                           className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg"
-                          style={{ background: visual.soft, color: visual.color }}
+                          style={{
+                            background: visual.soft,
+                            color: visual.color,
+                          }}
                           aria-hidden
                         >
                           <visual.icon className="size-4" />
                         </span>
                         <span className="min-w-0">
-                          <span className="block font-medium text-ink">{entry?.type?.name ?? "Sensor"}</span>
+                          <span className="block font-medium text-ink">
+                            {entry?.type?.name ?? "Sensor"}
+                          </span>
                           <span className="block text-xs text-muted">
                             {OPERATOR_PHRASES[rule.comparison_operator]}{" "}
                             <span className="font-semibold text-ink tabular-nums">
-                              {formatNumber(rule.reference_value)} {entry?.type?.unit_of_measure}
+                              {formatNumber(rule.reference_value)}{" "}
+                              {entry?.type?.unit_of_measure}
                             </span>
                           </span>
                           {entry?.station && (
-                            <span className="block text-xs text-muted md:hidden">em {entry.station.name}</span>
+                            <span className="block text-xs text-muted md:hidden">
+                              em {entry.station.name}
+                            </span>
                           )}
                           {rule.message && (
-                            <span className="line-clamp-1 text-xs text-muted lg:hidden">“{rule.message}”</span>
+                            <span className="line-clamp-1 text-xs text-muted lg:hidden">
+                              “{rule.message}”
+                            </span>
                           )}
                         </span>
                         {!rule.active && (
-                          <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted">Inativa</span>
+                          <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted">
+                            Inativa
+                          </span>
                         )}
                       </span>
                     </Td>
                     <Td className="hidden md:table-cell">
                       {entry?.station ? (
-                        <Link href={`/estacoes/${entry.station.id}`} className="text-ink hover:text-brand-700">
+                        <Link
+                          href={`/estacoes/${entry.station.id}`}
+                          className="text-ink hover:text-brand-700"
+                        >
                           {entry.station.name}
-                          <span className="block font-mono text-xs text-faint">{entry.sensor.local_identifier}</span>
+                          <span className="block font-mono text-xs text-faint">
+                            {entry.sensor.local_identifier}
+                          </span>
                         </Link>
                       ) : (
                         <span className="text-faint">—</span>
                       )}
                     </Td>
                     <Td className="hidden max-w-xs text-muted lg:table-cell">
-                      <span className="line-clamp-2">{rule.message ?? "—"}</span>
+                      <span className="line-clamp-2">
+                        {rule.message ?? "—"}
+                      </span>
                     </Td>
                     <Td className="hidden whitespace-nowrap text-muted xl:table-cell">
-                      {rule.manager_user_id && userById.get(rule.manager_user_id) ? (
+                      {rule.manager_user_id &&
+                      userById.get(rule.manager_user_id) ? (
                         <span className="inline-flex items-center gap-2">
-                          <Avatar name={userById.get(rule.manager_user_id)!.name} size="sm" />
+                          <Avatar
+                            name={userById.get(rule.manager_user_id)!.name}
+                            size="sm"
+                          />
                           {userById.get(rule.manager_user_id)!.name}
                         </span>
                       ) : (
@@ -221,16 +284,32 @@ export function RulesPage() {
                       )}
                     </Td>
                     <Td>
-                      <Switch disabled={!canUpdate} label={`Regra ${rule.id} ativa`} checked={rule.active} onChange={() => void toggle(rule)} />
+                      <Switch
+                        disabled={!canUpdate}
+                        label={`Regra ${rule.id} ativa`}
+                        checked={rule.active}
+                        onChange={() => void toggle(rule)}
+                      />
                     </Td>
                     <Td>
                       <RowActions>
-                        <Can permission="alert-configs.update"><IconButton label={`Editar regra ${rule.id}`} onClick={() => setEditing(rule)}>
-                          <Pencil className="size-4" />
-                        </IconButton></Can>
-                        <Can permission="alert-configs.delete"><IconButton label={`Excluir regra ${rule.id}`} onClick={() => setDeleting(rule)} className="hover:text-danger">
-                          <Trash2 className="size-4" />
-                        </IconButton></Can>
+                        <Can permission="alert-configs.update">
+                          <IconButton
+                            label={`Editar regra ${rule.id}`}
+                            onClick={() => setEditing(rule)}
+                          >
+                            <Pencil className="size-4" />
+                          </IconButton>
+                        </Can>
+                        <Can permission="alert-configs.delete">
+                          <IconButton
+                            label={`Excluir regra ${rule.id}`}
+                            onClick={() => setDeleting(rule)}
+                            className="hover:text-danger"
+                          >
+                            <Trash2 className="size-4" />
+                          </IconButton>
+                        </Can>
                       </RowActions>
                     </Td>
                   </Tr>
@@ -241,15 +320,28 @@ export function RulesPage() {
         )}
       </Card>
 
-      {editing && <Can permission={editing === "new" ? "alert-configs.create" : "alert-configs.update"}><RuleFormModal rule={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} /></Can>}
-      <Can permission="alert-configs.delete"><ConfirmDialog
-        open={Boolean(deleting)}
-        title="Excluir regra"
-        message="A regra e o histórico de alertas disparados por ela serão apagados."
-        loading={remove.isPending}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleting(null)}
-      /></Can>
+      {editing && (
+        <Can
+          permission={
+            editing === "new" ? "alert-configs.create" : "alert-configs.update"
+          }
+        >
+          <RuleFormModal
+            rule={editing === "new" ? undefined : editing}
+            onClose={() => setEditing(null)}
+          />
+        </Can>
+      )}
+      <Can permission="alert-configs.delete">
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          title="Excluir regra"
+          message="A regra e o histórico de alertas disparados por ela serão apagados."
+          loading={remove.isPending}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      </Can>
     </>
   );
 }

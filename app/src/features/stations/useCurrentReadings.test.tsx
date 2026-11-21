@@ -22,27 +22,55 @@ class Socket {
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
   onmessage: ((event: { data: string }) => void) | null = null;
-  close = vi.fn(() => { this.readyState = 3; this.onclose?.(); });
-  constructor(readonly url: URL) { Socket.instances.push(this); }
-  open() { this.readyState = 1; this.onopen?.(); }
-  message(data: unknown) { this.onmessage?.({ data: JSON.stringify(data) }); }
+  close = vi.fn(() => {
+    this.readyState = 3;
+    this.onclose?.();
+  });
+  constructor(readonly url: URL) {
+    Socket.instances.push(this);
+  }
+  open() {
+    this.readyState = 1;
+    this.onopen?.();
+  }
+  message(data: unknown) {
+    this.onmessage?.({ data: JSON.stringify(data) });
+  }
 }
 
 const event = (value = 32, stationId = 1): LiveReading => ({
-  type: "reading", reading_id: 101, station_id: stationId, sensor_id: 10,
-  local_identifier: "temp", sensor_type_id: 1, sensor_type: "Temperatura",
-  unit_of_measure: "°C", value, unix_time: Math.floor(Date.now() / 1000),
+  type: "reading",
+  reading_id: 101,
+  station_id: stationId,
+  sensor_id: 10,
+  local_identifier: "temp",
+  sensor_type_id: 1,
+  sensor_type: "Temperatura",
+  unit_of_measure: "°C",
+  value,
+  unix_time: Math.floor(Date.now() / 1000),
 });
 
 function setup(propertyId?: number, stationId?: number) {
   Socket.instances = [];
   vi.stubGlobal("WebSocket", Socket);
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  const wrapper = ({ children }: { children: ReactNode }) =>
-    <QueryClientProvider client={client}><AuthProvider initialUser={testUser} validateSession={false}>{children}</AuthProvider></QueryClientProvider>;
-  return renderHook(({ property, station }) => useCurrentReadings(property, station), {
-    wrapper, initialProps: { property: propertyId, station: stationId },
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>
+      <AuthProvider initialUser={testUser} validateSession={false}>
+        {children}
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+  return renderHook(
+    ({ property, station }) => useCurrentReadings(property, station),
+    {
+      wrapper,
+      initialProps: { property: propertyId, station: stationId },
+    },
+  );
 }
 
 afterEach(() => vi.useRealTimers());
@@ -66,18 +94,24 @@ describe("leituras atuais", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     hook.rerender({ property: 5, station: undefined });
     await waitFor(() => expect(hook.result.current.isFetching).toBe(false));
-    expect(hook.result.current.now).toBeGreaterThanOrEqual(hook.result.current.dataUpdatedAt);
+    expect(hook.result.current.now).toBeGreaterThanOrEqual(
+      hook.result.current.dataUpdatedAt,
+    );
     hook.unmount();
   });
 
   it("valida mensagens e ignora eventos antigos ou repetidos", () => {
     expect(parseLiveReading("invalid")).toBeNull();
-    expect(parseLiveReading(JSON.stringify({ ...event(), value: null }))).toBeNull();
+    expect(
+      parseLiveReading(JSON.stringify({ ...event(), value: null })),
+    ).toBeNull();
     expect(parseLiveReading(JSON.stringify(event()))).toEqual(event());
     const updated = mergeReading(current, event());
     const old = { ...event(5), unix_time: event().unix_time - 100 };
     expect(mergeReading(updated, old).stations[0]!.readings[0]!.value).toBe(32);
-    expect(mergeReading(updated, event(5)).stations[0]!.readings[0]!.value).toBe(32);
+    expect(
+      mergeReading(updated, event(5)).stations[0]!.readings[0]!.value,
+    ).toBe(32);
   });
 
   it("aplica eventos imediatamente, preserva outras estações e fecha ao desmontar", async () => {
@@ -90,7 +124,9 @@ describe("leituras atuais", () => {
     act(() => socket.message(event()));
     expect(hook.result.current.data!.stations[0]!.readings[0]!.value).toBe(32);
     expect(hook.result.current.data!.stations[1]!.readings[0]!.value).toBe(30);
-    await act(async () => { await hook.result.current.refetch(); });
+    await act(async () => {
+      await hook.result.current.refetch();
+    });
     expect(hook.result.current.data!.stations[0]!.readings[0]!.value).toBe(32);
     hook.unmount();
     expect(socket.close).toHaveBeenCalled();
@@ -110,13 +146,20 @@ describe("leituras atuais", () => {
 
   it("reconecta, sincroniza pelo REST e mantém dados após falha", async () => {
     let failing = false;
-    mockApi({ ...defaultRoutes(), "/api/stations/current": () => failing
-      ? { status: 503, body: { message: "Indisponível" } } : current });
+    mockApi({
+      ...defaultRoutes(),
+      "/api/stations/current": () =>
+        failing ? { status: 503, body: { message: "Indisponível" } } : current,
+    });
     const hook = setup();
     await waitFor(() => expect(hook.result.current.data).toBeDefined());
     failing = true;
-    await act(async () => { await hook.result.current.refetch(); });
-    await waitFor(() => expect(hook.result.current.error?.message).toBe("Indisponível"));
+    await act(async () => {
+      await hook.result.current.refetch();
+    });
+    await waitFor(() =>
+      expect(hook.result.current.error?.message).toBe("Indisponível"),
+    );
     expect(hook.result.current.data!.stations[0]!.readings[0]!.value).toBe(24);
     vi.useFakeTimers();
     act(() => Socket.instances[0]!.close());
@@ -139,7 +182,9 @@ describe("leituras atuais", () => {
     const old = Socket.instances[0]!;
     act(() => old.message(event()));
     hook.rerender({ property: 2, station: undefined });
-    await waitFor(() => expect(hook.result.current.data?.stations[0]?.station_id).toBe(3));
+    await waitFor(() =>
+      expect(hook.result.current.data?.stations[0]?.station_id).toBe(3),
+    );
     expect(old.close).toHaveBeenCalled();
     expect(hook.result.current.data!.stations).toHaveLength(1);
   });

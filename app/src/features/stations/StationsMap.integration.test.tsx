@@ -10,7 +10,9 @@ describe("StationsMap", () => {
   it("põe um pino por estação com coordenadas, com nome e status acessíveis", () => {
     render(<StationsMap stations={overview.stations} />);
 
-    expect(screen.getByRole("region", { name: "Mapa das estações" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Mapa das estações" }),
+    ).toBeInTheDocument();
     const pin = screen.getByTitle("Estação Sede: Online");
     expect(pin).toHaveAttribute("role", "button");
     expect(pin).toHaveAttribute("aria-label", "Estação Sede: Online");
@@ -32,7 +34,11 @@ describe("StationsMap", () => {
 
   it("enquadra as estações uma vez e não reenquadra com os mesmos pontos", () => {
     const fit = vi.spyOn(L.Map.prototype, "fitBounds");
-    const located = overview.stations.map((s, i) => ({ ...s, latitude: -23.1 - i / 100, longitude: -45.8 }));
+    const located = overview.stations.map((s, i) => ({
+      ...s,
+      latitude: -23.1 - i / 100,
+      longitude: -45.8,
+    }));
     const { rerender } = render(<StationsMap stations={located} />);
     expect(fit).toHaveBeenCalledTimes(1);
 
@@ -42,9 +48,19 @@ describe("StationsMap", () => {
   });
 
   it("aceita rótulo próprio e destaca a estação selecionada", () => {
-    render(<StationsMap stations={[overview.stations[0]!]} selectedId={1} label="Localização da Sede" />);
-    expect(screen.getByRole("region", { name: "Localização da Sede" })).toBeInTheDocument();
-    expect(screen.getByTitle("Estação Sede: Online").innerHTML).toContain("width:22px");
+    render(
+      <StationsMap
+        stations={[overview.stations[0]!]}
+        selectedId={1}
+        label="Localização da Sede"
+      />,
+    );
+    expect(
+      screen.getByRole("region", { name: "Localização da Sede" }),
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("Estação Sede: Online").innerHTML).toContain(
+      "width:22px",
+    );
   });
 });
 

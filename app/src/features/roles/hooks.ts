@@ -10,17 +10,27 @@ import { type RoleInput, rolesApi } from "./api";
 export const roleKeys = { permissions: ["permissions"] as const };
 
 export const useRolesWithPermissions = () =>
-  useQuery({ enabled: useCan("roles.read"), queryKey: userKeys.roles, queryFn: rolesApi.list });
+  useQuery({
+    enabled: useCan("roles.read"),
+    queryKey: userKeys.roles,
+    queryFn: rolesApi.list,
+  });
 
 export const usePermissionCatalog = () =>
-  useQuery({ enabled: useCan("permissions.read"), queryKey: roleKeys.permissions, queryFn: rolesApi.permissions, staleTime: 10 * 60_000 });
+  useQuery({
+    enabled: useCan("permissions.read"),
+    queryKey: roleKeys.permissions,
+    queryFn: rolesApi.permissions,
+    staleTime: 10 * 60_000,
+  });
 
 function useInvalidateRoles() {
   const client = useQueryClient();
-  return () => Promise.all([
-    client.invalidateQueries({ queryKey: userKeys.roles }),
-    client.invalidateQueries({ queryKey: ["auth", "me"] }),
-  ]);
+  return () =>
+    Promise.all([
+      client.invalidateQueries({ queryKey: userKeys.roles }),
+      client.invalidateQueries({ queryKey: ["auth", "me"] }),
+    ]);
 }
 
 export function useSaveRole() {
@@ -40,7 +50,8 @@ export function useDeleteRole() {
 export function useSetRolePermissions() {
   const invalidate = useInvalidateRoles();
   return useMutation({
-    mutationFn: ({ id, permissions }: { id: number; permissions: string[] }) => rolesApi.setPermissions(id, permissions),
+    mutationFn: ({ id, permissions }: { id: number; permissions: string[] }) =>
+      rolesApi.setPermissions(id, permissions),
     onSuccess: invalidate,
   });
 }
