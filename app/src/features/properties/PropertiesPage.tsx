@@ -21,6 +21,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
+import { Can } from "@/features/auth/Can";
 import { useOverview } from "@/features/stations/hooks";
 import { useUsers } from "@/features/users/hooks";
 import { ApiError } from "@/lib/api/http";
@@ -258,13 +259,15 @@ export function PropertiesPage() {
             >
               Associar estações
             </Button>
-            <Button
-              variant="light"
-              icon={<Plus className="size-4" />}
-              onClick={() => setFormProperty("new")}
-            >
-              Nova propriedade
-            </Button>
+            <Can permission="properties.create">
+              <Button
+                variant="light"
+                icon={<Plus className="size-4" />}
+                onClick={() => setFormProperty("new")}
+              >
+                Nova propriedade
+              </Button>
+            </Can>
           </div>
         }
       >
@@ -436,14 +439,16 @@ export function PropertiesPage() {
               · Clique em uma linha para visualizar o detalhamento abaixo
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon={<Plus className="size-3.5" />}
-            onClick={() => setFormProperty("new")}
-          >
-            Cadastrar propriedade
-          </Button>
+          <Can permission="properties.create">
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={<Plus className="size-3.5" />}
+              onClick={() => setFormProperty("new")}
+            >
+              Cadastrar propriedade
+            </Button>
+          </Can>
         </div>
 
         {propertiesQuery.isLoading ? (
@@ -598,14 +603,16 @@ export function PropertiesPage() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="inline-flex items-center gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            icon={<Edit2 className="size-3" />}
-                            onClick={() => setFormProperty(p)}
-                          >
-                            Editar
-                          </Button>
+                          <Can permission="properties.update">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              icon={<Edit2 className="size-3" />}
+                              onClick={() => setFormProperty(p)}
+                            >
+                              Editar
+                            </Button>
+                          </Can>
                           <Button
                             size="sm"
                             variant="secondary"
@@ -614,12 +621,14 @@ export function PropertiesPage() {
                           >
                             Estações
                           </Button>
-                          <IconButton
-                            label={`Excluir ${p.name}`}
-                            onClick={() => setDeletingProperty(p)}
-                          >
-                            <Trash2 className="size-3.5 text-danger" />
-                          </IconButton>
+                          <Can permission="properties.delete">
+                            <IconButton
+                              label={`Excluir ${p.name}`}
+                              onClick={() => setDeletingProperty(p)}
+                            >
+                              <Trash2 className="size-3.5 text-danger" />
+                            </IconButton>
+                          </Can>
                         </div>
                       </Td>
                     </Tr>
@@ -666,14 +675,16 @@ export function PropertiesPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                icon={<Edit2 className="size-3.5" />}
-                onClick={() => setFormProperty(activeProperty)}
-              >
-                Editar propriedade
-              </Button>
+              <Can permission="properties.update">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={<Edit2 className="size-3.5" />}
+                  onClick={() => setFormProperty(activeProperty)}
+                >
+                  Editar propriedade
+                </Button>
+              </Can>
               <Button
                 size="sm"
                 variant="glass"
@@ -687,7 +698,7 @@ export function PropertiesPage() {
 
           <div className="mt-5 grid gap-5 lg:grid-cols-12">
             {/* Mapa conceitual e espacial da propriedade */}
-            <div className="lg:col-span-5">
+            <div className="min-w-0 lg:col-span-5">
               <div className="relative h-56 w-full overflow-hidden rounded-xl border border-line bg-subtle/30 p-3">
                 <svg
                   className="absolute inset-0 h-full w-full"
@@ -744,7 +755,7 @@ export function PropertiesPage() {
             </div>
 
             {/* Tabela de estações vinculadas */}
-            <div className="lg:col-span-7">
+            <div className="min-w-0 lg:col-span-7">
               <div className="overflow-hidden rounded-xl border border-line bg-surface">
                 <Table>
                   <thead>
