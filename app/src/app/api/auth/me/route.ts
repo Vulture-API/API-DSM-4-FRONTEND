@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { clearSession, errorResponse, fetchIdentity, isAuthUser, sessionToken } from "@/lib/auth/session.server";
+import {
+  clearSession,
+  errorResponse,
+  fetchIdentity,
+  isAuthUser,
+  sessionToken,
+} from "@/lib/auth/session.server";
 
 export async function GET() {
   const token = await sessionToken();
@@ -8,12 +14,25 @@ export async function GET() {
   try {
     const backend = await fetchIdentity(token);
     if (!backend.ok) {
-      const response = errorResponse(backend.status, backend.status === 401 ? "Sessão expirada. Entre novamente." : "Não foi possível verificar sua sessão.");
+      const response = errorResponse(
+        backend.status,
+        backend.status === 401
+          ? "Sessão expirada. Entre novamente."
+          : "Não foi possível verificar sua sessão.",
+      );
       if (backend.status === 401) clearSession(response);
       return response;
     }
     const user = await backend.json();
-    if (!isAuthUser(user)) return errorResponse(502, "Resposta de autenticação inválida.");
-    return NextResponse.json(user, { headers: { "Cache-Control": "no-store" } });
-  } catch { return errorResponse(503, "Não foi possível verificar sua sessão. Tente novamente."); }
+    if (!isAuthUser(user))
+      return errorResponse(502, "Resposta de autenticação inválida.");
+    return NextResponse.json(user, {
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch {
+    return errorResponse(
+      503,
+      "Não foi possível verificar sua sessão. Tente novamente.",
+    );
+  }
 }

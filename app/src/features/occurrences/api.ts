@@ -20,5 +20,7 @@ export const occurrencesApi = {
   resolve: (id: number) =>
     request<Occurrence>(`/api/occurrences/${id}/resolve`, { method: "PATCH" }),
   open: (stationId?: number) =>
-    requestAll<Occurrence>(`/api/occurrences${query({ status: "OPEN", station_id: stationId })}`),
+    requestAll<Occurrence>(
+      `/api/occurrences${query({ status: "OPEN", station_id: stationId })}`,
+    ),
 };

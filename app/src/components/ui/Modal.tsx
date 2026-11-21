@@ -23,7 +23,15 @@ const widths = { sm: "max-w-md", md: "max-w-lg", lg: "max-w-2xl" };
  * Diálogo modal: Esc e clique fora fecham, o foco vai para o primeiro campo e
  * volta para quem abriu ao fechar.
  */
-export function Modal({ open, onClose, title, description, children, footer, size = "md" }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  size = "md",
+}: ModalProps) {
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
 
@@ -95,7 +103,9 @@ export function Modal({ open, onClose, title, description, children, footer, siz
             <h2 id={titleId} className="text-base font-semibold text-ink">
               {title}
             </h2>
-            {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+            {description && (
+              <p className="mt-0.5 text-[13px] text-muted">{description}</p>
+            )}
           </div>
           <IconButton label="Fechar" onClick={onClose} data-close>
             <X className="size-4" />

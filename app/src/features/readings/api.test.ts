@@ -19,7 +19,9 @@ describe("readingsApi - [QA] Endpoint de histórico e leituras", () => {
       current_page: 1,
     });
     expect(
-      calls.some((c) => c.path.startsWith("/api/readings?") && c.path.includes("page=1")),
+      calls.some(
+        (c) => c.path.startsWith("/api/readings?") && c.path.includes("page=1"),
+      ),
     ).toBe(true);
   });
 
@@ -70,7 +72,9 @@ describe("readingsApi - [QA] Endpoint de histórico e leituras", () => {
 
     expect(
       calls.some(
-        (c) => c.path.startsWith("/api/readings?") && c.path.includes("sensor_id=10"),
+        (c) =>
+          c.path.startsWith("/api/readings?") &&
+          c.path.includes("sensor_id=10"),
       ),
     ).toBe(true);
   });
@@ -102,10 +106,14 @@ describe("readingsApi - [QA] Endpoint de histórico e leituras", () => {
     mockApi({
       "/api/readings": {
         status: 500,
-        body: { message: "Falha de comunicação interna no servidor de telemetria" },
+        body: {
+          message: "Falha de comunicação interna no servidor de telemetria",
+        },
       },
     });
 
-    await expect(readingsApi.list()).rejects.toThrow("Falha de comunicação interna no servidor de telemetria");
+    await expect(readingsApi.list()).rejects.toThrow(
+      "Falha de comunicação interna no servidor de telemetria",
+    );
   });
 });

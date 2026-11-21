@@ -38,7 +38,9 @@ export function useSensorCatalog() {
             sensor,
             type: typeById.get(sensor.sensor_type_id),
             station,
-            property: station ? propertyById.get(station.property_id) : undefined,
+            property: station
+              ? propertyById.get(station.property_id)
+              : undefined,
           },
         ];
       }),

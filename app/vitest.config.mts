@@ -1,8 +1,24 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
+
+const integrationFiles = ["src/**/*.integration.test.{ts,tsx}"];
+
+// No CI, cada nível roda uma vez e guarda a cobertura parcial; o mínimo de 80%
+// é cobrado depois, na junção dos dois níveis (npm run test:ci:coverage).
+const coberturaParcial = process.env.COBERTURA_PARCIAL === "1";
 
 export default defineConfig({
-  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)), "server-only": fileURLToPath(new URL("./node_modules/next/dist/compiled/server-only/empty.js", import.meta.url)) } },
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "server-only": fileURLToPath(
+        new URL(
+          "./node_modules/next/dist/compiled/server-only/empty.js",
+          import.meta.url,
+        ),
+      ),
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
@@ -16,8 +32,24 @@ export default defineConfig({
         "src/app/**",
         "src/features/properties/**",
       ],
-      reporter: ["text", "html", "json-summary"],
-      thresholds: { statements: 80, branches: 80, functions: 80, lines: 80 },
+      reporter: coberturaParcial ? [] : ["text", "html", "json-summary"],
+      thresholds: coberturaParcial
+        ? {}
+        : { statements: 80, branches: 80, functions: 80, lines: 80 },
     },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/**/*.test.{ts,tsx}"],
+          exclude: [...configDefaults.exclude, ...integrationFiles],
+        },
+      },
+      {
+        extends: true,
+        test: { name: "integration", include: integrationFiles },
+      },
+    ],
   },
 });

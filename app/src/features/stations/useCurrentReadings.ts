@@ -26,18 +26,28 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
   const scope = `${propertyId ?? "all"}:${stationId ?? "all"}`;
   const [connection, setConnection] = useState<ConnectionStatus>("connecting");
   const [now, setNow] = useState(() => Date.now());
-  const key = ["stations", "current", propertyId ?? "all", stationId ?? "all"] as const;
+  const key = [
+    "stations",
+    "current",
+    propertyId ?? "all",
+    stationId ?? "all",
+  ] as const;
   const current = useQuery({
     enabled: allowed,
     queryKey: key,
     queryFn: async () => {
-      const events = buffers.current.get(scope) ?? new Map<number, LiveReading>();
+      const events =
+        buffers.current.get(scope) ?? new Map<number, LiveReading>();
       buffers.current.set(scope, events);
       let data = await stationsApi.current(propertyId, stationId);
       for (const [sensorId, event] of events) {
-        const snapshot = data.stations.find((s) => s.station_id === event.station_id)
+        const snapshot = data.stations
+          .find((s) => s.station_id === event.station_id)
           ?.readings.find((r) => r.sensor_id === sensorId);
-        if (snapshot?.unix_time != null && snapshot.unix_time >= event.unix_time) {
+        if (
+          snapshot?.unix_time != null &&
+          snapshot.unix_time >= event.unix_time
+        ) {
           events.delete(sensorId);
         } else {
           data = mergeReading(data, event);
@@ -59,7 +69,12 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
     let reconnect: ReturnType<typeof setTimeout> | undefined;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     let attempts = 0;
-    const cacheKey = ["stations", "current", propertyId ?? "all", stationId ?? "all"] as const;
+    const cacheKey = [
+      "stations",
+      "current",
+      propertyId ?? "all",
+      stationId ?? "all",
+    ] as const;
     const sync = () => {
       void client.invalidateQueries({ queryKey: cacheKey, exact: true });
     };
@@ -81,16 +96,25 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
         ws.onmessage = (message) => {
           if (disposed) return;
           const event = parseLiveReading(message.data);
-          if (!event || (stationId !== undefined && event.station_id !== stationId)) return;
+          if (
+            !event ||
+            (stationId !== undefined && event.station_id !== stationId)
+          )
+            return;
           const previous = events.get(event.sensor_id);
           if (previous && previous.unix_time >= event.unix_time) return;
           events.set(event.sensor_id, event);
-          client.setQueryData<CurrentData>(cacheKey, (data) => data ? mergeReading(data, event) : data);
+          client.setQueryData<CurrentData>(cacheKey, (data) =>
+            data ? mergeReading(data, event) : data,
+          );
           setNow(Date.now());
         };
         ws.onerror = () => ws.close();
         ws.onclose = (event) => {
-          if (event?.code === 1008) { refreshSession(); return; }
+          if (event?.code === 1008) {
+            refreshSession();
+            return;
+          }
           retry();
         };
       } catch {
@@ -125,7 +149,11 @@ export function useCurrentReadings(propertyId?: number, stationId?: number) {
       window.removeEventListener("online", resume);
       document.removeEventListener("visibilitychange", resume);
       if (socket) {
-        socket.onopen = socket.onmessage = socket.onclose = socket.onerror = null;
+        socket.onopen =
+          socket.onmessage =
+          socket.onclose =
+          socket.onerror =
+            null;
         socket.close();
       }
     };

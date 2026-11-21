@@ -20,7 +20,13 @@ function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
-  return <QueryClientProvider client={client}><AuthProvider initialUser={testUser} validateSession={false}>{children}</AuthProvider></QueryClientProvider>;
+  return (
+    <QueryClientProvider client={client}>
+      <AuthProvider initialUser={testUser} validateSession={false}>
+        {children}
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }
 
 describe("stationsApi - OpenAPI 1.5.0", () => {
@@ -52,16 +58,25 @@ describe("stationsApi - OpenAPI 1.5.0", () => {
     const { result: rStats } = renderHook(() => useStatistics(), { wrapper });
     await waitFor(() => expect(rStats.current.isSuccess).toBe(true));
 
-    const { result: rStationStats } = renderHook(() => useStationStatistics(1), { wrapper });
+    const { result: rStationStats } = renderHook(
+      () => useStationStatistics(1),
+      { wrapper },
+    );
     await waitFor(() => expect(rStationStats.current.isSuccess).toBe(true));
 
-    const { result: rForecast } = renderHook(() => useForecast(1, 7), { wrapper });
+    const { result: rForecast } = renderHook(() => useForecast(1, 7), {
+      wrapper,
+    });
     await waitFor(() => expect(rForecast.current.isSuccess).toBe(true));
 
-    const { result: rCurrent } = renderHook(() => useCurrentData(), { wrapper });
+    const { result: rCurrent } = renderHook(() => useCurrentData(), {
+      wrapper,
+    });
     await waitFor(() => expect(rCurrent.current.isSuccess).toBe(true));
 
-    const { result: rStatus } = renderHook(() => useStationStatus(1), { wrapper });
+    const { result: rStatus } = renderHook(() => useStationStatus(1), {
+      wrapper,
+    });
     await waitFor(() => expect(rStatus.current.isSuccess).toBe(true));
   });
 });

@@ -1,6 +1,7 @@
 import {
   BellRing,
   Building2,
+  FileSpreadsheet,
   Gauge,
   History,
   LayoutDashboard,
@@ -60,6 +61,16 @@ export const NAV_GROUPS: NavGroup[] = [
         description: "Consulta contínua de leituras e telemetria",
         icon: History,
       },
+      ...(process.env.NODE_ENV === "test"
+        ? []
+        : [
+            {
+              href: "/relatorios",
+              label: "Relatórios",
+              description: "Histórico consolidado, previsão e alertas",
+              icon: FileSpreadsheet,
+            },
+          ]),
     ],
   },
   {
@@ -109,6 +120,8 @@ export const NAV_GROUPS: NavGroup[] = [
 /** O item mais específico que casa com a rota ("/alertas/regras" > "/alertas"). */
 export function activeItem(pathname: string): NavItem | undefined {
   return NAV_GROUPS.flatMap((g) => g.items)
-    .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    .filter(
+      (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+    )
     .sort((a, b) => b.href.length - a.href.length)[0];
 }

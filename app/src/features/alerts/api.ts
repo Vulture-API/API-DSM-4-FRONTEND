@@ -29,10 +29,16 @@ export type Severity = "alta" | "moderada";
  * Quanto a leitura passou do limite. Acima de 10% do valor de referência
  * (ou do próprio limite, se ele for 0) conta como gravidade alta.
  */
-export function exceedance(value: number, reference: number): { delta: number; severity: Severity } {
+export function exceedance(
+  value: number,
+  reference: number,
+): { delta: number; severity: Severity } {
   const delta = value - reference;
   const base = Math.abs(reference) || 1;
-  return { delta, severity: Math.abs(delta) / base > 0.1 ? "alta" : "moderada" };
+  return {
+    delta,
+    severity: Math.abs(delta) / base > 0.1 ? "alta" : "moderada",
+  };
 }
 
 export type AlertRule = {
@@ -60,16 +66,26 @@ export type TriggeredAlert = {
 
 export const alertsApi = {
   rules: () => requestAll<AlertRule>("/api/alerts/config"),
-  createRule: (input: AlertRuleInput) => request<AlertRule>("/api/alerts/config", { method: "POST", json: input }),
+  createRule: (input: AlertRuleInput) =>
+    request<AlertRule>("/api/alerts/config", { method: "POST", json: input }),
   updateRule: (id: number, input: AlertRuleInput) =>
-    request<AlertRule>(`/api/alerts/config/${id}`, { method: "PUT", json: input }),
-  removeRule: (id: number) => request<void>(`/api/alerts/config/${id}`, { method: "DELETE" }),
+    request<AlertRule>(`/api/alerts/config/${id}`, {
+      method: "PUT",
+      json: input,
+    }),
+  removeRule: (id: number) =>
+    request<void>(`/api/alerts/config/${id}`, { method: "DELETE" }),
 
   triggered: (acknowledged: boolean, page: number, limit: number) =>
-    request<Paginated<TriggeredAlert>>(`/api/alerts/triggered${query({ acknowledged, page, limit })}`),
+    request<Paginated<TriggeredAlert>>(
+      `/api/alerts/triggered${query({ acknowledged, page, limit })}`,
+    ),
   pendingCount: async () =>
-    (await request<Paginated<TriggeredAlert>>("/api/alerts/triggered?acknowledged=false&limit=1")).meta
-      .total_records,
+    (
+      await request<Paginated<TriggeredAlert>>(
+        "/api/alerts/triggered?acknowledged=false&limit=1",
+      )
+    ).meta.total_records,
   acknowledge: (id: number, userId: number) =>
     request<TriggeredAlert>(`/api/alerts/triggered/${id}/acknowledge`, {
       method: "PUT",

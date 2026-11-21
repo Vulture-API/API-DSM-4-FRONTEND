@@ -14,17 +14,29 @@ export const parameterKeys = {
 };
 
 export const useSensorTypes = () =>
-  useQuery({ enabled: useCan("sensor-types.read"), queryKey: parameterKeys.sensorTypes, queryFn: parametersApi.sensorTypes, staleTime: 5 * 60_000 });
+  useQuery({
+    enabled: useCan("sensor-types.read"),
+    queryKey: parameterKeys.sensorTypes,
+    queryFn: parametersApi.sensorTypes,
+    staleTime: 5 * 60_000,
+  });
 
 export const useSensors = (stationId?: number) =>
-  useQuery({ enabled: useCan("sensors.read"), queryKey: parameterKeys.sensors(stationId), queryFn: () => parametersApi.sensors(stationId) });
+  useQuery({
+    enabled: useCan("sensors.read"),
+    queryKey: parameterKeys.sensors(stationId),
+    queryFn: () => parametersApi.sensors(stationId),
+  });
 
 export function useSaveSensorType() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ id, input }: { id?: number; input: SensorTypeInput }) =>
-      id ? parametersApi.updateSensorType(id, input) : parametersApi.createSensorType(input),
-    onSuccess: () => client.invalidateQueries({ queryKey: parameterKeys.sensorTypes }),
+      id
+        ? parametersApi.updateSensorType(id, input)
+        : parametersApi.createSensorType(input),
+    onSuccess: () =>
+      client.invalidateQueries({ queryKey: parameterKeys.sensorTypes }),
   });
 }
 
@@ -32,7 +44,8 @@ export function useDeleteSensorType() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: parametersApi.removeSensorType,
-    onSuccess: () => client.invalidateQueries({ queryKey: parameterKeys.sensorTypes }),
+    onSuccess: () =>
+      client.invalidateQueries({ queryKey: parameterKeys.sensorTypes }),
   });
 }
 
@@ -45,7 +58,9 @@ export function useSaveSensor() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: ({ id, input }: { id?: number; input: SensorInput }) =>
-      id ? parametersApi.updateSensor(id, input) : parametersApi.createSensor(input),
+      id
+        ? parametersApi.updateSensor(id, input)
+        : parametersApi.createSensor(input),
     onSuccess: () => invalidateSensors(client),
   });
 }

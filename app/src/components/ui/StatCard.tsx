@@ -29,9 +29,18 @@ export function StatCard({
     <Card className="p-5">
       <div className="flex items-start justify-between">
         <p className="text-[13px] font-medium text-muted">{label}</p>
-        <span className={cn("inline-flex size-8 items-center justify-center rounded-lg", accents[accent])}>{icon}</span>
+        <span
+          className={cn(
+            "inline-flex size-8 items-center justify-center rounded-lg",
+            accents[accent],
+          )}
+        >
+          {icon}
+        </span>
       </div>
-      <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-ink">{value}</p>
+      <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums text-ink">
+        {value}
+      </p>
       {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
     </Card>
   );

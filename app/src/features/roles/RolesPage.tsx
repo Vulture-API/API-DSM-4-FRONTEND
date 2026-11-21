@@ -18,7 +18,13 @@ import { ApiError } from "@/lib/api/http";
 import { cn } from "@/lib/cn";
 
 import type { Permission, RoleWithPermissions } from "./api";
-import { useDeleteRole, usePermissionCatalog, useRolesWithPermissions, useSaveRole, useSetRolePermissions } from "./hooks";
+import {
+  useDeleteRole,
+  usePermissionCatalog,
+  useRolesWithPermissions,
+  useSaveRole,
+  useSetRolePermissions,
+} from "./hooks";
 
 /** Rótulo de cada grupo do catálogo (prefixo do código da permissão). */
 const GROUP_LABELS: Record<string, string> = {
@@ -43,7 +49,11 @@ export function groupPermissions(catalog: Permission[]) {
     groups.set(prefix, [...(groups.get(prefix) ?? []), permission]);
   }
   return [...groups.entries()]
-    .map(([prefix, items]) => ({ prefix, label: GROUP_LABELS[prefix] ?? prefix, items }))
+    .map(([prefix, items]) => ({
+      prefix,
+      label: GROUP_LABELS[prefix] ?? prefix,
+      items,
+    }))
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
@@ -57,22 +67,38 @@ export function RolesPage() {
   const canEdit = useCan("roles.permissions.update");
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [draft, setDraft] = useState<{ roleId: number; codes: Set<string> } | null>(null);
-  const [editing, setEditing] = useState<RoleWithPermissions | "new" | null>(null);
+  const [draft, setDraft] = useState<{
+    roleId: number;
+    codes: Set<string>;
+  } | null>(null);
+  const [editing, setEditing] = useState<RoleWithPermissions | "new" | null>(
+    null,
+  );
   const [deleting, setDeleting] = useState<RoleWithPermissions | null>(null);
 
-  const list = useMemo(() => [...(roles.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)), [roles.data]);
+  const list = useMemo(
+    () => [...(roles.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [roles.data],
+  );
   const selected = list.find((r) => r.id === selectedId) ?? list[0];
-  const groups = useMemo(() => groupPermissions(catalog.data ?? []), [catalog.data]);
+  const groups = useMemo(
+    () => groupPermissions(catalog.data ?? []),
+    [catalog.data],
+  );
   const usersByRole = useMemo(() => {
     const counts = new Map<number, number>();
-    users.data?.forEach((u) => counts.set(u.role_id, (counts.get(u.role_id) ?? 0) + 1));
+    users.data?.forEach((u) =>
+      counts.set(u.role_id, (counts.get(u.role_id) ?? 0) + 1),
+    );
     return counts;
   }, [users.data]);
 
   const saved = new Set(selected?.permissions ?? []);
-  const current = draft && selected && draft.roleId === selected.id ? draft.codes : saved;
-  const dirty = current.size !== saved.size || [...current].some((code) => !saved.has(code));
+  const current =
+    draft && selected && draft.roleId === selected.id ? draft.codes : saved;
+  const dirty =
+    current.size !== saved.size ||
+    [...current].some((code) => !saved.has(code));
 
   function toggle(codes: string[], value: boolean) {
     if (!selected) return;
@@ -89,7 +115,10 @@ export function RolesPage() {
   async function save() {
     if (!selected) return;
     try {
-      await setPermissions.mutateAsync({ id: selected.id, permissions: [...current].sort() });
+      await setPermissions.mutateAsync({
+        id: selected.id,
+        permissions: [...current].sort(),
+      });
       toast.success(`Permissões do perfil "${selected.name}" atualizadas.`);
       setDraft(null);
     } catch (error) {
@@ -105,9 +134,11 @@ export function RolesPage() {
       if (selectedId === deleting.id) setSelectedId(null);
       setDeleting(null);
     } catch (error) {
-      toast.error(error instanceof ApiError && error.status === 409
-        ? "O perfil possui usuários vinculados. Altere o cargo desses usuários antes."
-        : (error as Error).message);
+      toast.error(
+        error instanceof ApiError && error.status === 409
+          ? "O perfil possui usuários vinculados. Altere o cargo desses usuários antes."
+          : (error as Error).message,
+      );
     }
   }
 
@@ -122,39 +153,84 @@ export function RolesPage() {
         description="Defina o que cada perfil de acesso pode consultar e alterar no portal."
         actions={
           <Can permission="roles.create">
-            <Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
+            <Button
+              variant="light"
+              icon={<Plus className="size-4" />}
+              onClick={() => setEditing("new")}
+            >
               Novo perfil
             </Button>
           </Can>
         }
       />
       {error ? (
-        <ErrorState message={error.message} onRetry={() => { void roles.refetch(); void catalog.refetch(); }} />
+        <ErrorState
+          message={error.message}
+          onRetry={() => {
+            void roles.refetch();
+            void catalog.refetch();
+          }}
+        />
       ) : roles.isLoading || catalog.isLoading ? (
         <div className="grid gap-6 lg:grid-cols-12">
           <Skeleton className="h-64 lg:col-span-4" />
           <Skeleton className="h-96 lg:col-span-8" />
         </div>
       ) : !selected ? (
-        <Card><EmptyState title="Nenhum perfil cadastrado" description="Crie um perfil para atribuir aos usuários." /></Card>
+        <Card>
+          <EmptyState
+            title="Nenhum perfil cadastrado"
+            description="Crie um perfil para atribuir aos usuários."
+          />
+        </Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-12">
           <Card className="lg:col-span-4">
-            <CardHeader title="Perfis" description={`${list.length} perfis de acesso`} />
-            <ul className="mt-4 divide-y divide-line border-t border-line" aria-label="Perfis de acesso">
+            <CardHeader
+              title="Perfis"
+              description={`${list.length} perfis de acesso`}
+            />
+            <ul
+              className="mt-4 divide-y divide-line border-t border-line"
+              aria-label="Perfis de acesso"
+            >
               {list.map((role) => (
-                <li key={role.id} className={cn("flex items-center gap-2 px-5 py-3", role.id === selected.id && "bg-brand-50/60")}>
-                  <button type="button" className="min-w-0 flex-1 text-left" aria-current={role.id === selected.id} onClick={() => select(role)}>
-                    <span className="block truncate text-sm font-medium text-ink">{role.name}</span>
+                <li
+                  key={role.id}
+                  className={cn(
+                    "flex items-center gap-2 px-5 py-3",
+                    role.id === selected.id && "bg-brand-50/60",
+                  )}
+                >
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    aria-current={role.id === selected.id}
+                    onClick={() => select(role)}
+                  >
+                    <span className="block truncate text-sm font-medium text-ink">
+                      {role.name}
+                    </span>
                     <span className="block text-xs text-muted">
-                      {role.permissions.length} permissões · {usersByRole.get(role.id) ?? 0} usuário(s)
+                      {role.permissions.length} permissões ·{" "}
+                      {usersByRole.get(role.id) ?? 0} usuário(s)
                     </span>
                   </button>
                   <Can permission="roles.update">
-                    <IconButton label={`Editar ${role.name}`} onClick={() => setEditing(role)}><Pencil className="size-4" /></IconButton>
+                    <IconButton
+                      label={`Editar ${role.name}`}
+                      onClick={() => setEditing(role)}
+                    >
+                      <Pencil className="size-4" />
+                    </IconButton>
                   </Can>
                   <Can permission="roles.delete">
-                    <IconButton label={`Excluir ${role.name}`} onClick={() => setDeleting(role)}><Trash2 className="size-4" /></IconButton>
+                    <IconButton
+                      label={`Excluir ${role.name}`}
+                      onClick={() => setDeleting(role)}
+                    >
+                      <Trash2 className="size-4" />
+                    </IconButton>
                   </Can>
                 </li>
               ))}
@@ -165,28 +241,49 @@ export function RolesPage() {
             <CardHeader
               icon={<ShieldCheck className="size-4" />}
               title={`Permissões — ${selected.name}`}
-              description={selected.description ?? "Marque o que este perfil pode fazer."}
-              action={canEdit && (
-                <>
-                  <Button variant="secondary" size="sm" disabled={!dirty || setPermissions.isPending} onClick={() => setDraft(null)}>
-                    Descartar
-                  </Button>
-                  <Button size="sm" disabled={!dirty} loading={setPermissions.isPending} onClick={() => void save()}>
-                    Salvar permissões
-                  </Button>
-                </>
-              )}
+              description={
+                selected.description ?? "Marque o que este perfil pode fazer."
+              }
+              action={
+                canEdit && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={!dirty || setPermissions.isPending}
+                      onClick={() => setDraft(null)}
+                    >
+                      Descartar
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={!dirty}
+                      loading={setPermissions.isPending}
+                      onClick={() => void save()}
+                    >
+                      Salvar permissões
+                    </Button>
+                  </>
+                )
+              }
             />
             <div className="mt-4 grid gap-4 border-t border-line p-5 sm:grid-cols-2">
               {groups.map((group) => {
                 const codes = group.items.map((p) => p.code);
                 const all = codes.every((code) => current.has(code));
                 return (
-                  <fieldset key={group.prefix} className="rounded-xl border border-line p-3">
+                  <fieldset
+                    key={group.prefix}
+                    className="rounded-xl border border-line p-3"
+                  >
                     <legend className="flex w-full items-center justify-between gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
                       <span>{group.label}</span>
                       {canEdit && (
-                        <button type="button" className="text-[11px] font-medium normal-case text-brand-600 hover:underline" onClick={() => toggle(codes, !all)}>
+                        <button
+                          type="button"
+                          className="text-[11px] font-medium normal-case text-brand-600 hover:underline"
+                          onClick={() => toggle(codes, !all)}
+                        >
                           {all ? "Desmarcar todas" : "Marcar todas"}
                         </button>
                       )}
@@ -200,11 +297,15 @@ export function RolesPage() {
                               className="mt-0.5 size-4 accent-brand-600"
                               checked={current.has(permission.code)}
                               disabled={!canEdit}
-                              onChange={(e) => toggle([permission.code], e.target.checked)}
+                              onChange={(e) =>
+                                toggle([permission.code], e.target.checked)
+                              }
                             />
                             <span>
                               {permission.description}
-                              <span className="block font-mono text-[11px] text-faint">{permission.code}</span>
+                              <span className="block font-mono text-[11px] text-faint">
+                                {permission.code}
+                              </span>
                             </span>
                           </label>
                         </li>
@@ -218,13 +319,21 @@ export function RolesPage() {
         </div>
       )}
 
-      {editing && <RoleModal role={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} onSaved={(id) => setSelectedId(id)} />}
+      {editing && (
+        <RoleModal
+          role={editing === "new" ? undefined : editing}
+          onClose={() => setEditing(null)}
+          onSaved={(id) => setSelectedId(id)}
+        />
+      )}
       <ConfirmDialog
         open={Boolean(deleting)}
         title="Excluir perfil"
-        message={deletingUsers
-          ? `O perfil "${deleting?.name}" está atribuído a ${deletingUsers} usuário(s). Altere o cargo desses usuários antes de excluir.`
-          : `O perfil "${deleting?.name ?? ""}" será excluído.`}
+        message={
+          deletingUsers
+            ? `O perfil "${deleting?.name}" está atribuído a ${deletingUsers} usuário(s). Altere o cargo desses usuários antes de excluir.`
+            : `O perfil "${deleting?.name ?? ""}" será excluído.`
+        }
         confirmDisabled={deletingUsers > 0}
         loading={removeRole.isPending}
         onConfirm={() => void confirmDelete()}
@@ -234,7 +343,15 @@ export function RolesPage() {
   );
 }
 
-function RoleModal({ role, onClose, onSaved }: { role?: RoleWithPermissions | undefined; onClose: () => void; onSaved: (id: number) => void }) {
+function RoleModal({
+  role,
+  onClose,
+  onSaved,
+}: {
+  role?: RoleWithPermissions | undefined;
+  onClose: () => void;
+  onSaved: (id: number) => void;
+}) {
   const save = useSaveRole();
   const toast = useToast();
   const [name, setName] = useState(role?.name ?? "");
@@ -248,12 +365,23 @@ function RoleModal({ role, onClose, onSaved }: { role?: RoleWithPermissions | un
       return;
     }
     try {
-      const result = await save.mutateAsync({ id: role?.id, input: { name: name.trim(), description: description.trim() || null } });
-      toast.success(role ? "Perfil atualizado." : "Perfil criado. Agora marque as permissões.");
+      const result = await save.mutateAsync({
+        id: role?.id,
+        input: { name: name.trim(), description: description.trim() || null },
+      });
+      toast.success(
+        role
+          ? "Perfil atualizado."
+          : "Perfil criado. Agora marque as permissões.",
+      );
       onSaved(result.id);
       onClose();
     } catch (err) {
-      toast.error(err instanceof ApiError && err.status === 409 ? "Já existe um perfil com esse nome." : (err as Error).message);
+      toast.error(
+        err instanceof ApiError && err.status === 409
+          ? "Já existe um perfil com esse nome."
+          : (err as Error).message,
+      );
     }
   }
 
@@ -264,17 +392,41 @@ function RoleModal({ role, onClose, onSaved }: { role?: RoleWithPermissions | un
       title={role ? "Editar perfil" : "Novo perfil"}
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" form="role-form" loading={save.isPending}>{role ? "Salvar" : "Criar perfil"}</Button>
+          <Button variant="secondary" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" form="role-form" loading={save.isPending}>
+            {role ? "Salvar" : "Criar perfil"}
+          </Button>
         </>
       }
     >
-      <form id="role-form" onSubmit={(e) => void submit(e)} noValidate className="space-y-4">
+      <form
+        id="role-form"
+        onSubmit={(e) => void submit(e)}
+        noValidate
+        className="space-y-4"
+      >
         <Field label="Nome" error={error}>
-          {(p) => <Input {...p} value={name} maxLength={50} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Técnico de campo" />}
+          {(p) => (
+            <Input
+              {...p}
+              value={name}
+              maxLength={50}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex.: Técnico de campo"
+            />
+          )}
         </Field>
         <Field label="Descrição" hint="Opcional">
-          {(p) => <Input {...p} value={description} maxLength={255} onChange={(e) => setDescription(e.target.value)} />}
+          {(p) => (
+            <Input
+              {...p}
+              value={description}
+              maxLength={255}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          )}
         </Field>
       </form>
     </Modal>

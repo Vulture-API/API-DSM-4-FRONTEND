@@ -52,7 +52,9 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     expect(within(table).getByText("ID #002")).toBeInTheDocument();
 
     // Localizações na tabela
-    expect(within(table).getByText("São José dos Campos - SP")).toBeInTheDocument();
+    expect(
+      within(table).getByText("São José dos Campos - SP"),
+    ).toBeInTheDocument();
     expect(within(table).getByText("Pindamonhangaba - SP")).toBeInTheDocument();
 
     // Responsáveis resolvidos dinamicamente de usersMap (User 1: Mariana Albuquerque, User 2: Carlos Mendes)
@@ -75,7 +77,9 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
       await screen.findByText("Nenhuma propriedade encontrada"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Não há propriedades agrícolas correspondentes aos filtros selecionados/),
+      screen.getByText(
+        /Não há propriedades agrícolas correspondentes aos filtros selecionados/,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -94,7 +98,9 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     const searchInput = screen.getByLabelText("Propriedade (Identificação)");
     await user.type(searchInput, "Água Limpa");
     expect(within(table).getByText("Sítio Água Limpa")).toBeInTheDocument();
-    expect(within(table).queryByText("Fazenda Santa Rita")).not.toBeInTheDocument();
+    expect(
+      within(table).queryByText("Fazenda Santa Rita"),
+    ).not.toBeInTheDocument();
 
     // 2. Limpar filtros
     await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
@@ -103,23 +109,31 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     });
 
     // 3. Filtro por localização
-    const locationSelect = screen.getByLabelText("Localização (Município - UF)");
+    const locationSelect = screen.getByLabelText(
+      "Localização (Município - UF)",
+    );
     await user.selectOptions(locationSelect, "Jacareí - SP");
     expect(within(table).getByText("Fazenda Esperança")).toBeInTheDocument();
-    expect(within(table).queryByText("Fazenda Santa Rita")).not.toBeInTheDocument();
+    expect(
+      within(table).queryByText("Fazenda Santa Rita"),
+    ).not.toBeInTheDocument();
 
     // 4. Filtro por responsável
     await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
     const ownerSelect = screen.getByLabelText("Responsável");
     await user.selectOptions(ownerSelect, "Carlos Mendes");
     expect(within(table).getByText("Sítio Água Limpa")).toBeInTheDocument();
-    expect(within(table).queryByText("Fazenda Santa Rita")).not.toBeInTheDocument();
+    expect(
+      within(table).queryByText("Fazenda Santa Rita"),
+    ).not.toBeInTheDocument();
 
     // 5. Filtro por cobertura de estações
     await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
     await user.click(screen.getByRole("radio", { name: /Sem estações/ }));
     expect(within(table).getByText("Fazenda Esperança")).toBeInTheDocument();
-    expect(within(table).queryByText("Fazenda Santa Rita")).not.toBeInTheDocument();
+    expect(
+      within(table).queryByText("Fazenda Santa Rita"),
+    ).not.toBeInTheDocument();
   });
 
   it("Cenário 4: seleciona uma propriedade para visualizar painel de detalhamento", async () => {
@@ -135,9 +149,13 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     await user.click(row);
 
     // Painel de detalhamento exibido abaixo
-    expect(screen.getByRole("heading", { level: 3, name: "Fazenda Santa Rita" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Fazenda Santa Rita" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("2 estações associadas")).toBeInTheDocument();
-    expect(screen.getByText("Localização territorial · São José dos Campos - SP")).toBeInTheDocument();
+    expect(
+      screen.getByText("Localização territorial · São José dos Campos - SP"),
+    ).toBeInTheDocument();
 
     const tables = await screen.findAllByRole("table");
     expect(tables.length).toBeGreaterThanOrEqual(2);
@@ -165,21 +183,39 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     const dialog = screen.getByRole("dialog", { name: "Nova propriedade" });
 
     // Tenta cadastrar sem nome (validação)
-    await user.click(within(dialog).getByRole("button", { name: "Cadastrar propriedade" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cadastrar propriedade" }),
+    );
     expect(
-      within(dialog).getByText("Informe o nome da propriedade com pelo menos 3 caracteres."),
+      within(dialog).getByText(
+        "Informe o nome da propriedade com pelo menos 3 caracteres.",
+      ),
     ).toBeInTheDocument();
 
     // Preenche formulário
-    await user.type(within(dialog).getByLabelText(/Nome da propriedade/), "Fazenda Nova Aurora");
-    await user.type(within(dialog).getByLabelText(/Localização/), "Taubaté - SP");
+    await user.type(
+      within(dialog).getByLabelText(/Nome da propriedade/),
+      "Fazenda Nova Aurora",
+    );
+    await user.type(
+      within(dialog).getByLabelText(/Localização/),
+      "Taubaté - SP",
+    );
     await user.selectOptions(within(dialog).getByLabelText(/Responsável/), "1");
 
-    await user.click(within(dialog).getByRole("button", { name: "Cadastrar propriedade" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cadastrar propriedade" }),
+    );
 
     // Valida mensagem de sucesso e payload enviado
-    expect(await screen.findByText('Propriedade "Fazenda Nova Aurora" cadastrada com sucesso.')).toBeInTheDocument();
-    const postCall = calls.find((c) => c.method === "POST" && c.path === "/api/properties");
+    expect(
+      await screen.findByText(
+        'Propriedade "Fazenda Nova Aurora" cadastrada com sucesso.',
+      ),
+    ).toBeInTheDocument();
+    const postCall = calls.find(
+      (c) => c.method === "POST" && c.path === "/api/properties",
+    );
     expect(postCall?.body).toEqual({
       name: "Fazenda Nova Aurora",
       location: "Taubaté - SP",
@@ -192,22 +228,42 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     const { calls } = mockApi({
       ...defaultRoutes(),
       "/api/properties": testProperties,
-      "POST /api/properties": { id: 5, name: "Fazenda Padrão", location: null, owner_user_id: 1 },
+      "POST /api/properties": {
+        id: 5,
+        name: "Fazenda Padrão",
+        location: null,
+        owner_user_id: 1,
+      },
     });
 
     renderWithProviders(<PropertiesPage />);
     await getPropertiesTable();
     await user.click(screen.getByRole("button", { name: "Nova propriedade" }));
     const dialog = screen.getByRole("dialog", { name: "Nova propriedade" });
-    await user.type(within(dialog).getByLabelText(/Nome da propriedade/), "Fazenda Padrão");
-    const owner = within(dialog).getByLabelText(/Responsável/) as HTMLSelectElement;
+    await user.type(
+      within(dialog).getByLabelText(/Nome da propriedade/),
+      "Fazenda Padrão",
+    );
+    const owner = within(dialog).getByLabelText(
+      /Responsável/,
+    ) as HTMLSelectElement;
     await waitFor(() => expect(owner.options.length).toBeGreaterThan(1));
 
-    await user.click(within(dialog).getByRole("button", { name: "Cadastrar propriedade" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Cadastrar propriedade" }),
+    );
 
-    expect(await screen.findByText('Propriedade "Fazenda Padrão" cadastrada com sucesso.')).toBeInTheDocument();
-    const postCall = calls.find((c) => c.method === "POST" && c.path === "/api/properties");
-    expect((postCall?.body as { owner_user_id: number }).owner_user_id).toBe(Number(owner.value));
+    expect(
+      await screen.findByText(
+        'Propriedade "Fazenda Padrão" cadastrada com sucesso.',
+      ),
+    ).toBeInTheDocument();
+    const postCall = calls.find(
+      (c) => c.method === "POST" && c.path === "/api/properties",
+    );
+    expect((postCall?.body as { owner_user_id: number }).owner_user_id).toBe(
+      Number(owner.value),
+    );
   });
 
   it("Cenário 6: abre modal de edição e atualiza propriedade via PUT", async () => {
@@ -225,10 +281,14 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
 
     renderWithProviders(<PropertiesPage />);
     const table = await getPropertiesTable();
-    const santaRitaRow = within(table).getByText("Fazenda Santa Rita").closest("tr")!;
+    const santaRitaRow = within(table)
+      .getByText("Fazenda Santa Rita")
+      .closest("tr")!;
 
     // Clica no botão editar da linha
-    await user.click(within(santaRitaRow).getByRole("button", { name: "Editar" }));
+    await user.click(
+      within(santaRitaRow).getByRole("button", { name: "Editar" }),
+    );
     const dialog = screen.getByRole("dialog", { name: "Editar propriedade" });
 
     // Altera valores
@@ -237,10 +297,18 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
     await user.type(nameInput, "Fazenda Santa Rita Atualizada");
     await user.selectOptions(within(dialog).getByLabelText(/Responsável/), "2");
 
-    await user.click(within(dialog).getByRole("button", { name: "Salvar alterações" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Salvar alterações" }),
+    );
 
-    expect(await screen.findByText('Propriedade "Fazenda Santa Rita Atualizada" atualizada com sucesso.')).toBeInTheDocument();
-    const putCall = calls.find((c) => c.method === "PUT" && c.path === "/api/properties/1");
+    expect(
+      await screen.findByText(
+        'Propriedade "Fazenda Santa Rita Atualizada" atualizada com sucesso.',
+      ),
+    ).toBeInTheDocument();
+    const putCall = calls.find(
+      (c) => c.method === "PUT" && c.path === "/api/properties/1",
+    );
     expect(putCall?.body).toEqual({
       name: "Fazenda Santa Rita Atualizada",
       location: "São José dos Campos - SP",
@@ -258,19 +326,35 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
 
     renderWithProviders(<PropertiesPage />);
     const table = await getPropertiesTable();
-    const esperancaRow = within(table).getByText("Fazenda Esperança").closest("tr")!;
+    const esperancaRow = within(table)
+      .getByText("Fazenda Esperança")
+      .closest("tr")!;
 
     // Clica no botão de excluir (IconButton com aria-label)
-    await user.click(within(esperancaRow).getByRole("button", { name: "Excluir Fazenda Esperança" }));
-    const dialog = screen.getByRole("dialog", { name: "Excluir propriedade agrícola" });
+    await user.click(
+      within(esperancaRow).getByRole("button", {
+        name: "Excluir Fazenda Esperança",
+      }),
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "Excluir propriedade agrícola",
+    });
     expect(
-      within(dialog).getByText(/Deseja realmente excluir a propriedade "Fazenda Esperança"?/),
+      within(dialog).getByText(
+        /Deseja realmente excluir a propriedade "Fazenda Esperança"?/,
+      ),
     ).toBeInTheDocument();
 
     // Confirma exclusão
     await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
-    expect(await screen.findByText('Propriedade "Fazenda Esperança" excluída.')).toBeInTheDocument();
-    expect(calls.some((c) => c.method === "DELETE" && c.path === "/api/properties/3")).toBe(true);
+    expect(
+      await screen.findByText('Propriedade "Fazenda Esperança" excluída.'),
+    ).toBeInTheDocument();
+    expect(
+      calls.some(
+        (c) => c.method === "DELETE" && c.path === "/api/properties/3",
+      ),
+    ).toBe(true);
   });
 
   it("Cenário 8: não oferece excluir propriedade com estações associadas", async () => {
@@ -282,12 +366,24 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
 
     renderWithProviders(<PropertiesPage />);
     const table = await getPropertiesTable();
-    const santaRitaRow = within(table).getByText("Fazenda Santa Rita").closest("tr")!;
+    const santaRitaRow = within(table)
+      .getByText("Fazenda Santa Rita")
+      .closest("tr")!;
 
-    await user.click(within(santaRitaRow).getByRole("button", { name: "Excluir Fazenda Santa Rita" }));
-    const dialog = screen.getByRole("dialog", { name: "Excluir propriedade agrícola" });
-    expect(within(dialog).getByText(/Desassocie as estações antes de excluir/)).toBeInTheDocument();
-    expect(within(dialog).queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
+    await user.click(
+      within(santaRitaRow).getByRole("button", {
+        name: "Excluir Fazenda Santa Rita",
+      }),
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "Excluir propriedade agrícola",
+    });
+    expect(
+      within(dialog).getByText(/Desassocie as estações antes de excluir/),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Excluir" }),
+    ).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Entendi" }));
     expect(calls.some((c) => c.method === "DELETE")).toBe(false);
   });
@@ -299,19 +395,31 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
       "/api/properties": testProperties,
       "DELETE /api/properties/3": {
         status: 409,
-        body: { message: "Cannot delete property because it has associated stations." },
+        body: {
+          message: "Cannot delete property because it has associated stations.",
+        },
       },
     });
 
     renderWithProviders(<PropertiesPage />);
     const table = await getPropertiesTable();
-    const esperancaRow = within(table).getByText("Fazenda Esperança").closest("tr")!;
-    await user.click(within(esperancaRow).getByRole("button", { name: "Excluir Fazenda Esperança" }));
-    const dialog = screen.getByRole("dialog", { name: "Excluir propriedade agrícola" });
+    const esperancaRow = within(table)
+      .getByText("Fazenda Esperança")
+      .closest("tr")!;
+    await user.click(
+      within(esperancaRow).getByRole("button", {
+        name: "Excluir Fazenda Esperança",
+      }),
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "Excluir propriedade agrícola",
+    });
     await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
 
     expect(
-      await screen.findByText("A propriedade possui estações associadas. Desassocie as estações antes de excluir."),
+      await screen.findByText(
+        "A propriedade possui estações associadas. Desassocie as estações antes de excluir.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -325,34 +433,48 @@ describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
 
     renderWithProviders(<PropertiesPage />);
     const table = await getPropertiesTable();
-    const santaRitaRow = within(table).getByText("Fazenda Santa Rita").closest("tr")!;
+    const santaRitaRow = within(table)
+      .getByText("Fazenda Santa Rita")
+      .closest("tr")!;
 
     // Clica no botão Estações
-    await user.click(within(santaRitaRow).getByRole("button", { name: "Estações" }));
+    await user.click(
+      within(santaRitaRow).getByRole("button", { name: "Estações" }),
+    );
     const modal = screen.getByRole("dialog", { name: /Associar estações/ });
     expect(modal).toBeInTheDocument();
 
     // Estação disponível para associação (Estação Brejo, que pertence à propriedade 2)
-    const availableSection = within(modal).getByText(/Estações disponíveis na rede/);
+    const availableSection = within(modal).getByText(
+      /Estações disponíveis na rede/,
+    );
     expect(availableSection).toBeInTheDocument();
     expect(within(modal).getByText("Estação Brejo")).toBeInTheDocument();
 
     // Clica em Associar
-    const associateButton = within(modal).getByRole("button", { name: "Associar" });
+    const associateButton = within(modal).getByRole("button", {
+      name: "Associar",
+    });
     await user.click(associateButton);
 
     expect(
-      await screen.findByText('Estação "Estação Brejo" vinculada a "Fazenda Santa Rita".'),
+      await screen.findByText(
+        'Estação "Estação Brejo" vinculada a "Fazenda Santa Rita".',
+      ),
     ).toBeInTheDocument();
 
     expect(
-      calls.some((c) => c.method === "PUT" && c.path === "/api/properties/1/stations/3"),
+      calls.some(
+        (c) => c.method === "PUT" && c.path === "/api/properties/1/stations/3",
+      ),
     ).toBe(true);
 
     // Fecha o modal
     await user.click(within(modal).getByRole("button", { name: "Concluir" }));
     await waitFor(() => {
-      expect(screen.queryByRole("dialog", { name: /Associar estações/ })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("dialog", { name: /Associar estações/ }),
+      ).not.toBeInTheDocument();
     });
   });
 });

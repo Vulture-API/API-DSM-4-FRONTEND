@@ -55,9 +55,12 @@
   --color-dot-danger: #d8452f;
 
   --radius-card: 16px;
-  --shadow-card: 0 1px 2px rgb(24 32 26 / 0.05), 0 2px 8px -2px rgb(24 32 26 / 0.06);
-  --shadow-lift: 0 18px 40px -20px rgb(15 42 29 / 0.45), 0 2px 6px rgb(15 42 29 / 0.08);
-  --shadow-pop: 0 16px 40px -12px rgb(24 32 26 / 0.28), 0 2px 6px rgb(24 32 26 / 0.08);
+  --shadow-card:
+    0 1px 2px rgb(24 32 26 / 0.05), 0 2px 8px -2px rgb(24 32 26 / 0.06);
+  --shadow-lift:
+    0 18px 40px -20px rgb(15 42 29 / 0.45), 0 2px 6px rgb(15 42 29 / 0.08);
+  --shadow-pop:
+    0 16px 40px -12px rgb(24 32 26 / 0.28), 0 2px 6px rgb(24 32 26 / 0.08);
 
   --animate-fade-in: fade-in 140ms ease-out;
   --animate-pop-in: pop-in 160ms cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -110,11 +113,21 @@
   .hero-band {
     background-color: var(--color-forest);
     background-image:
-      radial-gradient(110% 90% at 88% -20%, rgb(147 211 166 / 0.18), transparent 55%),
+      radial-gradient(
+        110% 90% at 88% -20%,
+        rgb(147 211 166 / 0.18),
+        transparent 55%
+      ),
       radial-gradient(70% 80% at 0% 0%, rgb(34 99 57 / 0.6), transparent 60%),
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='340' fill='none' stroke='%2393d3a6' stroke-opacity='.08' stroke-width='1.2'%3E%3Cpath d='M-20 250c90-40 150-10 230-50s120-120 230-110 170 70 300 40'/%3E%3Cpath d='M-20 280c100-40 160-5 250-50s130-120 240-100 150 60 270 40'/%3E%3Cpath d='M-20 220c80-40 140-15 210-55s110-120 220-120 190 80 330 45'/%3E%3Cpath d='M-20 190c70-40 130-20 190-60s100-110 200-125 210 85 370 50'/%3E%3Cpath d='M-20 310c110-35 180 0 270-40s140-110 250-90 130 50 240 35'/%3E%3Cpath d='M-20 160c60-40 120-25 170-65s90-100 190-130 230 90 400 55'/%3E%3C/svg%3E");
-    background-size: auto, auto, 720px 340px;
-    background-position: 0 0, 0 0, right -60px bottom -30px;
+    background-size:
+      auto,
+      auto,
+      720px 340px;
+    background-position:
+      0 0,
+      0 0,
+      right -60px bottom -30px;
     background-repeat: no-repeat;
   }
 }

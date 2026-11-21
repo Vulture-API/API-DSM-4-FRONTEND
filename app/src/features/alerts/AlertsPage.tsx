@@ -34,9 +34,15 @@ export function AlertsPage() {
   // aba usa uma consulta leve (limit=1) sem polling, atualizada ao reconhecer.
   const pendingCount = useTriggeredAlerts(false, 1, 1, { poll: false });
   const doneCount = useTriggeredAlerts(true, 1, 1, { poll: false });
-  const tableTotal = triggered.isPlaceholderData ? undefined : triggered.data?.meta.total_records;
-  const pendingTotal = (!acknowledged ? tableTotal : undefined) ?? pendingCount.data?.meta.total_records;
-  const doneTotal = (acknowledged ? tableTotal : undefined) ?? doneCount.data?.meta.total_records;
+  const tableTotal = triggered.isPlaceholderData
+    ? undefined
+    : triggered.data?.meta.total_records;
+  const pendingTotal =
+    (!acknowledged ? tableTotal : undefined) ??
+    pendingCount.data?.meta.total_records;
+  const doneTotal =
+    (acknowledged ? tableTotal : undefined) ??
+    doneCount.data?.meta.total_records;
   const rules = useAlertRules();
   const catalog = useSensorCatalog();
   const users = useUsers();
@@ -69,9 +75,11 @@ export function AlertsPage() {
         title="Alertas disparados"
         description="Ocorrências geradas pelo motor de regras a partir das leituras das estações."
         actions={
-          <Can permission="alert-configs.read"><Link href="/alertas/regras" className={buttonClasses("glass")}>
-            Gerenciar regras
-          </Link></Can>
+          <Can permission="alert-configs.read">
+            <Link href="/alertas/regras" className={buttonClasses("glass")}>
+              Gerenciar regras
+            </Link>
+          </Can>
         }
       />
 
@@ -85,15 +93,24 @@ export function AlertsPage() {
               setPage(1);
             }}
             options={[
-              { value: "pending", label: "Pendentes", ...(pendingTotal !== undefined ? { count: pendingTotal } : {}) },
-              { value: "done", label: "Reconhecidos", ...(doneTotal !== undefined ? { count: doneTotal } : {}) },
+              {
+                value: "pending",
+                label: "Pendentes",
+                ...(pendingTotal !== undefined ? { count: pendingTotal } : {}),
+              },
+              {
+                value: "done",
+                label: "Reconhecidos",
+                ...(doneTotal !== undefined ? { count: doneTotal } : {}),
+              },
             ]}
           />
           {me && (
             <Can permission="triggered-alerts.acknowledge">
               <p className="hidden items-center gap-2 text-xs text-muted sm:flex">
                 <Avatar name={me.name} size="sm" />
-                Reconhecendo como <span className="font-medium text-ink">{me.name}</span>
+                Reconhecendo como{" "}
+                <span className="font-medium text-ink">{me.name}</span>
               </p>
             </Can>
           )}
@@ -106,12 +123,21 @@ export function AlertsPage() {
             ))}
           </div>
         ) : triggered.error ? (
-          <ErrorState message={triggered.error.message} onRetry={() => void triggered.refetch()} />
+          <ErrorState
+            message={triggered.error.message}
+            onRetry={() => void triggered.refetch()}
+          />
         ) : !triggered.data?.data.length ? (
           <EmptyState
             icon={<BellRing className="size-5" />}
-            title={acknowledged ? "Nenhum alerta reconhecido ainda" : "Nenhum alerta pendente"}
-            description={acknowledged ? undefined : "Tudo dentro dos limites configurados."}
+            title={
+              acknowledged
+                ? "Nenhum alerta reconhecido ainda"
+                : "Nenhum alerta pendente"
+            }
+            description={
+              acknowledged ? undefined : "Tudo dentro dos limites configurados."
+            }
           />
         ) : (
           <Table>
@@ -121,46 +147,70 @@ export function AlertsPage() {
                 <Th className="hidden md:table-cell">Estação</Th>
                 <Th className="text-right">Leitura</Th>
                 <Th className="hidden sm:table-cell">Disparado</Th>
-                <Th className="text-right">{acknowledged ? "Reconhecido" : <span className="sr-only">Ação</span>}</Th>
+                <Th className="text-right">
+                  {acknowledged ? (
+                    "Reconhecido"
+                  ) : (
+                    <span className="sr-only">Ação</span>
+                  )}
+                </Th>
               </tr>
             </thead>
             <tbody>
               {triggered.data.data.map((alert) => {
                 const rule = ruleById.get(alert.alert_config_id);
-                const entry = rule ? catalog.bySensorId.get(rule.sensor_id) : undefined;
+                const entry = rule
+                  ? catalog.bySensorId.get(rule.sensor_id)
+                  : undefined;
                 const visual = sensorVisual(entry?.type?.name ?? "");
                 const unit = entry?.type?.unit_of_measure ?? "";
                 const excess =
-                  rule && alert.reading_value !== null ? exceedance(alert.reading_value, rule.reference_value) : undefined;
+                  rule && alert.reading_value !== null
+                    ? exceedance(alert.reading_value, rule.reference_value)
+                    : undefined;
                 return (
                   <Tr key={alert.id}>
                     <Td>
                       <div className="flex items-start gap-3">
                         <span
                           className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg"
-                          style={{ background: visual.soft, color: visual.color }}
+                          style={{
+                            background: visual.soft,
+                            color: visual.color,
+                          }}
                         >
                           <visual.icon className="size-4" />
                         </span>
                         <div className="min-w-0">
-                          <p className="font-medium text-ink">{rule?.message ?? `Regra #${alert.alert_config_id}`}</p>
+                          <p className="font-medium text-ink">
+                            {rule?.message ?? `Regra #${alert.alert_config_id}`}
+                          </p>
                           {rule && (
                             <p className="text-xs text-muted">
-                              {entry?.type?.name ?? "Sensor"} {OPERATOR_PHRASES[rule.comparison_operator]}{" "}
+                              {entry?.type?.name ?? "Sensor"}{" "}
+                              {OPERATOR_PHRASES[rule.comparison_operator]}{" "}
                               {formatNumber(rule.reference_value)} {unit}
                             </p>
                           )}
                           <p className="text-xs text-muted md:hidden">
-                            {entry?.station?.name ?? "Estação"} · {formatRelative(alert.triggered_at)}
+                            {entry?.station?.name ?? "Estação"} ·{" "}
+                            {formatRelative(alert.triggered_at)}
                           </p>
                         </div>
                       </div>
                     </Td>
                     <Td className="hidden md:table-cell">
                       {entry?.station ? (
-                        <Link href={`/estacoes/${entry.station.id}`} className="hover:text-brand-700">
-                          <span className="block text-ink">{entry.station.name}</span>
-                          <span className="block text-xs text-muted">{entry.property?.name}</span>
+                        <Link
+                          href={`/estacoes/${entry.station.id}`}
+                          className="hover:text-brand-700"
+                        >
+                          <span className="block text-ink">
+                            {entry.station.name}
+                          </span>
+                          <span className="block text-xs text-muted">
+                            {entry.property?.name}
+                          </span>
                         </Link>
                       ) : (
                         <span className="text-faint">—</span>
@@ -169,7 +219,10 @@ export function AlertsPage() {
                     <Td className="text-right tabular-nums">
                       {alert.reading_value !== null ? (
                         <>
-                          <SeverityValue severity={excess?.severity} muted={acknowledged}>
+                          <SeverityValue
+                            severity={excess?.severity}
+                            muted={acknowledged}
+                          >
                             {formatNumber(alert.reading_value)} {unit}
                           </SeverityValue>
                           {excess && (
@@ -184,7 +237,10 @@ export function AlertsPage() {
                       )}
                     </Td>
                     <Td className="hidden sm:table-cell">
-                      <span className="text-muted" title={formatDateTime(alert.triggered_at)}>
+                      <span
+                        className="text-muted"
+                        title={formatDateTime(alert.triggered_at)}
+                      >
                         {formatRelative(alert.triggered_at)}
                       </span>
                     </Td>
@@ -192,22 +248,29 @@ export function AlertsPage() {
                       {acknowledged ? (
                         <span className="text-xs text-muted">
                           <span className="block font-medium text-ink">
-                            {userById.get(alert.acknowledged_by ?? -1)?.name ?? "—"}
+                            {userById.get(alert.acknowledged_by ?? -1)?.name ??
+                              "—"}
                           </span>
-                          {alert.acknowledged_at && formatDateTime(alert.acknowledged_at)}
+                          {alert.acknowledged_at &&
+                            formatDateTime(alert.acknowledged_at)}
                         </span>
                       ) : (
-                        <Can permission="triggered-alerts.acknowledge"><Button
-                          size="sm"
-                          variant="secondary"
-                          icon={<Check className="size-3.5" />}
-                          loading={acknowledge.isPending && acknowledge.variables?.id === alert.id}
-                          onClick={() => void ack(alert.id)}
-                          aria-label="Reconhecer"
-                          className="max-sm:size-8 max-sm:px-0"
-                        >
-                          <span className="hidden sm:inline">Reconhecer</span>
-                        </Button></Can>
+                        <Can permission="triggered-alerts.acknowledge">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            icon={<Check className="size-3.5" />}
+                            loading={
+                              acknowledge.isPending &&
+                              acknowledge.variables?.id === alert.id
+                            }
+                            onClick={() => void ack(alert.id)}
+                            aria-label="Reconhecer"
+                            className="max-sm:size-8 max-sm:px-0"
+                          >
+                            <span className="hidden sm:inline">Reconhecer</span>
+                          </Button>
+                        </Can>
                       )}
                     </Td>
                   </Tr>
@@ -223,10 +286,18 @@ export function AlertsPage() {
               Página {page} de {totalPages}
             </span>
             <div className="flex gap-1">
-              <IconButton label="Página anterior" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+              <IconButton
+                label="Página anterior"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
                 <ChevronLeft className="size-4" />
               </IconButton>
-              <IconButton label="Próxima página" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              <IconButton
+                label="Próxima página"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
                 <ChevronRight className="size-4" />
               </IconButton>
             </div>
@@ -236,7 +307,8 @@ export function AlertsPage() {
       {!acknowledged && (pendingTotal ?? 0) > 0 && (
         <p className="mt-4 flex items-center gap-2 text-xs text-muted">
           <Info className="size-4 text-info" aria-hidden />
-          Reconhecer um alerta tira a estação do status &quot;Com alerta&quot;. A regra só dispara de novo depois disso.
+          Reconhecer um alerta tira a estação do status &quot;Com alerta&quot;.
+          A regra só dispara de novo depois disso.
         </p>
       )}
     </>

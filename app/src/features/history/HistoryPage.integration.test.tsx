@@ -18,24 +18,34 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
 
     // Valida título da página e seção de filtros
     expect(
-      await screen.findByRole("heading", { name: "Histórico de dados meteorológicos" }),
+      await screen.findByRole("heading", {
+        name: "Histórico de dados meteorológicos",
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("Filtros de consulta")).toBeInTheDocument();
 
     // Valida presença do calendário de previsão meteorológica
-    expect(await screen.findByText(/Evolução da medição no período/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Evolução da medição no período/),
+    ).toBeInTheDocument();
 
     // Valida cabeçalho e dados da tabela de telemetria consolidada
-    expect(await screen.findByText("DATA / HORA (REGISTRO)")).toBeInTheDocument();
+    expect(
+      await screen.findByText("DATA / HORA (REGISTRO)"),
+    ).toBeInTheDocument();
     expect(screen.getByText("TEMPERATURA")).toBeInTheDocument();
     expect(screen.getByText("UMIDADE DO AR")).toBeInTheDocument();
     expect(screen.getByText("VENTO (DIR)")).toBeInTheDocument();
     expect(screen.getByText("PLUVIOMETRIA")).toBeInTheDocument();
-    expect(screen.getByText("LEITURAS DE SOLO (TEMP / UMID)")).toBeInTheDocument();
+    expect(
+      screen.getByText("LEITURAS DE SOLO (TEMP / UMID)"),
+    ).toBeInTheDocument();
     expect(screen.getByText("STATUS PREVISTO / ALERTA")).toBeInTheDocument();
 
     // Valida contador de leituras obtidas
-    expect(await screen.findByText(/leituras obtidas no período selecionado/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/leituras obtidas no período selecionado/),
+    ).toBeInTheDocument();
   });
 
   it("Cenário 2: consulta sem registros disponíveis", async () => {
@@ -52,7 +62,9 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     renderWithProviders(<HistoryPage />);
 
     // Valida empty state
-    expect(await screen.findByText("Nenhum registro encontrado no período")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nenhum registro encontrado no período"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         "Não há leituras meteorológicas para os filtros informados. Tente alterar o período ou limpar os filtros de busca.",
@@ -60,14 +72,20 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     ).toBeInTheDocument();
 
     // Valida que exportar CSV sem registros acusa aviso
-    const exportBtn = screen.getAllByRole("button", { name: "Exportar CSV" })[0]!;
+    const exportBtn = screen.getAllByRole("button", {
+      name: "Exportar CSV",
+    })[0]!;
     await user.click(exportBtn);
-    expect(await screen.findByText("Nenhum dado disponível para exportar.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nenhum dado disponível para exportar."),
+    ).toBeInTheDocument();
 
     // Valida ação de redefinir filtros
     const resetBtn = screen.getByRole("button", { name: "Ver últimos 7 dias" });
     await user.click(resetBtn);
-    expect(await screen.findByText("Filtros redefinidos para os últimos 7 dias.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Filtros redefinidos para os últimos 7 dias."),
+    ).toBeInTheDocument();
   });
 
   it("Cenário 3: filtro por período (rápido e personalizado)", async () => {
@@ -94,7 +112,9 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     await user.type(endDateInput, "07/01/2026");
 
     await user.click(screen.getByRole("button", { name: "Filtrar leituras" }));
-    expect(await screen.findByText("Filtros aplicados ao histórico de telemetria.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Filtros aplicados ao histórico de telemetria."),
+    ).toBeInTheDocument();
   });
 
   it("Cenário 4: filtro por estação", async () => {
@@ -136,17 +156,28 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     const groupingSelect = screen.getByLabelText("Agrupamento temporal");
     await user.selectOptions(groupingSelect, "1h");
 
-    const aggregationSelect = screen.getByLabelText("Direcionamento de Leitura");
+    const aggregationSelect = screen.getByLabelText(
+      "Direcionamento de Leitura",
+    );
     await user.selectOptions(aggregationSelect, "avg");
 
     // Aplica os filtros combinados
     await user.click(screen.getByRole("button", { name: "Filtrar leituras" }));
-    expect(await screen.findByText("Filtros aplicados ao histórico de telemetria.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Filtros aplicados ao histórico de telemetria."),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Estação ativa:/)).toBeInTheDocument();
 
     // A tabela consulta a série agregada da estação, no período e intervalo escolhidos
-    const seriesCalls = calls.filter((c) => c.path.startsWith("/api/stations/1/readings/series"));
-    expect(seriesCalls.some((c) => c.path.includes("hours=24") && c.path.includes("bucket_minutes=60"))).toBe(true);
+    const seriesCalls = calls.filter((c) =>
+      c.path.startsWith("/api/stations/1/readings/series"),
+    );
+    expect(
+      seriesCalls.some(
+        (c) =>
+          c.path.includes("hours=24") && c.path.includes("bucket_minutes=60"),
+      ),
+    ).toBe(true);
     expect(calls.some((c) => c.path.startsWith("/api/readings"))).toBe(false);
   });
 
@@ -199,7 +230,9 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
     await user.click(screen.getByRole("button", { name: "Filtrar leituras" }));
 
     // Deve exibir estado vazio sem erros em tela
-    expect(await screen.findByText("Nenhum registro encontrado no período")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nenhum registro encontrado no período"),
+    ).toBeInTheDocument();
   });
 
   it("Cenário 8: falha de comunicação com a API", async () => {
@@ -230,16 +263,22 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
 
     await screen.findByText("DATA / HORA (REGISTRO)");
 
-    const alertsCheckbox = screen.getByLabelText(/Exibir apenas leituras com alerta/);
+    const alertsCheckbox = screen.getByLabelText(
+      /Exibir apenas leituras com alerta/,
+    );
     await user.click(alertsCheckbox);
     expect(alertsCheckbox).toBeChecked();
 
     await user.click(screen.getByRole("button", { name: "Filtrar leituras" }));
-    expect(await screen.findByText("Filtros aplicados ao histórico de telemetria.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Filtros aplicados ao histórico de telemetria."),
+    ).toBeInTheDocument();
 
     // Resetar filtros
     await user.click(screen.getByRole("button", { name: "Limpar filtros" }));
-    expect(await screen.findByText("Filtros redefinidos para os últimos 7 dias.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Filtros redefinidos para os últimos 7 dias."),
+    ).toBeInTheDocument();
     expect(alertsCheckbox).not.toBeChecked();
   });
 
@@ -266,10 +305,14 @@ describe("HistoryPage - [QA] Consulta e Filtros do Histórico", () => {
 
     await screen.findByText("DATA / HORA (REGISTRO)");
 
-    const exportButtons = screen.getAllByRole("button", { name: "Exportar CSV" });
+    const exportButtons = screen.getAllByRole("button", {
+      name: "Exportar CSV",
+    });
     await user.click(exportButtons[0]!);
 
     expect(window.URL.createObjectURL).toHaveBeenCalled();
-    expect(await screen.findByText(/Exportação CSV concluída/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Exportação CSV concluída/),
+    ).toBeInTheDocument();
   });
 });

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDate, formatDateTime, formatHour, formatNumber, formatRelative, initials } from "./format";
+import {
+  formatDate,
+  formatDateTime,
+  formatHour,
+  formatNumber,
+  formatRelative,
+  initials,
+} from "./format";
 
 describe("format", () => {
   const now = new Date("2026-09-25T15:00:00Z");

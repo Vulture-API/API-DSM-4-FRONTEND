@@ -1,6 +1,12 @@
 "use client";
 
-import { Calendar, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "./Button";
 import { cn } from "@/lib/cn";
@@ -59,8 +65,16 @@ function isSameDay(d1: Date | null, d2: Date | null): boolean {
 function isBetween(d: Date, start: Date | null, end: Date | null): boolean {
   if (!start || !end) return false;
   const time = d.getTime();
-  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  const s = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate(),
+  ).getTime();
+  const e = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+  ).getTime();
   const [min, max] = s <= e ? [s, e] : [e, s];
   return time > min && time < max;
 }
@@ -91,14 +105,18 @@ export function DateRangePicker({
   // Fecha ao clicar fora do popover
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
         setPickingStart(null);
       }
     }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -238,7 +256,12 @@ export function DateRangePicker({
               {daysDiff} {daysDiff === 1 ? "dia" : "dias"}
             </span>
           )}
-          <ChevronDown className={cn("size-3.5 text-muted transition-transform", isOpen && "rotate-180")} />
+          <ChevronDown
+            className={cn(
+              "size-3.5 text-muted transition-transform",
+              isOpen && "rotate-180",
+            )}
+          />
         </div>
       </button>
 
@@ -342,9 +365,15 @@ export function DateRangePicker({
                   className={cn(
                     "flex h-8 w-full items-center justify-center rounded-lg text-xs font-mono transition-colors",
                     !isCurrentMonth && "text-faint/40",
-                    isCurrentMonth && !isStart && !isEnd && !inRange && "text-ink hover:bg-subtle",
-                    inRange && "bg-brand-50 text-brand-900 font-medium rounded-none first:rounded-l-lg last:rounded-r-lg",
-                    (isStart || isEnd) && "bg-brand-600 font-semibold text-white shadow-sm hover:bg-brand-700",
+                    isCurrentMonth &&
+                      !isStart &&
+                      !isEnd &&
+                      !inRange &&
+                      "text-ink hover:bg-subtle",
+                    inRange &&
+                      "bg-brand-50 text-brand-900 font-medium rounded-none first:rounded-l-lg last:rounded-r-lg",
+                    (isStart || isEnd) &&
+                      "bg-brand-600 font-semibold text-white shadow-sm hover:bg-brand-700",
                     isStart && inRange && "rounded-r-none",
                     isEnd && inRange && "rounded-l-none",
                   )}
@@ -358,7 +387,9 @@ export function DateRangePicker({
           {/* Rodapé com campos manuais e confirmação */}
           <div className="mt-3 flex items-center justify-between border-t border-line pt-3">
             <span className="text-[11px] text-muted">
-              {pickingStart ? "Selecione a data final" : `${startDate} — ${endDate}`}
+              {pickingStart
+                ? "Selecione a data final"
+                : `${startDate} — ${endDate}`}
             </span>
             <div className="flex items-center gap-1.5">
               <Button

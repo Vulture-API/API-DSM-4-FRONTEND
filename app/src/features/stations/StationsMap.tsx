@@ -19,7 +19,8 @@ import { STATUS_COLOR } from "./StationStatusBadge";
  * carregarem (sem internet), os pinos continuam sobre o fundo neutro.
  */
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+const ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 type Located = StationOverview & { latitude: number; longitude: number };
 
@@ -38,9 +39,13 @@ const iconCache = new Map<string, L.DivIcon>();
  * Desenho do ponto de cada status. Além da cor, muda a forma (WCAG 1.4.1):
  * Online = cheio com pulso, Com alerta = cheio com "!", Offline = anel vazado.
  */
-export function markerDot(status: StationOverview["status"], size: number): string {
+export function markerDot(
+  status: StationOverview["status"],
+  size: number,
+): string {
   const color = STATUS_COLOR[status];
-  const base = "position:absolute;inset:0;border-radius:9999px;box-shadow:0 2px 6px rgb(15 42 29 / .35);";
+  const base =
+    "position:absolute;inset:0;border-radius:9999px;box-shadow:0 2px 6px rgb(15 42 29 / .35);";
   if (status === "Offline") {
     return `<span style="${base}background:#fff;border:${Math.max(3, size / 4)}px solid ${color}"></span>`;
   }
@@ -74,12 +79,19 @@ function pin(status: StationOverview["status"], selected: boolean): L.DivIcon {
 }
 
 /** Enquadra todas as estações (ou centraliza a única). */
-function FitBounds({ points, zoom }: { points: [number, number][]; zoom: number }) {
+function FitBounds({
+  points,
+  zoom,
+}: {
+  points: [number, number][];
+  zoom: number;
+}) {
   const map = useMap();
   const key = points.map((p) => p.join(",")).join("|");
   useEffect(() => {
     if (points.length === 1) map.setView(points[0]!, zoom);
-    else if (points.length > 1) map.fitBounds(points, { padding: [36, 36], maxZoom: zoom });
+    else if (points.length > 1)
+      map.fitBounds(points, { padding: [36, 36], maxZoom: zoom });
     // key resume os pontos; evita reenquadrar a cada refetch com os mesmos dados
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, key, zoom]);
@@ -100,16 +112,39 @@ export function StationsMap({
   label?: string;
 }) {
   const located = useMemo(() => stations.filter(hasLocation), [stations]);
-  const points = useMemo(() => located.map((s) => [s.latitude, s.longitude] as [number, number]), [located]);
+  const points = useMemo(
+    () => located.map((s) => [s.latitude, s.longitude] as [number, number]),
+    [located],
+  );
   const center = points[0] ?? [-23.18, -45.88];
 
   return (
-    <div role="region" aria-label={label} style={{ height }} className="relative isolate z-0 overflow-hidden">
-      <MapContainer center={center} zoom={zoom} scrollWheelZoom={false} className="size-full" attributionControl>
-        <TileLayer url={TILES} attribution={ATTRIBUTION} maxZoom={19} referrerPolicy="strict-origin" />
+    <div
+      role="region"
+      aria-label={label}
+      style={{ height }}
+      className="relative isolate z-0 overflow-hidden"
+    >
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        scrollWheelZoom={false}
+        className="size-full"
+        attributionControl
+      >
+        <TileLayer
+          url={TILES}
+          attribution={ATTRIBUTION}
+          maxZoom={19}
+          referrerPolicy="strict-origin"
+        />
         <FitBounds points={points} zoom={zoom} />
         {located.map((station) => (
-          <StationMarker key={station.id} station={station} selected={station.id === selectedId} />
+          <StationMarker
+            key={station.id}
+            station={station}
+            selected={station.id === selectedId}
+          />
         ))}
       </MapContainer>
       <Legend />
@@ -117,7 +152,13 @@ export function StationsMap({
   );
 }
 
-function StationMarker({ station, selected }: { station: Located; selected: boolean }) {
+function StationMarker({
+  station,
+  selected,
+}: {
+  station: Located;
+  selected: boolean;
+}) {
   const marker = useRef<L.Marker>(null);
   const label = `${station.name}: ${station.status}`;
 
@@ -137,7 +178,12 @@ function StationMarker({ station, selected }: { station: Located; selected: bool
         // Ao abrir, o foco vai para o link do resumo; ao fechar, volta ao pino
         // (o popup fica em outro painel do DOM, longe do pino na ordem do Tab).
         popupopen: (event) => {
-          requestAnimationFrame(() => event.popup.getElement()?.querySelector<HTMLElement>("a[href^='/']")?.focus());
+          requestAnimationFrame(() =>
+            event.popup
+              .getElement()
+              ?.querySelector<HTMLElement>("a[href^='/']")
+              ?.focus(),
+          );
         },
         popupclose: (event) => {
           if (event.popup.getElement()?.contains(document.activeElement)) {
@@ -154,24 +200,36 @@ function StationMarker({ station, selected }: { station: Located; selected: bool
 }
 
 function StationPopup({ station }: { station: Located }) {
-  const temp = station.latest_readings.find((r) => r.sensor_type === "Temperatura");
-  const humidity = station.latest_readings.find((r) => r.sensor_type === "Umidade");
+  const temp = station.latest_readings.find(
+    (r) => r.sensor_type === "Temperatura",
+  );
+  const humidity = station.latest_readings.find(
+    (r) => r.sensor_type === "Umidade",
+  );
   return (
     <div className="min-w-44 text-ink">
       <p className="text-sm font-semibold">{station.name}</p>
       <p className="text-xs text-muted">{station.property_name}</p>
       <p className="mt-2 flex items-center gap-1.5 text-xs">
-        <span className="size-2 rounded-full" style={{ background: STATUS_COLOR[station.status] }} aria-hidden />
+        <span
+          className="size-2 rounded-full"
+          style={{ background: STATUS_COLOR[station.status] }}
+          aria-hidden
+        />
         {station.status} · {formatRelative(station.last_communication_at)}
       </p>
       {(temp || humidity) && (
         <p className="mt-1 text-xs text-muted tabular-nums">
           {temp && `${formatNumber(temp.value)} ${temp.unit_of_measure}`}
           {temp && humidity && " · "}
-          {humidity && `${formatNumber(humidity.value)} ${humidity.unit_of_measure}`}
+          {humidity &&
+            `${formatNumber(humidity.value)} ${humidity.unit_of_measure}`}
         </p>
       )}
-      <Link href={`/estacoes/${station.id}`} className="mt-2 inline-block text-xs font-medium !text-brand-700 hover:underline">
+      <Link
+        href={`/estacoes/${station.id}`}
+        className="mt-2 inline-block text-xs font-medium !text-brand-700 hover:underline"
+      >
         Abrir estação →
       </Link>
     </div>
@@ -184,13 +242,18 @@ function Legend() {
       aria-hidden
       className="pointer-events-none absolute bottom-3 left-3 z-[400] flex gap-3 rounded-lg bg-white/90 px-2.5 py-1.5 text-[11px] text-muted shadow-sm ring-1 ring-line backdrop-blur"
     >
-      {(Object.keys(STATUS_COLOR) as (keyof typeof STATUS_COLOR)[]).map((status) => (
-        <li key={status} className="flex items-center gap-1.5">
-          {/* markerDot só monta HTML a partir de constantes (cor e tamanho), nunca de dados. */}
-          <span className="relative inline-block size-3" dangerouslySetInnerHTML={{ __html: markerDot(status, 12) }} />
-          {status}
-        </li>
-      ))}
+      {(Object.keys(STATUS_COLOR) as (keyof typeof STATUS_COLOR)[]).map(
+        (status) => (
+          <li key={status} className="flex items-center gap-1.5">
+            {/* markerDot só monta HTML a partir de constantes (cor e tamanho), nunca de dados. */}
+            <span
+              className="relative inline-block size-3"
+              dangerouslySetInnerHTML={{ __html: markerDot(status, 12) }}
+            />
+            {status}
+          </li>
+        ),
+      )}
     </ul>
   );
 }

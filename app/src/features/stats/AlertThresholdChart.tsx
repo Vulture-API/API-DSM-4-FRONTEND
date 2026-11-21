@@ -31,7 +31,10 @@ export type AlertSeriesPoint = {
   max: number;
 };
 
-export function isThresholdViolated(value: number, rule?: ThresholdRule | null): boolean {
+export function isThresholdViolated(
+  value: number,
+  rule?: ThresholdRule | null,
+): boolean {
   if (!rule) return false;
   switch (rule.operator) {
     case ">":
@@ -84,14 +87,24 @@ export function AlertThresholdChart({
   const rawMin = allVals.length ? Math.min(...allVals) : 0;
   const rawMax = allVals.length ? Math.max(...allVals) : 100;
   const pad = Math.max(1, (rawMax - rawMin) * 0.18);
-  const yMin = rawMin >= 0 ? Math.max(0, Math.floor(rawMin - pad)) : Math.floor(rawMin - pad);
+  const yMin =
+    rawMin >= 0
+      ? Math.max(0, Math.floor(rawMin - pad))
+      : Math.floor(rawMin - pad);
   const yMax = Math.ceil(rawMax + pad);
 
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 14, right: 16, bottom: 4, left: -10 }}>
-          <CartesianGrid vertical={false} stroke="#e4e2d9" strokeDasharray="3 3" />
+        <LineChart
+          data={chartData}
+          margin={{ top: 14, right: 16, bottom: 4, left: -10 }}
+        >
+          <CartesianGrid
+            vertical={false}
+            stroke="#e4e2d9"
+            strokeDasharray="3 3"
+          />
 
           <XAxis
             dataKey="t"
@@ -128,7 +141,8 @@ export function AlertThresholdChart({
             labelFormatter={(value) => formatDateTime(Number(value))}
             formatter={(value, _name, item) => {
               const num = Number(value);
-              const payload = item?.payload as { violated?: boolean; min?: number; max?: number } | undefined;
+              const payload = item?.payload as
+                { violated?: boolean; min?: number; max?: number } | undefined;
               const status = payload?.violated ? " (Acima do limite)" : "";
               return [`${formatNumber(num)} ${unit}${status}`, "Leitura"];
             }}
@@ -156,7 +170,8 @@ export function AlertThresholdChart({
                       className="inline-block h-0.5 w-3.5"
                       style={{ backgroundColor: STAT_COLORS.max }}
                     />
-                    Limite ({rule.operator} {formatNumber(rule.referenceValue)} {unit})
+                    Limite ({rule.operator} {formatNumber(rule.referenceValue)}{" "}
+                    {unit})
                   </span>
                 )}
               </span>
@@ -171,9 +186,14 @@ export function AlertThresholdChart({
             strokeWidth={2.5}
             connectNulls
             isAnimationActive={false}
-            dot={(props: { cx?: number; cy?: number; payload?: { violated?: boolean; t?: number } }) => {
+            dot={(props: {
+              cx?: number;
+              cy?: number;
+              payload?: { violated?: boolean; t?: number };
+            }) => {
               const { cx, cy, payload } = props;
-              if (cx === undefined || cy === undefined) return <g key="empty" />;
+              if (cx === undefined || cy === undefined)
+                return <g key="empty" />;
               const violated = Boolean(payload?.violated);
               return (
                 <circle
@@ -187,7 +207,12 @@ export function AlertThresholdChart({
                 />
               );
             }}
-            activeDot={{ r: 5.5, fill: STAT_COLORS.min, stroke: "#ffffff", strokeWidth: 2 }}
+            activeDot={{
+              r: 5.5,
+              fill: STAT_COLORS.min,
+              stroke: "#ffffff",
+              strokeWidth: 2,
+            }}
           />
 
           {/* Linha Verde: Média do período */}
@@ -198,7 +223,11 @@ export function AlertThresholdChart({
               strokeDasharray="5 4"
               strokeWidth={2}
               ifOverflow="extendDomain"
-              label={({ viewBox }: { viewBox?: { x?: number; y?: number } }) => {
+              label={({
+                viewBox,
+              }: {
+                viewBox?: { x?: number; y?: number };
+              }) => {
                 const x = (viewBox?.x ?? 0) + 8;
                 const y = (viewBox?.y ?? 0) - 10;
                 const text = `Média: ${formatNumber(periodAvg)} ${unit}`;
@@ -237,7 +266,11 @@ export function AlertThresholdChart({
               strokeDasharray="6 4"
               strokeWidth={2}
               ifOverflow="extendDomain"
-              label={({ viewBox }: { viewBox?: { x?: number; y?: number; width?: number } }) => {
+              label={({
+                viewBox,
+              }: {
+                viewBox?: { x?: number; y?: number; width?: number };
+              }) => {
                 const x = (viewBox?.x ?? 0) + (viewBox?.width ?? 0) - 8;
                 const y = (viewBox?.y ?? 0) - 10;
                 const text = `Limite: ${rule.operator} ${formatNumber(rule.referenceValue)} ${unit}`;

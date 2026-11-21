@@ -21,7 +21,8 @@ function messageFrom(body: unknown, status: number): string {
   if (body && typeof body === "object" && "message" in body) {
     return String((body as { message: unknown }).message);
   }
-  if (status === 0) return "Serviço indisponível. Verifique se a API está no ar.";
+  if (status === 0)
+    return "Serviço indisponível. Verifique se a API está no ar.";
   return `Erro ${status} na requisição.`;
 }
 
@@ -30,7 +31,8 @@ export async function request<T>(
   init: RequestInit & { json?: unknown } = {},
 ): Promise<T> {
   const { json, headers, ...rest } = init;
-  if (!path.startsWith("/api/")) throw new ApiError(400, "Caminho de API inválido.");
+  if (!path.startsWith("/api/"))
+    throw new ApiError(400, "Caminho de API inválido.");
   const destination = `/api/backend/${path.slice(5)}`;
 
   let response: Response;
@@ -64,7 +66,8 @@ export async function request<T>(
     if (response.status === 401 && typeof window !== "undefined") {
       window.dispatchEvent(new Event(SESSION_EXPIRED));
     }
-    if (response.status === 403 && typeof window !== "undefined") window.dispatchEvent(new Event("agritech:permissions-changed"));
+    if (response.status === 403 && typeof window !== "undefined")
+      window.dispatchEvent(new Event("agritech:permissions-changed"));
     throw new ApiError(response.status, messageFrom(body, response.status));
   }
   return body as T;
@@ -78,7 +81,9 @@ export type Paginated<T> = {
 /** Busca todas as páginas (limite 100 por página nos serviços). */
 export async function requestAll<T>(path: string): Promise<T[]> {
   const separator = path.includes("?") ? "&" : "?";
-  const first = await request<Paginated<T>>(`${path}${separator}page=1&limit=100`);
+  const first = await request<Paginated<T>>(
+    `${path}${separator}page=1&limit=100`,
+  );
   const rest = await Promise.all(
     Array.from({ length: Math.max(0, first.meta.total_pages - 1) }, (_, i) =>
       request<Paginated<T>>(`${path}${separator}page=${i + 2}&limit=100`),
@@ -87,10 +92,13 @@ export async function requestAll<T>(path: string): Promise<T[]> {
   return [first, ...rest].flatMap((page) => page.data);
 }
 
-export function query(params: Record<string, string | number | boolean | undefined | null>): string {
+export function query(
+  params: Record<string, string | number | boolean | undefined | null>,
+): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== null && value !== "") search.set(key, String(value));
+    if (value !== undefined && value !== null && value !== "")
+      search.set(key, String(value));
   }
   const text = search.toString();
   return text ? `?${text}` : "";

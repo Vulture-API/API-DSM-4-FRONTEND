@@ -22,9 +22,10 @@ describe("getOpenApiMock", () => {
   });
 
   it("retorna leituras paginadas com filtros de sensor e tempo", () => {
-    const resAll = getOpenApiMock<{ data: unknown[]; meta: { total_records: number } }>(
-      "/api/readings?page=1&limit=10",
-    );
+    const resAll = getOpenApiMock<{
+      data: unknown[];
+      meta: { total_records: number };
+    }>("/api/readings?page=1&limit=10");
     expect(resAll).toBeDefined();
     expect(resAll?.data).toHaveLength(10);
     expect(resAll?.meta.total_records).toBeGreaterThan(10);
@@ -43,7 +44,9 @@ describe("getOpenApiMock", () => {
     const stationStats = getOpenApiMock("/api/stations/1/statistics");
     expect(stationStats).toEqual(mockStatistics);
 
-    const forecast = getOpenApiMock<{ days: unknown[]; source: string }>("/api/stations/1/forecast?days=3");
+    const forecast = getOpenApiMock<{ days: unknown[]; source: string }>(
+      "/api/stations/1/forecast?days=3",
+    );
     expect(forecast?.days).toHaveLength(3);
     expect(forecast?.source).toBe(mockForecast.source);
   });
@@ -67,6 +70,11 @@ describe("getOpenApiMock", () => {
     expect(getOpenApiMock("/api/alerts/triggered")).toBeDefined();
     expect(getOpenApiMock("/api/users")).toEqual(mockUsers);
     expect(getOpenApiMock("/api/roles")).toEqual(mockRoles);
+    expect(getOpenApiMock("/api/reports?type=history")).toBeDefined();
+    expect(
+      getOpenApiMock("/api/reports?type=forecast&station_id=1&days=3"),
+    ).toBeDefined();
+    expect(getOpenApiMock("/api/reports?type=alerts")).toBeDefined();
     expect(getOpenApiMock("/api/rota-inexistente")).toBeUndefined();
   });
 });

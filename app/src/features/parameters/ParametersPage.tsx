@@ -17,10 +17,22 @@ import { RowActions } from "@/components/ui/Table";
 import { useToast } from "@/components/ui/Toast";
 import { sensorVisual } from "@/features/sensor-visual";
 import { ApiError } from "@/lib/api/http";
-import { formatNumber } from "@/lib/format";
 
 import type { SensorType } from "./api";
-import { useDeleteSensorType, useSaveSensorType, useSensors, useSensorTypes } from "./hooks";
+import {
+  calibrationParts,
+  calibrationText,
+  multiplierError,
+  offsetError,
+  parseCalibration,
+} from "./calibration";
+import {
+  useDeleteSensorType,
+  useSaveSensorType,
+  useSensors,
+  useSensorTypes,
+} from "./hooks";
+import { limitsErrors, limitsText } from "./limits";
 
 export function ParametersPage() {
   const types = useSensorTypes();
@@ -33,13 +45,20 @@ export function ParametersPage() {
 
   const usage = useMemo(() => {
     const counts = new Map<number, number>();
-    sensors.data?.forEach((s) => counts.set(s.sensor_type_id, (counts.get(s.sensor_type_id) ?? 0) + 1));
+    sensors.data?.forEach((s) =>
+      counts.set(s.sensor_type_id, (counts.get(s.sensor_type_id) ?? 0) + 1),
+    );
     return counts;
   }, [sensors.data]);
 
   const term = search.trim().toLowerCase();
   const visible = (types.data ?? [])
-    .filter((t) => !term || t.name.toLowerCase().includes(term) || t.unit_of_measure.toLowerCase().includes(term))
+    .filter(
+      (t) =>
+        !term ||
+        t.name.toLowerCase().includes(term) ||
+        t.unit_of_measure.toLowerCase().includes(term),
+    )
     .sort((a, b) => a.name.localeCompare(b.name));
 
   async function confirmDelete() {
@@ -49,9 +68,11 @@ export function ParametersPage() {
       toast.success("Parâmetro excluído.");
       setDeleting(null);
     } catch (error) {
-      toast.error(error instanceof ApiError && error.status === 409
-        ? "O parâmetro está em uso por sensores. Remova os sensores antes."
-        : (error as Error).message);
+      toast.error(
+        error instanceof ApiError && error.status === 409
+          ? "O parâmetro está em uso por sensores. Remova os sensores antes."
+          : (error as Error).message,
+      );
     }
   }
 
@@ -60,19 +81,32 @@ export function ParametersPage() {
       <PageHeader
         eyebrow="Administração"
         title="Parâmetros meteorológicos"
-        description="Tipos de medição que os sensores podem registrar, com unidade e calibração."
+        description="Tipos de medição que os sensores podem registrar, com unidade, calibração e limites físicos."
         actions={
-          <Can permission="sensor-types.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
-            Novo parâmetro
-          </Button></Can>
+          <Can permission="sensor-types.create">
+            <Button
+              variant="light"
+              icon={<Plus className="size-4" />}
+              onClick={() => setEditing("new")}
+            >
+              Novo parâmetro
+            </Button>
+          </Can>
         }
       />
       <Card className="shadow-[var(--shadow-lift)]">
         <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
-          <SearchInput label="Buscar parâmetro" placeholder="Buscar por nome ou unidade" value={search} onChange={setSearch} className="sm:w-72" />
+          <SearchInput
+            label="Buscar parâmetro"
+            placeholder="Buscar por nome ou unidade"
+            value={search}
+            onChange={setSearch}
+            className="sm:w-72"
+          />
           {types.data && (
             <p className="text-xs text-muted">
-              {types.data.length} parâmetros · {sensors.data?.length ?? 0} sensores cadastrados
+              {types.data.length} parâmetros · {sensors.data?.length ?? 0}{" "}
+              sensores cadastrados
             </p>
           )}
         </div>
@@ -83,15 +117,24 @@ export function ParametersPage() {
             ))}
           </div>
         ) : types.error ? (
-          <ErrorState message={types.error.message} onRetry={() => void types.refetch()} />
+          <ErrorState
+            message={types.error.message}
+            onRetry={() => void types.refetch()}
+          />
         ) : visible.length === 0 ? (
-          <EmptyState icon={<Gauge className="size-5" />} title="Nenhum parâmetro encontrado" />
+          <EmptyState
+            icon={<Gauge className="size-5" />}
+            title="Nenhum parâmetro encontrado"
+          />
         ) : (
-          <ul className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3" aria-label="Parâmetros">
+          <ul
+            className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3"
+            aria-label="Parâmetros"
+          >
             {visible.map((type) => {
               const visual = sensorVisual(type.name);
               const count = usage.get(type.id) ?? 0;
-              const calibrated = type.factor !== null || type.gain !== null;
+              const calibration = calibrationParts(type);
               return (
                 <li
                   key={type.id}
@@ -107,19 +150,32 @@ export function ParametersPage() {
                         <visual.icon className="size-5" />
                       </span>
                       <span>
-                        <h2 className="text-sm font-semibold text-ink">{type.name}</h2>
+                        <h2 className="text-sm font-semibold text-ink">
+                          {type.name}
+                        </h2>
                         <span className="mt-0.5 inline-block rounded-md bg-subtle px-1.5 py-0.5 font-mono text-xs">
                           {type.unit_of_measure}
                         </span>
                       </span>
                     </span>
                     <RowActions>
-                      <Can permission="sensor-types.update"><IconButton label={`Editar ${type.name}`} onClick={() => setEditing(type)}>
-                        <Pencil className="size-4" />
-                      </IconButton></Can>
-                      <Can permission="sensor-types.delete"><IconButton label={`Excluir ${type.name}`} onClick={() => setDeleting(type)} className="hover:text-danger">
-                        <Trash2 className="size-4" />
-                      </IconButton></Can>
+                      <Can permission="sensor-types.update">
+                        <IconButton
+                          label={`Editar ${type.name}`}
+                          onClick={() => setEditing(type)}
+                        >
+                          <Pencil className="size-4" />
+                        </IconButton>
+                      </Can>
+                      <Can permission="sensor-types.delete">
+                        <IconButton
+                          label={`Excluir ${type.name}`}
+                          onClick={() => setDeleting(type)}
+                          className="hover:text-danger"
+                        >
+                          <Trash2 className="size-4" />
+                        </IconButton>
+                      </Can>
                     </RowActions>
                   </div>
                   <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3 text-sm">
@@ -130,15 +186,20 @@ export function ParametersPage() {
                     <div>
                       <dt className="text-xs text-faint">Calibração</dt>
                       <dd className="tabular-nums text-muted">
-                        {calibrated ? (
-                          <>
-                            {type.factor !== null && <span>fator {formatNumber(type.factor)}</span>}
-                            {type.factor !== null && type.gain !== null && " · "}
-                            {type.gain !== null && <span>ganho {formatNumber(type.gain)}</span>}
-                          </>
-                        ) : (
-                          "Sem calibração"
-                        )}
+                        {calibration.length
+                          ? calibration.map((part, index) => (
+                              <span key={part}>
+                                {index > 0 && " · "}
+                                <span>{part}</span>
+                              </span>
+                            ))
+                          : "Sem calibração"}
+                      </dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="text-xs text-faint">Limites físicos</dt>
+                      <dd className="tabular-nums text-muted">
+                        {limitsText(type, type.unit_of_measure)}
                       </dd>
                     </div>
                   </dl>
@@ -148,54 +209,98 @@ export function ParametersPage() {
           </ul>
         )}
       </Card>
-      {editing && <Can permission={editing === "new" ? "sensor-types.create" : "sensor-types.update"}><SensorTypeModal type={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} /></Can>}
-      <Can permission="sensor-types.delete"><ConfirmDialog
-        open={Boolean(deleting)}
-        title="Excluir parâmetro"
-        message={
-          deleting && usage.get(deleting.id)
-            ? `${deleting.name} está em uso por ${usage.get(deleting.id)} sensor(es). Remova os sensores antes.`
-            : `${deleting?.name ?? ""} será excluído.`
-        }
-        loading={remove.isPending}
-        confirmDisabled={Boolean(deleting && usage.get(deleting.id))}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleting(null)}
-      /></Can>
+      {editing && (
+        <Can
+          permission={
+            editing === "new" ? "sensor-types.create" : "sensor-types.update"
+          }
+        >
+          <SensorTypeModal
+            type={editing === "new" ? undefined : editing}
+            onClose={() => setEditing(null)}
+          />
+        </Can>
+      )}
+      <Can permission="sensor-types.delete">
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          title="Excluir parâmetro"
+          message={
+            deleting && usage.get(deleting.id)
+              ? `${deleting.name} está em uso por ${usage.get(deleting.id)} sensor(es). Remova os sensores antes.`
+              : `${deleting?.name ?? ""} será excluído.`
+          }
+          loading={remove.isPending}
+          confirmDisabled={Boolean(deleting && usage.get(deleting.id))}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      </Can>
     </>
   );
 }
 
-function SensorTypeModal({ type, onClose }: { type?: SensorType | undefined; onClose: () => void }) {
+function SensorTypeModal({
+  type,
+  onClose,
+}: {
+  type?: SensorType | undefined;
+  onClose: () => void;
+}) {
   const save = useSaveSensorType();
   const toast = useToast();
   const [values, setValues] = useState({
     name: type?.name ?? "",
     unit_of_measure: type?.unit_of_measure ?? "",
-    factor: type?.factor?.toString() ?? "",
-    gain: type?.gain?.toString() ?? "",
+    factor: calibrationText(type?.factor),
+    gain: calibrationText(type?.gain),
+    offset_value: calibrationText(type?.offset_value),
+    min_value: calibrationText(type?.min_value),
+    max_value: calibrationText(type?.max_value),
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof values, string>>>({});
-  const set = (key: keyof typeof values) => (value: string) => setValues((v) => ({ ...v, [key]: value }));
-  const numberOrNull = (value: string) => (value.trim() === "" ? null : Number(value.replace(",", ".")));
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof typeof values, string>>
+  >({});
+  const set = (key: keyof typeof values) => (value: string) =>
+    setValues((v) => ({ ...v, [key]: value }));
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     const found: typeof errors = {};
     if (!values.name.trim()) found.name = "Informe o nome.";
-    if (!values.unit_of_measure.trim()) found.unit_of_measure = "Informe a unidade.";
-    if (Number.isNaN(numberOrNull(values.factor))) found.factor = "Número inválido.";
-    if (Number.isNaN(numberOrNull(values.gain))) found.gain = "Número inválido.";
+    if (!values.unit_of_measure.trim())
+      found.unit_of_measure = "Informe a unidade.";
+    const factorError = multiplierError(values.factor);
+    const gainError = multiplierError(values.gain);
+    const offsetValueError = offsetError(values.offset_value);
+    if (factorError) found.factor = factorError;
+    if (gainError) found.gain = gainError;
+    if (offsetValueError) found.offset_value = offsetValueError;
+    Object.assign(found, limitsErrors(values.min_value, values.max_value));
     setErrors(found);
     if (Object.keys(found).length) return;
+    const offsetValue = parseCalibration(values.offset_value);
+    const minValue = parseCalibration(values.min_value);
+    const maxValue = parseCalibration(values.max_value);
     try {
       await save.mutateAsync({
         id: type?.id,
         input: {
           name: values.name.trim(),
           unit_of_measure: values.unit_of_measure.trim(),
-          factor: numberOrNull(values.factor),
-          gain: numberOrNull(values.gain),
+          factor: parseCalibration(values.factor),
+          gain: parseCalibration(values.gain),
+          // Na edição, vazio remove o offset; no cadastro o campo nem é enviado.
+          ...(type || offsetValue !== null
+            ? { offset_value: offsetValue }
+            : {}),
+          // Limite vazio só é enviado para remover um que o tipo já tinha.
+          ...(minValue !== null || type?.min_value != null
+            ? { min_value: minValue }
+            : {}),
+          ...(maxValue !== null || type?.max_value != null
+            ? { max_value: maxValue }
+            : {}),
         },
       });
       toast.success(type ? "Parâmetro atualizado." : "Parâmetro cadastrado.");
@@ -215,24 +320,127 @@ function SensorTypeModal({ type, onClose }: { type?: SensorType | undefined; onC
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" form="sensor-type-form" loading={save.isPending}>
+          <Button
+            type="submit"
+            form="sensor-type-form"
+            loading={save.isPending}
+          >
             {type ? "Salvar" : "Cadastrar"}
           </Button>
         </>
       }
     >
-      <form id="sensor-type-form" onSubmit={submit} noValidate className="grid gap-4 sm:grid-cols-2">
+      <form
+        id="sensor-type-form"
+        onSubmit={submit}
+        noValidate
+        className="grid gap-4 sm:grid-cols-2"
+      >
         <Field label="Nome" error={errors.name} className="sm:col-span-2">
-          {(p) => <Input {...p} value={values.name} maxLength={50} onChange={(e) => set("name")(e.target.value)} placeholder="Temperatura" />}
+          {(p) => (
+            <Input
+              {...p}
+              value={values.name}
+              maxLength={50}
+              onChange={(e) => set("name")(e.target.value)}
+              placeholder="Temperatura"
+            />
+          )}
         </Field>
-        <Field label="Unidade de medida" error={errors.unit_of_measure} className="sm:col-span-2">
-          {(p) => <Input {...p} value={values.unit_of_measure} maxLength={20} onChange={(e) => set("unit_of_measure")(e.target.value)} placeholder="°C" />}
+        <Field
+          label="Unidade de medida"
+          error={errors.unit_of_measure}
+          className="sm:col-span-2"
+        >
+          {(p) => (
+            <Input
+              {...p}
+              value={values.unit_of_measure}
+              maxLength={20}
+              onChange={(e) => set("unit_of_measure")(e.target.value)}
+              placeholder="°C"
+            />
+          )}
         </Field>
-        <Field label="Fator" error={errors.factor} hint="Opcional, calibração">
-          {(p) => <Input {...p} inputMode="decimal" value={values.factor} onChange={(e) => set("factor")(e.target.value)} />}
+        <p className="text-sm text-muted sm:col-span-2">
+          Calibração padrão do tipo, opcional: valor = leitura × fator × ganho +
+          offset. Cada sensor pode ter ganho e offset próprios.
+        </p>
+        <Field label="Fator" error={errors.factor} hint="Conversão de unidade">
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.factor}
+              onChange={(e) => set("factor")(e.target.value)}
+            />
+          )}
         </Field>
-        <Field label="Ganho" error={errors.gain} hint="Opcional, calibração">
-          {(p) => <Input {...p} inputMode="decimal" value={values.gain} onChange={(e) => set("gain")(e.target.value)} />}
+        <Field label="Ganho" error={errors.gain} hint="Multiplica a leitura">
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.gain}
+              onChange={(e) => set("gain")(e.target.value)}
+            />
+          )}
+        </Field>
+        <Field
+          label="Offset"
+          error={errors.offset_value}
+          hint="Somado à leitura"
+          className="sm:col-span-2"
+        >
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.offset_value}
+              onChange={(e) => set("offset_value")(e.target.value)}
+            />
+          )}
+        </Field>
+        <p className="text-sm text-muted sm:col-span-2">
+          Limites físicos, opcionais: leitura fora da faixa é gravada como
+          inconsistente. Quando o sensor tem limite próprio, ele substitui o do
+          tipo.
+        </p>
+        <Field
+          label="Mínimo físico"
+          error={errors.min_value}
+          hint={
+            values.unit_of_measure.trim()
+              ? `Em ${values.unit_of_measure.trim()}`
+              : "Na unidade do tipo"
+          }
+        >
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.min_value}
+              onChange={(e) => set("min_value")(e.target.value)}
+            />
+          )}
+        </Field>
+        <Field
+          label="Máximo físico"
+          error={errors.max_value}
+          hint={
+            values.unit_of_measure.trim()
+              ? `Em ${values.unit_of_measure.trim()}`
+              : "Na unidade do tipo"
+          }
+        >
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="decimal"
+              value={values.max_value}
+              onChange={(e) => set("max_value")(e.target.value)}
+            />
+          )}
         </Field>
       </form>
     </Modal>

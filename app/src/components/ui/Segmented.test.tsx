@@ -37,12 +37,21 @@ describe("Segmented", () => {
 
     await user.keyboard("{ArrowRight}");
     expect(screen.getByRole("radio", { name: "Online" })).toHaveFocus();
-    expect(screen.getByRole("radio", { name: "Online" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Online" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
 
     await user.keyboard("{ArrowLeft}{ArrowLeft}");
-    expect(screen.getByRole("radio", { name: "Offline" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Offline" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     await user.keyboard("{Home}");
-    expect(screen.getByRole("radio", { name: /Todas/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: /Todas/ })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
     await user.keyboard("{End}");
     expect(screen.getByRole("radio", { name: "Offline" })).toHaveFocus();
 
@@ -53,7 +62,11 @@ describe("Segmented", () => {
 
 describe("Field", () => {
   it("anuncia o erro e liga o texto ao campo", () => {
-    render(<Field label="Nome" error="Informe o nome.">{(p) => <Input {...p} />}</Field>);
+    render(
+      <Field label="Nome" error="Informe o nome.">
+        {(p) => <Input {...p} />}
+      </Field>,
+    );
 
     const input = screen.getByLabelText("Nome");
     expect(input).toHaveAttribute("aria-invalid", "true");

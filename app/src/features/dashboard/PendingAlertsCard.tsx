@@ -24,7 +24,11 @@ export function PendingAlertsCard({ className }: { className?: string }) {
     <Card className={cn("flex flex-col", className)}>
       <CardHeader
         title="Alertas pendentes"
-        description={triggered.data ? `${triggered.data.meta.total_records} aguardando reconhecimento` : "Últimos disparos"}
+        description={
+          triggered.data
+            ? `${triggered.data.meta.total_records} aguardando reconhecimento`
+            : "Últimos disparos"
+        }
         icon={<BellRing className="size-4" />}
       />
       <div className="flex-1 px-2 pt-3 pb-2">
@@ -35,22 +39,34 @@ export function PendingAlertsCard({ className }: { className?: string }) {
             ))}
           </div>
         ) : triggered.error ? (
-          <ErrorState message={triggered.error.message} onRetry={() => void triggered.refetch()} />
+          <ErrorState
+            message={triggered.error.message}
+            onRetry={() => void triggered.refetch()}
+          />
         ) : !triggered.data?.data.length ? (
-          <EmptyState title="Nenhum alerta pendente" description="Tudo dentro dos limites configurados." />
+          <EmptyState
+            title="Nenhum alerta pendente"
+            description="Tudo dentro dos limites configurados."
+          />
         ) : (
           <ul>
             {triggered.data.data.map((alert) => {
               const rule = ruleById.get(alert.alert_config_id);
-              const entry = rule ? catalog.bySensorId.get(rule.sensor_id) : undefined;
+              const entry = rule
+                ? catalog.bySensorId.get(rule.sensor_id)
+                : undefined;
               const visual = sensorVisual(entry?.type?.name ?? "");
               const severity =
                 rule && alert.reading_value !== null
-                  ? exceedance(alert.reading_value, rule.reference_value).severity
+                  ? exceedance(alert.reading_value, rule.reference_value)
+                      .severity
                   : "moderada";
               return (
                 <li key={alert.id}>
-                  <Link href="/alertas" className="flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-canvas">
+                  <Link
+                    href="/alertas"
+                    className="flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-canvas"
+                  >
                     <span
                       className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg"
                       style={{ background: visual.soft, color: visual.color }}
@@ -63,11 +79,16 @@ export function PendingAlertsCard({ className }: { className?: string }) {
                         {rule?.message ?? `Regra #${alert.alert_config_id}`}
                       </span>
                       <span className="block truncate text-xs text-muted">
-                        {entry?.station?.name ?? "Estação"} · {formatRelative(alert.triggered_at)}
+                        {entry?.station?.name ?? "Estação"} ·{" "}
+                        {formatRelative(alert.triggered_at)}
                       </span>
                     </span>
                     <span className="mt-0.5 shrink-0">
-                      <SeverityValue severity={alert.reading_value !== null ? severity : undefined}>
+                      <SeverityValue
+                        severity={
+                          alert.reading_value !== null ? severity : undefined
+                        }
+                      >
                         {alert.reading_value !== null
                           ? `${formatNumber(alert.reading_value)} ${entry?.type?.unit_of_measure ?? ""}`
                           : "leitura expirada"}
