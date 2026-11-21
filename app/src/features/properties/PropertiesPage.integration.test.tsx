@@ -3,7 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import type { Property } from "@/features/properties/api";
-import { defaultRoutes, mockApi, renderWithProviders } from "@/test/utils";
+import {
+  defaultRoutes,
+  mockApi,
+  renderWithProviders,
+  testUser,
+} from "@/test/utils";
 
 import { PropertiesPage } from "./PropertiesPage";
 
@@ -34,6 +39,35 @@ async function getPropertiesTable() {
 }
 
 describe("PropertiesPage - [QA] CRUD e Associação de Propriedades", () => {
+  it("esconde criar, editar e excluir para quem só tem leitura de propriedades", async () => {
+    mockApi({
+      ...defaultRoutes(),
+      "/api/properties": testProperties,
+    });
+
+    renderWithProviders(<PropertiesPage />, {
+      ...testUser,
+      permissions: ["properties.read", "monitoring.read"],
+    });
+
+    await getPropertiesTable();
+    expect(
+      screen.queryByRole("button", { name: /nova propriedade/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^editar$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /excluir/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /cadastrar propriedade/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /editar propriedade/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("Cenário 1: lista propriedades agrícolas com localização, responsável e contadores", async () => {
     mockApi({
       ...defaultRoutes(),
