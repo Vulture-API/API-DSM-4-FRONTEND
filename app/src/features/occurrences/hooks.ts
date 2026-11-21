@@ -8,7 +8,8 @@ import { type Occurrence, occurrencesApi } from "./api";
 
 export function useOpenOccurrences(stationId?: number) {
   return useQuery({
-    enabled: useCan("occurrences.read"), queryKey: ["occurrences", "open", stationId ?? "all"],
+    enabled: useCan("occurrences.read"),
+    queryKey: ["occurrences", "open", stationId ?? "all"],
     queryFn: () => occurrencesApi.open(stationId),
     refetchInterval: 30_000,
   });
@@ -21,8 +22,10 @@ export function useResolveOccurrence() {
     onSuccess: async (resolved) => {
       // Evita que uma consulta iniciada antes da resolução restaure a ocorrência.
       await client.cancelQueries({ queryKey: ["occurrences", "open"] });
-      client.setQueriesData<Occurrence[]>({ queryKey: ["occurrences", "open"] },
-        (data) => data?.filter((o) => o.id !== resolved.id));
+      client.setQueriesData<Occurrence[]>(
+        { queryKey: ["occurrences", "open"] },
+        (data) => data?.filter((o) => o.id !== resolved.id),
+      );
       await client.invalidateQueries({ queryKey: ["occurrences"] });
     },
   });

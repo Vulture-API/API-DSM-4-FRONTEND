@@ -17,7 +17,9 @@ export type SensorCalibration = {
 export function parseCalibration(text: string): number | null {
   const trimmed = text.trim();
   if (trimmed === "") return null;
-  return /^[+-]?(\d+([.,]\d*)?|[.,]\d+)$/.test(trimmed) ? Number(trimmed.replace(",", ".")) : Number.NaN;
+  return /^[+-]?(\d+([.,]\d*)?|[.,]\d+)$/.test(trimmed)
+    ? Number(trimmed.replace(",", "."))
+    : Number.NaN;
 }
 
 /** Fator e ganho multiplicam a leitura: zero apagaria toda medição. */
@@ -30,10 +32,13 @@ export function multiplierError(text: string): string | undefined {
 
 export function offsetError(text: string): string | undefined {
   const value = parseCalibration(text);
-  return value === null || Number.isFinite(value) ? undefined : "Número inválido.";
+  return value === null || Number.isFinite(value)
+    ? undefined
+    : "Número inválido.";
 }
 
-export const calibrationText = (value: number | null | undefined) => (value === null || value === undefined ? "" : String(value).replace(".", ","));
+export const calibrationText = (value: number | null | undefined) =>
+  value === null || value === undefined ? "" : String(value).replace(".", ",");
 
 export type EffectiveCalibration = {
   factor: number | null;
@@ -43,7 +48,10 @@ export type EffectiveCalibration = {
   fromSensor: boolean;
 };
 
-export function effectiveCalibration(sensor: SensorCalibration, type: TypeCalibration | undefined): EffectiveCalibration {
+export function effectiveCalibration(
+  sensor: SensorCalibration,
+  type: TypeCalibration | undefined,
+): EffectiveCalibration {
   const sensorGain = sensor.gain ?? null;
   const sensorOffset = sensor.offset_value ?? null;
   return {
@@ -55,18 +63,29 @@ export function effectiveCalibration(sensor: SensorCalibration, type: TypeCalibr
 }
 
 // Um ganho de conversor analógico tem muitas casas (3,3 V / 4095 = 0,000805…).
-const calibrationFormat = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 12 });
+const calibrationFormat = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 12,
+});
 
 /** Partes para exibição, na ordem da conta; vazio quando não há calibração. */
 export function calibrationParts(calibration: TypeCalibration): string[] {
   const parts: string[] = [];
-  if (calibration.factor != null) parts.push(`fator ${calibrationFormat.format(calibration.factor)}`);
-  if (calibration.gain != null) parts.push(`ganho ${calibrationFormat.format(calibration.gain)}`);
-  if (calibration.offset_value != null) parts.push(`offset ${calibrationFormat.format(calibration.offset_value)}`);
+  if (calibration.factor != null)
+    parts.push(`fator ${calibrationFormat.format(calibration.factor)}`);
+  if (calibration.gain != null)
+    parts.push(`ganho ${calibrationFormat.format(calibration.gain)}`);
+  if (calibration.offset_value != null)
+    parts.push(`offset ${calibrationFormat.format(calibration.offset_value)}`);
   return parts;
 }
 
 /** Valor que o sistema grava para uma leitura bruta. */
-export function convertReading(raw: number, calibration: TypeCalibration): number {
-  return raw * (calibration.factor ?? 1) * (calibration.gain ?? 1) + (calibration.offset_value ?? 0);
+export function convertReading(
+  raw: number,
+  calibration: TypeCalibration,
+): number {
+  return (
+    raw * (calibration.factor ?? 1) * (calibration.gain ?? 1) +
+    (calibration.offset_value ?? 0)
+  );
 }

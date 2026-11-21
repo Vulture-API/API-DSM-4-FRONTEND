@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { AlertRule, TriggeredAlert } from "@/features/alerts/api";
 import type { Sensor, SensorType } from "@/features/parameters/api";
 import type { Reading } from "@/features/readings/api";
-import type { Property, Station, StationForecast } from "@/features/stations/api";
+import type {
+  Property,
+  Station,
+  StationForecast,
+} from "@/features/stations/api";
 import {
   type AlertsReport,
   type ForecastReport,
@@ -55,7 +59,13 @@ const fictionalStations: Station[] = [
 
 const fictionalSensorTypes: SensorType[] = [
   { id: 1, name: "Temperatura", unit_of_measure: "°C", factor: 1, gain: 0 },
-  { id: 2, name: "Índice Pluviométrico", unit_of_measure: "mm", factor: 1, gain: 0 },
+  {
+    id: 2,
+    name: "Índice Pluviométrico",
+    unit_of_measure: "mm",
+    factor: 1,
+    gain: 0,
+  },
 ];
 
 const fictionalSensors: Sensor[] = [
@@ -90,7 +100,9 @@ const fictionalReadings: Reading[] = [
     id: 1,
     sensor_id: 100,
     value: 20,
-    unix_time: Math.floor(new Date("2026-10-10T12:00:00.000Z").getTime() / 1000),
+    unix_time: Math.floor(
+      new Date("2026-10-10T12:00:00.000Z").getTime() / 1000,
+    ),
     data_consistent: true,
     created_at: "2026-10-10T12:00:00.000Z",
   },
@@ -98,7 +110,9 @@ const fictionalReadings: Reading[] = [
     id: 2,
     sensor_id: 100,
     value: 30,
-    unix_time: Math.floor(new Date("2026-10-11T12:00:00.000Z").getTime() / 1000),
+    unix_time: Math.floor(
+      new Date("2026-10-11T12:00:00.000Z").getTime() / 1000,
+    ),
     data_consistent: false,
     created_at: "2026-10-11T12:00:00.000Z",
   },
@@ -106,7 +120,9 @@ const fictionalReadings: Reading[] = [
     id: 3,
     sensor_id: 101,
     value: 12.5,
-    unix_time: Math.floor(new Date("2026-10-11T14:00:00.000Z").getTime() / 1000),
+    unix_time: Math.floor(
+      new Date("2026-10-11T14:00:00.000Z").getTime() / 1000,
+    ),
     data_consistent: true,
     created_at: "2026-10-11T14:00:00.000Z",
   },
@@ -114,7 +130,9 @@ const fictionalReadings: Reading[] = [
     id: 4,
     sensor_id: 101,
     value: 7.5,
-    unix_time: Math.floor(new Date("2026-10-12T14:00:00.000Z").getTime() / 1000),
+    unix_time: Math.floor(
+      new Date("2026-10-12T14:00:00.000Z").getTime() / 1000,
+    ),
     data_consistent: true,
     created_at: "2026-10-12T14:00:00.000Z",
   },
@@ -122,7 +140,9 @@ const fictionalReadings: Reading[] = [
     id: 5,
     sensor_id: 200,
     value: 18,
-    unix_time: Math.floor(new Date("2026-10-12T15:00:00.000Z").getTime() / 1000),
+    unix_time: Math.floor(
+      new Date("2026-10-12T15:00:00.000Z").getTime() / 1000,
+    ),
     data_consistent: true,
     created_at: "2026-10-12T15:00:00.000Z",
   },
@@ -178,7 +198,9 @@ const fictionalTriggeredAlerts: TriggeredAlert[] = [
     triggered_at: "2026-10-11T12:05:00.000Z",
     acknowledged_at: null,
     reading_value: 30,
-    reading_unix_time: Math.floor(new Date("2026-10-11T12:00:00.000Z").getTime() / 1000),
+    reading_unix_time: Math.floor(
+      new Date("2026-10-11T12:00:00.000Z").getTime() / 1000,
+    ),
   },
   {
     id: 501,
@@ -188,7 +210,9 @@ const fictionalTriggeredAlerts: TriggeredAlert[] = [
     triggered_at: "2026-10-12T10:00:00.000Z",
     acknowledged_at: "2026-10-12T11:00:00.000Z",
     reading_value: 29.1,
-    reading_unix_time: Math.floor(new Date("2026-10-12T10:00:00.000Z").getTime() / 1000),
+    reading_unix_time: Math.floor(
+      new Date("2026-10-12T10:00:00.000Z").getTime() / 1000,
+    ),
   },
 ];
 
@@ -263,10 +287,18 @@ describe("validação de entradas e filtros de relatórios", () => {
     });
 
     expect(invalidType.valid).toBe(false);
-    expect(invalidType.errors).toContain("Selecione um tipo de relatório válido (Histórico, Previsão ou Alertas).");
-    expect(invalidType.errors).toContain("O identificador da estação informada é inválido.");
-    expect(invalidType.errors).toContain("O identificador da propriedade informada é inválido.");
-    expect(invalidType.errors).toContain("A data inicial não pode ser posterior à data final.");
+    expect(invalidType.errors).toContain(
+      "Selecione um tipo de relatório válido (Histórico, Previsão ou Alertas).",
+    );
+    expect(invalidType.errors).toContain(
+      "O identificador da estação informada é inválido.",
+    );
+    expect(invalidType.errors).toContain(
+      "O identificador da propriedade informada é inválido.",
+    );
+    expect(invalidType.errors).toContain(
+      "A data inicial não pode ser posterior à data final.",
+    );
 
     const missingStationForecast = validateReportFilters({
       reportType: "forecast",
@@ -431,7 +463,12 @@ describe("organização e formatação dos dados por tipo de relatório", () => 
       report_type: "forecast",
       generated_at: "2026-10-14T00:00:00.000Z",
       period: { from: "2026-10-14", to: "2026-10-15" },
-      station: { id: 10, name: "Estação Pomar Norte", latitude: -23.1, longitude: -45.8 },
+      station: {
+        id: 10,
+        name: "Estação Pomar Norte",
+        latitude: -23.1,
+        longitude: -45.8,
+      },
       property: null,
       source: "open-meteo",
       total_days: 1,
@@ -575,7 +612,9 @@ describe("organização e formatação dos dados por tipo de relatório", () => 
       format: "csv",
     });
 
-    expect(buildExportRequestPayload(historyReport, "csv", filters, 128)).toEqual({
+    expect(
+      buildExportRequestPayload(historyReport, "csv", filters, 128),
+    ).toEqual({
       type: "history",
       station_id: 10,
       property_id: 1,
@@ -600,7 +639,9 @@ describe("organização e formatação dos dados por tipo de relatório", () => 
       triggeredAlerts: [],
     }) as ForecastReport;
 
-    expect(buildFilterExportPayload(forecastReport, "json", forecastFilters)).toEqual({
+    expect(
+      buildFilterExportPayload(forecastReport, "json", forecastFilters),
+    ).toEqual({
       type: "forecast",
       station_id: 10,
       days: 5,

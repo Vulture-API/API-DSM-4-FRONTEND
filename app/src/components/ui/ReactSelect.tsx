@@ -65,7 +65,10 @@ export function ReactSelect<T extends string | number>({
         minHeight: "36px",
         height: "36px",
         borderRadius: "8px",
-        backgroundColor: variant === "glass" ? "rgba(255, 255, 255, 0.1)" : "var(--color-surface, #ffffff)",
+        backgroundColor:
+          variant === "glass"
+            ? "rgba(255, 255, 255, 0.1)"
+            : "var(--color-surface, #ffffff)",
         borderColor: state.isFocused
           ? "var(--color-brand-500, #2f8050)"
           : variant === "glass"
@@ -100,7 +103,10 @@ export function ReactSelect<T extends string | number>({
       }),
       placeholder: (base) => ({
         ...base,
-        color: variant === "glass" ? "rgba(255, 255, 255, 0.6)" : "var(--color-faint, #636a64)",
+        color:
+          variant === "glass"
+            ? "rgba(255, 255, 255, 0.6)"
+            : "var(--color-faint, #636a64)",
         fontSize: "12px",
       }),
       input: (base) => ({
@@ -142,7 +148,8 @@ export function ReactSelect<T extends string | number>({
         backgroundColor: "var(--color-surface, #ffffff)",
         border: "1px solid var(--color-line, #e4e2d9)",
         borderRadius: "10px",
-        boxShadow: "0 12px 30px -6px rgb(24 32 26 / 0.16), 0 2px 6px rgb(24 32 26 / 0.06)",
+        boxShadow:
+          "0 12px 30px -6px rgb(24 32 26 / 0.16), 0 2px 6px rgb(24 32 26 / 0.06)",
         marginTop: "4px",
         zIndex: 9999,
         padding: "4px",

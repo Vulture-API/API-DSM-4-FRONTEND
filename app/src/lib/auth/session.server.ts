@@ -33,7 +33,10 @@ export function apiDestination(resource: string): string | null {
 }
 
 export function errorResponse(status: number, message: string): NextResponse {
-  return NextResponse.json({ message }, { status, headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    { message },
+    { status, headers: { "Cache-Control": "no-store" } },
+  );
 }
 
 function firstHeaderValue(value: string | null): string | undefined {
@@ -45,9 +48,17 @@ function firstHeaderValue(value: string | null): string | undefined {
 export function requestOrigins(request: Request): Set<string> {
   const url = new URL(request.url);
   const origins = new Set([url.origin]);
-  const host = firstHeaderValue(request.headers.get("x-forwarded-host")) ?? firstHeaderValue(request.headers.get("host"));
-  const proto = firstHeaderValue(request.headers.get("x-forwarded-proto")) ?? url.protocol.slice(0, -1);
-  if (host && /^[a-zA-Z0-9.\-[\]:]+$/.test(host) && (proto === "http" || proto === "https")) {
+  const host =
+    firstHeaderValue(request.headers.get("x-forwarded-host")) ??
+    firstHeaderValue(request.headers.get("host"));
+  const proto =
+    firstHeaderValue(request.headers.get("x-forwarded-proto")) ??
+    url.protocol.slice(0, -1);
+  if (
+    host &&
+    /^[a-zA-Z0-9.\-[\]:]+$/.test(host) &&
+    (proto === "http" || proto === "https")
+  ) {
     origins.add(`${proto}://${host}`);
   }
   return origins;
@@ -55,40 +66,67 @@ export function requestOrigins(request: Request): Set<string> {
 
 export function sameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  return !!origin && requestOrigins(request).has(origin) && request.headers.get("sec-fetch-site") !== "cross-site";
+  return (
+    !!origin &&
+    requestOrigins(request).has(origin) &&
+    request.headers.get("sec-fetch-site") !== "cross-site"
+  );
 }
 
 export async function sessionToken(): Promise<string | undefined> {
   return (await cookies()).get(SESSION_COOKIE)?.value;
 }
 
-export function setSession(response: NextResponse, token: string, seconds: number) {
+export function setSession(
+  response: NextResponse,
+  token: string,
+  seconds: number,
+) {
   const options = {
-    httpOnly: true, secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const, maxAge: Math.min(seconds, 3600),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge: Math.min(seconds, 3600),
   };
   response.cookies.set(SESSION_COOKIE, token, { ...options, path: "/" });
-  response.cookies.set(WS_COOKIE, token, { ...options, path: "/api/stations/current/ws" });
+  response.cookies.set(WS_COOKIE, token, {
+    ...options,
+    path: "/api/stations/current/ws",
+  });
 }
 
 export function clearSession(response: NextResponse) {
-  const options = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, maxAge: 0 };
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    maxAge: 0,
+  };
   response.cookies.set(SESSION_COOKIE, "", { ...options, path: "/" });
-  response.cookies.set(WS_COOKIE, "", { ...options, path: "/api/stations/current/ws" });
+  response.cookies.set(WS_COOKIE, "", {
+    ...options,
+    path: "/api/stations/current/ws",
+  });
 }
 
 export function isAuthUser(data: unknown): data is AuthUser {
   if (!data || typeof data !== "object") return false;
   const user = data as Partial<AuthUser>;
-  return Number.isSafeInteger(user.id) && typeof user.name === "string" &&
-    typeof user.email === "string" && Number.isSafeInteger(user.role_id) &&
-    user.active === true && Array.isArray(user.permissions) &&
-    user.permissions.every((code) => typeof code === "string");
+  return (
+    Number.isSafeInteger(user.id) &&
+    typeof user.name === "string" &&
+    typeof user.email === "string" &&
+    Number.isSafeInteger(user.role_id) &&
+    user.active === true &&
+    Array.isArray(user.permissions) &&
+    user.permissions.every((code) => typeof code === "string")
+  );
 }
 
 export async function fetchIdentity(token: string): Promise<Response> {
   return fetch(`${apiDestination("auth")}/api/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
     signal: AbortSignal.timeout(10_000),
   });
 }

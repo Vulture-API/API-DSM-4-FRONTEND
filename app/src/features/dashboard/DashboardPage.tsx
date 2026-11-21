@@ -14,12 +14,22 @@ import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { OccurrencesSummary } from "@/features/occurrences/OccurrencesSummary";
 import { sensorVisual } from "@/features/sensor-visual";
-import type { Overview, StationOverview, StationStatus } from "@/features/stations/api";
+import type {
+  Overview,
+  StationOverview,
+  StationStatus,
+} from "@/features/stations/api";
 import { useOverview, useProperties } from "@/features/stations/hooks";
 import { SeriesCard } from "@/features/stations/SeriesCard";
-import { communicationDelay, LastCommunication } from "@/features/stations/CommunicationDelay";
+import {
+  communicationDelay,
+  LastCommunication,
+} from "@/features/stations/CommunicationDelay";
 import { StationsMapLazy } from "@/features/stations/StationsMapLazy";
-import { STATUS_COLOR, StatusDot } from "@/features/stations/StationStatusBadge";
+import {
+  STATUS_COLOR,
+  StatusDot,
+} from "@/features/stations/StationStatusBadge";
 import { cn } from "@/lib/cn";
 import { formatNumber, formatRelative } from "@/lib/format";
 
@@ -41,11 +51,21 @@ export function DashboardPage() {
   const overview = useOverview(propertyId);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
-  const conditions = useMemo(() => currentConditions(current.data?.stations ?? [], current.now / 1000), [current.data, current.now]);
+  const stations = useMemo(
+    () => overview.data?.stations ?? [],
+    [overview.data],
+  );
+  const conditions = useMemo(
+    () => currentConditions(current.data?.stations ?? [], current.now / 1000),
+    [current.data, current.now],
+  );
   const summary = overview.data?.summary;
-  const selectedStations = stations.filter((s) => stationId === undefined || s.id === stationId);
-  const visible = selectedStations.filter((s) => filter === "all" || s.status === filter);
+  const selectedStations = stations.filter(
+    (s) => stationId === undefined || s.id === stationId,
+  );
+  const visible = selectedStations.filter(
+    (s) => filter === "all" || s.status === filter,
+  );
 
   return (
     <>
@@ -67,7 +87,12 @@ export function DashboardPage() {
               aria-label="Filtrar por propriedade"
               className="w-full sm:w-64"
               value={propertyId ?? ""}
-              onChange={(e) => { setPropertyId(e.target.value ? Number(e.target.value) : undefined); setStationId(undefined); }}
+              onChange={(e) => {
+                setPropertyId(
+                  e.target.value ? Number(e.target.value) : undefined,
+                );
+                setStationId(undefined);
+              }}
             >
               <option value="">Todas as propriedades</option>
               {properties.data?.map((p) => (
@@ -76,10 +101,23 @@ export function DashboardPage() {
                 </option>
               ))}
             </Select>
-            <Select variant="glass" aria-label="Filtrar por estação" className="w-full sm:w-64"
-              value={stationId ?? ""} onChange={(e) => setStationId(e.target.value ? Number(e.target.value) : undefined)}>
+            <Select
+              variant="glass"
+              aria-label="Filtrar por estação"
+              className="w-full sm:w-64"
+              value={stationId ?? ""}
+              onChange={(e) =>
+                setStationId(
+                  e.target.value ? Number(e.target.value) : undefined,
+                )
+              }
+            >
               <option value="">Todas as estações</option>
-              {stations.map((station) => <option key={station.id} value={station.id}>{station.name}</option>)}
+              {stations.map((station) => (
+                <option key={station.id} value={station.id}>
+                  {station.name}
+                </option>
+              ))}
             </Select>
           </div>
         }
@@ -87,50 +125,94 @@ export function DashboardPage() {
 
       {overview.error && !overview.data ? (
         <Card>
-          <ErrorState message={overview.error.message} onRetry={() => void overview.refetch()} />
+          <ErrorState
+            message={overview.error.message}
+            onRetry={() => void overview.refetch()}
+          />
         </Card>
       ) : (
         <div className="space-y-6">
-          {overview.error && <ErrorState message="Não foi possível atualizar o panorama da rede." onRetry={() => void overview.refetch()} />}
-          <NetworkSummary overview={overview.data} stationId={stationId} propertyId={propertyId} />
+          {overview.error && (
+            <ErrorState
+              message="Não foi possível atualizar o panorama da rede."
+              onRetry={() => void overview.refetch()}
+            />
+          )}
+          <NetworkSummary
+            overview={overview.data}
+            stationId={stationId}
+            propertyId={propertyId}
+          />
 
           <Card>
-            <CardHeader title="Condições agora" description="Média das estações que enviaram dados nos últimos 30 minutos" />
-            <CurrentReadingsState connection={current.connection} error={current.error} updatedAt={current.dataUpdatedAt}
-              now={current.now} onRetry={() => void current.refetch()} />
-            {current.error && !current.data ? <ErrorState message={current.error.message} onRetry={() => void current.refetch()} /> : (
+            <CardHeader
+              title="Condições agora"
+              description="Média das estações que enviaram dados nos últimos 30 minutos"
+            />
+            <CurrentReadingsState
+              connection={current.connection}
+              error={current.error}
+              updatedAt={current.dataUpdatedAt}
+              now={current.now}
+              onRetry={() => void current.refetch()}
+            />
+            {current.error && !current.data ? (
+              <ErrorState
+                message={current.error.message}
+                onRetry={() => void current.refetch()}
+              />
+            ) : (
               <div className="mt-4 overflow-hidden rounded-b-[var(--radius-card)] border-t border-line">
-              <section aria-label="Condições agora" className="-mb-px -ml-px flex flex-wrap">
-                {current.isLoading &&
-                  Array.from({ length: 5 }, (_, i) => (
-                    <div key={i} className="min-w-[170px] flex-1 border-b border-l border-line p-5">
-                      <Skeleton className="h-16" />
+                <section
+                  aria-label="Condições agora"
+                  className="-mb-px -ml-px flex flex-wrap"
+                >
+                  {current.isLoading &&
+                    Array.from({ length: 5 }, (_, i) => (
+                      <div
+                        key={i}
+                        className="min-w-[170px] flex-1 border-b border-l border-line p-5"
+                      >
+                        <Skeleton className="h-16" />
+                      </div>
+                    ))}
+                  {!current.isLoading && conditions.length === 0 && (
+                    <div className="flex-1 border-b border-l border-line">
+                      <EmptyState
+                        title="Nenhuma leitura nos últimos 30 minutos"
+                        description="As estações ativas aparecem aqui assim que enviarem dados."
+                      />
                     </div>
-                  ))}
-                {!current.isLoading && conditions.length === 0 && (
-                  <div className="flex-1 border-b border-l border-line">
-                    <EmptyState title="Nenhuma leitura nos últimos 30 minutos" description="As estações ativas aparecem aqui assim que enviarem dados." />
-                  </div>
-                )}
-                {conditions.map((c) => {
-                  const visual = sensorVisual(c.type);
-                  return (
-                    <div key={c.type} className="min-w-[170px] flex-1 border-b border-l border-line p-5">
-                      <p className="flex items-center gap-2 text-[13px] font-medium text-muted">
-                        <visual.icon className="size-4" style={{ color: visual.color }} aria-hidden />
-                        {c.type}
-                      </p>
-                      <p className="mt-2 text-[26px] leading-none font-semibold tracking-tight tabular-nums">
-                        {formatNumber(c.avg)}
-                        <span className="ml-1 text-sm font-medium text-muted">{c.unit}</span>
-                      </p>
-                      <p className="mt-2 text-xs text-faint">
-                        {formatNumber(c.min)} a {formatNumber(c.max)} · {c.stations} estações
-                      </p>
-                    </div>
-                  );
-                })}
-              </section>
+                  )}
+                  {conditions.map((c) => {
+                    const visual = sensorVisual(c.type);
+                    return (
+                      <div
+                        key={c.type}
+                        className="min-w-[170px] flex-1 border-b border-l border-line p-5"
+                      >
+                        <p className="flex items-center gap-2 text-[13px] font-medium text-muted">
+                          <visual.icon
+                            className="size-4"
+                            style={{ color: visual.color }}
+                            aria-hidden
+                          />
+                          {c.type}
+                        </p>
+                        <p className="mt-2 text-[26px] leading-none font-semibold tracking-tight tabular-nums">
+                          {formatNumber(c.avg)}
+                          <span className="ml-1 text-sm font-medium text-muted">
+                            {c.unit}
+                          </span>
+                        </p>
+                        <p className="mt-2 text-xs text-faint">
+                          {formatNumber(c.min)} a {formatNumber(c.max)} ·{" "}
+                          {c.stations} estações
+                        </p>
+                      </div>
+                    );
+                  })}
+                </section>
               </div>
             )}
           </Card>
@@ -146,13 +228,20 @@ export function DashboardPage() {
                 {overview.isLoading ? (
                   <Skeleton className="h-[420px] rounded-none" />
                 ) : (
-                  <StationsMapLazy stations={selectedStations} height={420} zoom={12} />
+                  <StationsMapLazy
+                    stations={selectedStations}
+                    height={420}
+                    zoom={12}
+                  />
                 )}
               </div>
             </Card>
 
             <Card className="flex flex-col lg:col-span-5">
-              <CardHeader title="Estações" description="Status e última leitura" />
+              <CardHeader
+                title="Estações"
+                description="Status e última leitura"
+              />
               <div className="px-5 pt-4">
                 {summary && (
                   <Segmented
@@ -161,14 +250,29 @@ export function DashboardPage() {
                     onChange={setFilter}
                     options={[
                       { value: "all", label: "Todas", count: summary.total },
-                      { value: "Online", label: "Online", count: summary.online },
-                      { value: "Com alerta", label: "Com alerta", count: summary.with_alert },
-                      { value: "Offline", label: "Offline", count: summary.offline },
+                      {
+                        value: "Online",
+                        label: "Online",
+                        count: summary.online,
+                      },
+                      {
+                        value: "Com alerta",
+                        label: "Com alerta",
+                        count: summary.with_alert,
+                      },
+                      {
+                        value: "Offline",
+                        label: "Offline",
+                        count: summary.offline,
+                      },
                     ]}
                   />
                 )}
               </div>
-              <ul className="mt-3 max-h-[392px] flex-1 overflow-y-auto border-t border-line px-2 py-2" aria-label="Estações">
+              <ul
+                className="mt-3 max-h-[392px] flex-1 overflow-y-auto border-t border-line px-2 py-2"
+                aria-label="Estações"
+              >
                 {overview.isLoading &&
                   Array.from({ length: 6 }, (_, i) => (
                     <li key={i} className="px-3 py-2">
@@ -176,8 +280,15 @@ export function DashboardPage() {
                     </li>
                   ))}
                 {visible.map((station) => (
-                  <StationRow key={station.id} station={station}
-                    lastUpdate={current.data?.stations.find((s) => s.station_id === station.id)?.last_update} />
+                  <StationRow
+                    key={station.id}
+                    station={station}
+                    lastUpdate={
+                      current.data?.stations.find(
+                        (s) => s.station_id === station.id,
+                      )?.last_update
+                    }
+                  />
                 ))}
                 {!overview.isLoading && visible.length === 0 && (
                   <li>
@@ -189,8 +300,15 @@ export function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 [&>*]:min-w-0">
-            <SeriesCard title="Clima na rede" stationId={stationId} propertyId={propertyId} className="lg:col-span-8" />
-            <Can permission="triggered-alerts.read"><PendingAlertsCard className="lg:col-span-4" /></Can>
+            <SeriesCard
+              title="Clima na rede"
+              stationId={stationId}
+              propertyId={propertyId}
+              className="lg:col-span-8"
+            />
+            <Can permission="triggered-alerts.read">
+              <PendingAlertsCard className="lg:col-span-4" />
+            </Can>
           </div>
         </div>
       )}
@@ -198,7 +316,11 @@ export function DashboardPage() {
   );
 }
 
-function NetworkSummary({ overview, stationId, propertyId }: {
+function NetworkSummary({
+  overview,
+  stationId,
+  propertyId,
+}: {
   overview: Overview | undefined;
   stationId?: number;
   propertyId?: number;
@@ -207,7 +329,8 @@ function NetworkSummary({ overview, stationId, propertyId }: {
   const canReadOccurrences = useCan("occurrences.read");
   const columns = 3 + Number(canReadAlerts) + Number(canReadOccurrences);
   const summary = overview?.summary;
-  const pending = overview?.stations.reduce((total, s) => total + s.active_alerts, 0) ?? 0;
+  const pending =
+    overview?.stations.reduce((total, s) => total + s.active_alerts, 0) ?? 0;
   const communicating = summary ? summary.online + summary.with_alert : 0;
   const parts: { status: StationStatus; value: number }[] = summary
     ? [
@@ -219,7 +342,10 @@ function NetworkSummary({ overview, stationId, propertyId }: {
 
   return (
     <Card className="shadow-[var(--shadow-lift)]">
-      <section aria-label="Resumo" className={`grid divide-y divide-line sm:grid-cols-2 sm:divide-x xl:divide-y-0 ${columns === 5 ? "xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]" : columns === 4 ? "xl:grid-cols-[1.4fr_1fr_1fr_1fr]" : "xl:grid-cols-[1.4fr_1fr_1fr]"}`}>
+      <section
+        aria-label="Resumo"
+        className={`grid divide-y divide-line sm:grid-cols-2 sm:divide-x xl:divide-y-0 ${columns === 5 ? "xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]" : columns === 4 ? "xl:grid-cols-[1.4fr_1fr_1fr_1fr]" : "xl:grid-cols-[1.4fr_1fr_1fr]"}`}
+      >
         {!summary ? (
           Array.from({ length: columns }, (_, i) => (
             <div key={i} className="p-5">
@@ -229,41 +355,75 @@ function NetworkSummary({ overview, stationId, propertyId }: {
         ) : (
           <>
             <div className="p-5">
-              <p className="text-[13px] font-medium text-muted">Estações comunicando</p>
+              <p className="text-[13px] font-medium text-muted">
+                Estações comunicando
+              </p>
               <p className="mt-1.5 flex items-baseline gap-2">
                 <span className="text-3xl font-semibold tracking-tight tabular-nums">{`${communicating}/${summary.total}`}</span>
-                <span className="text-xs text-faint">limite de {overview?.offline_threshold_minutes} min sem dados</span>
+                <span className="text-xs text-faint">
+                  limite de {overview?.offline_threshold_minutes} min sem dados
+                </span>
               </p>
-              <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-subtle" aria-hidden>
+              <div
+                className="mt-3 flex h-2 overflow-hidden rounded-full bg-subtle"
+                aria-hidden
+              >
                 {parts.map((part) =>
                   part.value > 0 ? (
                     <span
                       key={part.status}
                       className="h-full first:rounded-l-full last:rounded-r-full"
-                      style={{ width: `${(part.value / summary.total) * 100}%`, background: STATUS_COLOR[part.status] }}
+                      style={{
+                        width: `${(part.value / summary.total) * 100}%`,
+                        background: STATUS_COLOR[part.status],
+                      }}
                     />
                   ) : null,
                 )}
               </div>
             </div>
-            <Metric label="Com alerta" value={summary.with_alert} hint="Online, com alerta pendente" status="Com alerta" />
-            <Metric label="Offline" value={summary.offline} hint="Sem comunicação recente" status="Offline" />
-            <Can permission="triggered-alerts.read"><Link href="/alertas" className="group p-5 transition-colors hover:bg-canvas/70">
-              <div>
-                <p className="flex items-center justify-between text-[13px] font-medium text-muted">
-                  Alertas pendentes
-                  <ChevronRight className="size-4 text-faint transition-transform group-hover:translate-x-0.5" aria-hidden />
-                </p>
-                <p className="mt-1.5 text-3xl font-semibold tracking-tight tabular-nums">{pending}</p>
-                <p className="mt-1 text-xs text-faint">Aguardando reconhecimento</p>
-              </div>
-            </Link></Can>
-            <Can permission="occurrences.read"><OccurrencesSummary
-              key={`${propertyId ?? "all"}:${stationId ?? "all"}`}
-              stationId={stationId}
-              propertyId={propertyId}
-              stations={overview?.stations ?? []}
-            /></Can>
+            <Metric
+              label="Com alerta"
+              value={summary.with_alert}
+              hint="Online, com alerta pendente"
+              status="Com alerta"
+            />
+            <Metric
+              label="Offline"
+              value={summary.offline}
+              hint="Sem comunicação recente"
+              status="Offline"
+            />
+            <Can permission="triggered-alerts.read">
+              <Link
+                href="/alertas"
+                className="group p-5 transition-colors hover:bg-canvas/70"
+              >
+                <div>
+                  <p className="flex items-center justify-between text-[13px] font-medium text-muted">
+                    Alertas pendentes
+                    <ChevronRight
+                      className="size-4 text-faint transition-transform group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
+                  </p>
+                  <p className="mt-1.5 text-3xl font-semibold tracking-tight tabular-nums">
+                    {pending}
+                  </p>
+                  <p className="mt-1 text-xs text-faint">
+                    Aguardando reconhecimento
+                  </p>
+                </div>
+              </Link>
+            </Can>
+            <Can permission="occurrences.read">
+              <OccurrencesSummary
+                key={`${propertyId ?? "all"}:${stationId ?? "all"}`}
+                stationId={stationId}
+                propertyId={propertyId}
+                stations={overview?.stations ?? []}
+              />
+            </Can>
           </>
         )}
       </section>
@@ -271,22 +431,48 @@ function NetworkSummary({ overview, stationId, propertyId }: {
   );
 }
 
-function Metric({ label, value, hint, status }: { label: string; value: number; hint: string; status: StationStatus }) {
+function Metric({
+  label,
+  value,
+  hint,
+  status,
+}: {
+  label: string;
+  value: number;
+  hint: string;
+  status: StationStatus;
+}) {
   return (
     <div className="p-5">
       <p className="flex items-center gap-2 text-[13px] font-medium text-muted">
-        <span className="size-2 rounded-full" style={{ background: STATUS_COLOR[status] }} aria-hidden />
+        <span
+          className="size-2 rounded-full"
+          style={{ background: STATUS_COLOR[status] }}
+          aria-hidden
+        />
         {label}
       </p>
-      <p className="mt-1.5 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-1.5 text-3xl font-semibold tracking-tight tabular-nums">
+        {value}
+      </p>
       <p className="mt-1 text-xs text-faint">{hint}</p>
     </div>
   );
 }
 
-function StationRow({ station, lastUpdate }: { station: StationOverview; lastUpdate: string | null | undefined }) {
-  const temp = station.latest_readings.find((r) => r.sensor_type === "Temperatura");
-  const humidity = station.latest_readings.find((r) => r.sensor_type === "Umidade");
+function StationRow({
+  station,
+  lastUpdate,
+}: {
+  station: StationOverview;
+  lastUpdate: string | null | undefined;
+}) {
+  const temp = station.latest_readings.find(
+    (r) => r.sensor_type === "Temperatura",
+  );
+  const humidity = station.latest_readings.find(
+    (r) => r.sensor_type === "Umidade",
+  );
   return (
     <li>
       <Link
@@ -295,17 +481,31 @@ function StationRow({ station, lastUpdate }: { station: StationOverview; lastUpd
       >
         <StatusDot status={station.status} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-700">{station.name}</span>
-          <span className="block truncate text-xs text-muted">{station.property_name}</span>
+          <span className="block truncate text-sm font-medium text-ink group-hover:text-brand-700">
+            {station.name}
+          </span>
+          <span className="block truncate text-xs text-muted">
+            {station.property_name}
+          </span>
           <LastUpdate lastUpdate={lastUpdate} stationName={station.name} />
           {communicationDelay(station.last_communication_at) && (
-            <LastCommunication lastCommunicationAt={station.last_communication_at} className="mt-0.5 text-xs" />
+            <LastCommunication
+              lastCommunicationAt={station.last_communication_at}
+              className="mt-0.5 text-xs"
+            />
           )}
         </span>
         <span className="sr-only">{station.status}</span>
         <span className="text-right">
-          <span className={cn("block text-sm font-semibold tabular-nums", !temp && "font-normal text-faint")}>
-            {temp ? `${formatNumber(temp.value)} ${temp.unit_of_measure}` : "sem leitura"}
+          <span
+            className={cn(
+              "block text-sm font-semibold tabular-nums",
+              !temp && "font-normal text-faint",
+            )}
+          >
+            {temp
+              ? `${formatNumber(temp.value)} ${temp.unit_of_measure}`
+              : "sem leitura"}
           </span>
           <span className="block text-xs text-faint tabular-nums">
             {humidity ? `${formatNumber(humidity.value)} % · ` : ""}

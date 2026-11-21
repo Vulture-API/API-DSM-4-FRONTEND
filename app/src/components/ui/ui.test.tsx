@@ -80,7 +80,11 @@ describe("componentes base", () => {
         <Badge tone="danger" dot pulse>
           Offline
         </Badge>
-        <EmptyState title="Vazio" description="Nada aqui" action={<button>ação</button>} />
+        <EmptyState
+          title="Vazio"
+          description="Nada aqui"
+          action={<button>ação</button>}
+        />
       </>,
     );
     expect(screen.getByText("Offline")).toBeInTheDocument();

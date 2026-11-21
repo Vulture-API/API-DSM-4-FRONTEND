@@ -59,9 +59,10 @@ export function PropertyFormModal({
   // envio precisa usar o mesmo responsável que aparece na tela.
   const listedOwner = users.some((u) => String(u.id) === values.owner_user_id);
   const defaultOwner = users.find((u) => u.id === currentUserId) ?? users[0];
-  const ownerUserId = listedOwner || !users.length
-    ? values.owner_user_id
-    : String(defaultOwner?.id ?? "");
+  const ownerUserId =
+    listedOwner || !users.length
+      ? values.owner_user_id
+      : String(defaultOwner?.id ?? "");
 
   const [errors, setErrors] = useState<Errors>({});
 
@@ -114,7 +115,12 @@ export function PropertyFormModal({
         </>
       }
     >
-      <form id="property-form" onSubmit={submit} noValidate className="space-y-4">
+      <form
+        id="property-form"
+        onSubmit={submit}
+        noValidate
+        className="space-y-4"
+      >
         <Field label="Nome da propriedade *" error={errors.name}>
           {(p) => (
             <Input
@@ -126,7 +132,11 @@ export function PropertyFormModal({
           )}
         </Field>
 
-        <Field label="Localização (Município - UF)" error={errors.location} hint="Opcional">
+        <Field
+          label="Localização (Município - UF)"
+          error={errors.location}
+          hint="Opcional"
+        >
           {(p) => (
             <Input
               {...p}
@@ -151,9 +161,7 @@ export function PropertyFormModal({
                   </option>
                 ))
               ) : (
-                <option value={ownerUserId}>
-                  Carregando responsáveis...
-                </option>
+                <option value={ownerUserId}>Carregando responsáveis...</option>
               )}
             </Select>
           )}

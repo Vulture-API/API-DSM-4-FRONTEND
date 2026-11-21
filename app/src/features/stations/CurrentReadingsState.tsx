@@ -6,7 +6,11 @@ import { formatRelative } from "@/lib/format";
 import type { ConnectionStatus } from "./useCurrentReadings";
 
 export function CurrentReadingsState({
-  connection, error, updatedAt, now, onRetry,
+  connection,
+  error,
+  updatedAt,
+  now,
+  onRetry,
 }: {
   connection: ConnectionStatus;
   error: Error | null;
@@ -15,7 +19,11 @@ export function CurrentReadingsState({
   onRetry: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 px-5 py-3 text-xs text-muted" role="status" aria-live="polite">
+    <div
+      className="flex flex-wrap items-center gap-2 px-5 py-3 text-xs text-muted"
+      role="status"
+      aria-live="polite"
+    >
       <span>
         {error
           ? "Não foi possível sincronizar. Mantendo as últimas medições disponíveis."
@@ -25,8 +33,16 @@ export function CurrentReadingsState({
               ? "Conexão interrompida. Tentando reconectar; consulta automática a cada 30 s."
               : "Conectando às novas medições…"}
       </span>
-      {updatedAt > 0 && <span>Sincronizado {formatRelative(new Date(updatedAt), new Date(now))}.</span>}
-      {error && <Button variant="secondary" size="sm" onClick={onRetry}>Tentar novamente</Button>}
+      {updatedAt > 0 && (
+        <span>
+          Sincronizado {formatRelative(new Date(updatedAt), new Date(now))}.
+        </span>
+      )}
+      {error && (
+        <Button variant="secondary" size="sm" onClick={onRetry}>
+          Tentar novamente
+        </Button>
+      )}
     </div>
   );
 }

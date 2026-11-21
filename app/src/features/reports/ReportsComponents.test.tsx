@@ -4,7 +4,11 @@ import type { Property, Station } from "@/features/stations/api";
 import { ReportFiltersForm } from "./ReportFiltersForm";
 import { ReportTypeSelector } from "./ReportTypeSelector";
 import { ReportViewer } from "./ReportViewer";
-import type { AlertsReport, ForecastReport, HistoryReport } from "./reportRules";
+import type {
+  AlertsReport,
+  ForecastReport,
+  HistoryReport,
+} from "./reportRules";
 
 const fictionalProperties: Property[] = [
   { id: 1, name: "Fazenda Vale Verde", location: "São José dos Campos" },
@@ -196,7 +200,9 @@ describe("ReportFiltersForm", () => {
         startDate="15/10/2026"
         endDate="10/10/2026"
         days="7"
-        validationErrors={["A data inicial não pode ser posterior à data final."]}
+        validationErrors={[
+          "A data inicial não pode ser posterior à data final.",
+        ]}
         canExport={false}
         onPropertyChange={onPropertyChange}
         onStationChange={onStationChange}
@@ -265,7 +271,9 @@ describe("ReportFiltersForm", () => {
     fireEvent.click(exportBtn);
     expect(onExportCsv).toHaveBeenCalledTimes(1);
 
-    const exportJsonBtn = screen.getByRole("button", { name: /Exportar JSON/i });
+    const exportJsonBtn = screen.getByRole("button", {
+      name: /Exportar JSON/i,
+    });
     expect(exportJsonBtn).toBeEnabled();
     fireEvent.click(exportJsonBtn);
     expect(onExportJson).toHaveBeenCalledTimes(1);
@@ -282,8 +290,12 @@ describe("ReportViewer", () => {
       />,
     );
 
-    expect(screen.getByText("Resumo Estatístico por Tipo de Sensor")).toBeInTheDocument();
-    expect(screen.getByText("Amostra de Leituras do Período")).toBeInTheDocument();
+    expect(
+      screen.getByText("Resumo Estatístico por Tipo de Sensor"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Amostra de Leituras do Período"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Consistente")).toBeInTheDocument();
     expect(screen.getByText("Suspeito")).toBeInTheDocument();
     expect(screen.getByText("50%")).toBeInTheDocument();
@@ -315,7 +327,9 @@ describe("ReportViewer", () => {
       />,
     );
 
-    expect(screen.getByText("Ocorrências e Alertas Disparados")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ocorrências e Alertas Disparados"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Temperatura crítica acima de 35 °C"),
     ).toBeInTheDocument();
@@ -341,7 +355,9 @@ describe("ReportViewer", () => {
         onRetry={onRetry}
       />,
     );
-    expect(screen.getByText("Falha temporária na comunicação")).toBeInTheDocument();
+    expect(
+      screen.getByText("Falha temporária na comunicação"),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Tentar de novo/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
 

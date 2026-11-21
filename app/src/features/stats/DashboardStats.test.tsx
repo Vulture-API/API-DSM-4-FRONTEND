@@ -19,12 +19,16 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
 
     // Cabeçalho e resumo por sensor
     expect(
-      await screen.findByRole("heading", { name: "Estatísticas meteorológicas" }),
+      await screen.findByRole("heading", {
+        name: "Estatísticas meteorológicas",
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText("Resumo por sensor")).toBeInTheDocument();
 
     // Valida exibição dos 7 sensores no resumo consolidado
-    expect((await screen.findAllByText("Temperatura")).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Temperatura")).length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getAllByText("Umidade do Ar").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Vento").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Chuva").length).toBeGreaterThan(0);
@@ -93,22 +97,32 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
     const { calls } = mockApi(defaultRoutes());
     renderWithProviders(<DashboardStats />);
 
-    expect(await screen.findByText("Comparativo por estação")).toBeInTheDocument();
-    expect(screen.getByText("Monitoramento de limite de alerta")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Comparativo por estação"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Monitoramento de limite de alerta"),
+    ).toBeInTheDocument();
 
     // Filtra gráfico de barras por Velocidade do Vento
-    const barSelect = await screen.findByLabelText("Medição exibida no gráfico de barras");
+    const barSelect = await screen.findByLabelText(
+      "Medição exibida no gráfico de barras",
+    );
     await user.selectOptions(barSelect, "Velocidade do Vento");
     expect(barSelect).toHaveValue("Velocidade do Vento");
 
     // Filtra gráfico de linha por Pressão (sem regra ativa -> exibe "Sem limite")
-    const lineSelect = screen.getByLabelText("Medição exibida no gráfico de linha");
+    const lineSelect = screen.getByLabelText(
+      "Medição exibida no gráfico de linha",
+    );
     await user.selectOptions(lineSelect, "Pressão");
     expect(lineSelect).toHaveValue("Pressão");
     expect(await screen.findByText("Sem limite")).toBeInTheDocument();
 
     // Filtra gráfico de linha por estação específica
-    const stationSelect = screen.getByLabelText("Estação exibida no gráfico de linha");
+    const stationSelect = screen.getByLabelText(
+      "Estação exibida no gráfico de linha",
+    );
     await user.selectOptions(stationSelect, "1");
     expect(stationSelect).toHaveValue("1");
 
@@ -117,9 +131,7 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
     await user.selectOptions(propSelect, "1");
     expect(propSelect).toHaveValue("1");
 
-    expect(
-      calls.some((c) => c.path.includes("property_id=1")),
-    ).toBe(true);
+    expect(calls.some((c) => c.path.includes("property_id=1"))).toBe(true);
   });
 
   it("Cenário 5: período sem dados disponíveis nos 2 gráficos e no resumo", async () => {
@@ -150,7 +162,9 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
 
     // Valida estados vazios nos 7 cards e nos 2 gráficos da tela nova
     expect(await screen.findByText("Sem dados no período")).toBeInTheDocument();
-    expect(await screen.findByText("Sem dados de telemetria")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Sem dados de telemetria"),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Sem leituras no período").length).toBe(7);
   });
 
@@ -176,7 +190,9 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
       await screen.findByText("Falha ao carregar série temporal"),
     ).toBeInTheDocument();
 
-    const retryButtons = screen.getAllByRole("button", { name: "Tentar de novo" });
+    const retryButtons = screen.getAllByRole("button", {
+      name: "Tentar de novo",
+    });
     expect(retryButtons.length).toBeGreaterThanOrEqual(2);
     await user.click(retryButtons[0]!);
   });
@@ -198,10 +214,14 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
     mockApi(defaultRoutes());
     renderWithProviders(<DashboardStats />);
 
-    expect(await screen.findByText("Previsão Meteorológica")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Previsão Meteorológica"),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("forecast-day-0")).toBeInTheDocument();
     expect(screen.getByTestId("forecast-day-6")).toBeInTheDocument();
-    expect(screen.getByText("Janela de Pulverização (24h)")).toBeInTheDocument();
+    expect(
+      screen.getByText("Janela de Pulverização (24h)"),
+    ).toBeInTheDocument();
   });
 
   it("Cenário 9: indisponibilidade do serviço de previsão meteorológica (HTTP 503)", async () => {
@@ -215,7 +235,9 @@ describe("DashboardStats - [INTEGRAÇÃO SCRUM-445] Integrar dashboard de estat�
     });
     renderWithProviders(<DashboardStats />);
 
-    expect(await screen.findByText("Comparativo por estação")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Comparativo por estação"),
+    ).toBeInTheDocument();
     expect(
       await screen.findByText("Serviço de previsão meteorológica indisponível"),
     ).toBeInTheDocument();

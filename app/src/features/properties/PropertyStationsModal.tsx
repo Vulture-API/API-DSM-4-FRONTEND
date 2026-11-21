@@ -24,7 +24,10 @@ export function PropertyStationsModal({
   const associate = useAssociateStation();
   const toast = useToast();
 
-  const stations = useMemo(() => stationsQuery.data ?? [], [stationsQuery.data]);
+  const stations = useMemo(
+    () => stationsQuery.data ?? [],
+    [stationsQuery.data],
+  );
 
   const { linkedStations, availableStations } = useMemo(() => {
     if (!property) return { linkedStations: [], availableStations: [] };
@@ -75,7 +78,10 @@ export function PropertyStationsModal({
                   className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-subtle/50 px-2.5 py-1 text-xs font-medium text-ink"
                 >
                   <span className="size-1.5 rounded-full bg-brand-500" />
-                  {st.name} <span className="font-mono text-faint">({st.mac_address})</span>
+                  {st.name}{" "}
+                  <span className="font-mono text-faint">
+                    ({st.mac_address})
+                  </span>
                 </span>
               ))}
             </div>
@@ -105,7 +111,9 @@ export function PropertyStationsModal({
                 >
                   <div>
                     <span className="font-medium text-ink">{st.name}</span>
-                    <span className="ml-2 font-mono text-faint">{st.mac_address}</span>
+                    <span className="ml-2 font-mono text-faint">
+                      {st.mac_address}
+                    </span>
                   </div>
                   <Button
                     size="sm"

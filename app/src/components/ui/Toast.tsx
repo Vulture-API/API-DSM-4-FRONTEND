@@ -1,12 +1,22 @@
 "use client";
 
 import { CheckCircle2, XCircle } from "lucide-react";
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 import { cn } from "@/lib/cn";
 
 type Toast = { id: number; message: string; tone: "success" | "error" };
-type ToastApi = { success: (message: string) => void; error: (message: string) => void };
+type ToastApi = {
+  success: (message: string) => void;
+  error: (message: string) => void;
+};
 
 const ToastContext = createContext<ToastApi | null>(null);
 
@@ -17,7 +27,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback((message: string, tone: Toast["tone"]) => {
     const id = Date.now() + Math.random();
     setToasts((current) => [...current, { id, message, tone }]);
-    setTimeout(() => setToasts((current) => current.filter((t) => t.id !== id)), 4000);
+    setTimeout(
+      () => setToasts((current) => current.filter((t) => t.id !== id)),
+      4000,
+    );
   }, []);
 
   // Objeto estável: consumidores de useToast não re-renderizam a cada toast.
@@ -32,7 +45,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div aria-live="polite" className="pointer-events-none fixed right-4 bottom-4 z-[60] flex flex-col gap-2">
+      <div
+        aria-live="polite"
+        className="pointer-events-none fixed right-4 bottom-4 z-[60] flex flex-col gap-2"
+      >
         {toasts.map((toast) => (
           <div
             key={toast.id}

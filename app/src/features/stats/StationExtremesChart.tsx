@@ -54,14 +54,25 @@ export function StationExtremesChart({
   const minVal = allVals.length ? Math.min(...allVals) : 0;
   const maxVal = allVals.length ? Math.max(...allVals) : 100;
   const padding = Math.max(1, (maxVal - minVal) * 0.15);
-  const yMin = minVal >= 0 ? Math.max(0, Math.floor(minVal - padding)) : Math.floor(minVal - padding);
+  const yMin =
+    minVal >= 0
+      ? Math.max(0, Math.floor(minVal - padding))
+      : Math.floor(minVal - padding);
   const yMax = Math.ceil(maxVal + padding);
 
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 12, right: 16, bottom: 4, left: -10 }} barGap={3}>
-          <CartesianGrid vertical={false} stroke="#e4e2d9" strokeDasharray="3 3" />
+        <BarChart
+          data={rows}
+          margin={{ top: 12, right: 16, bottom: 4, left: -10 }}
+          barGap={3}
+        >
+          <CartesianGrid
+            vertical={false}
+            stroke="#e4e2d9"
+            strokeDasharray="3 3"
+          />
           <XAxis
             dataKey="shortName"
             tick={{ fontSize: 11, fill: "#636a64" }}
@@ -86,17 +97,14 @@ export function StationExtremesChart({
               backgroundColor: "var(--surface, #ffffff)",
             }}
             labelFormatter={(_, payload) => {
-              const item = payload?.[0]?.payload as StationSensorStat | undefined;
+              const item = payload?.[0]?.payload as
+                StationSensorStat | undefined;
               if (!item) return "";
               return `${item.stationName}${item.propertyName ? ` · ${item.propertyName}` : ""} (${item.count.toLocaleString("pt-BR")} leituras)`;
             }}
             formatter={(value, name) => {
               const label =
-                name === "min"
-                  ? "Mínimo"
-                  : name === "avg"
-                    ? "Média"
-                    : "Máximo";
+                name === "min" ? "Mínimo" : name === "avg" ? "Média" : "Máximo";
               return [`${formatNumber(Number(value))} ${unit}`, label];
             }}
           />
@@ -114,9 +122,27 @@ export function StationExtremesChart({
               return <span className="font-medium text-ink">{label}</span>;
             }}
           />
-          <Bar dataKey="min" fill={STAT_COLORS.min} radius={[4, 4, 0, 0]} maxBarSize={26} isAnimationActive={false} />
-          <Bar dataKey="avg" fill={STAT_COLORS.avg} radius={[4, 4, 0, 0]} maxBarSize={26} isAnimationActive={false} />
-          <Bar dataKey="max" fill={STAT_COLORS.max} radius={[4, 4, 0, 0]} maxBarSize={26} isAnimationActive={false} />
+          <Bar
+            dataKey="min"
+            fill={STAT_COLORS.min}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={26}
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="avg"
+            fill={STAT_COLORS.avg}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={26}
+            isAnimationActive={false}
+          />
+          <Bar
+            dataKey="max"
+            fill={STAT_COLORS.max}
+            radius={[4, 4, 0, 0]}
+            maxBarSize={26}
+            isAnimationActive={false}
+          />
           {networkAvg !== undefined && (
             <ReferenceLine
               y={networkAvg}
@@ -132,7 +158,11 @@ export function StationExtremesChart({
               strokeDasharray="6 4"
               strokeWidth={2}
               ifOverflow="extendDomain"
-              label={({ viewBox }: { viewBox?: { x?: number; y?: number; width?: number } }) => {
+              label={({
+                viewBox,
+              }: {
+                viewBox?: { x?: number; y?: number; width?: number };
+              }) => {
                 const x = (viewBox?.x ?? 0) + (viewBox?.width ?? 0) - 8;
                 const y = (viewBox?.y ?? 0) - 10;
                 const text = `Média geral: ${formatNumber(networkAvg)} ${unit}`;

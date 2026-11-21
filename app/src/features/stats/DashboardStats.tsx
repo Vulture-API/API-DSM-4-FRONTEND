@@ -41,7 +41,10 @@ import {
   isThresholdViolated,
   type ThresholdRule,
 } from "./AlertThresholdChart";
-import { StationExtremesChart, type StationSensorStat } from "./StationExtremesChart";
+import {
+  StationExtremesChart,
+  type StationSensorStat,
+} from "./StationExtremesChart";
 
 const PERIOD_OPTIONS = [
   { value: "6", label: "6 h", hours: 6 },
@@ -51,13 +54,55 @@ const PERIOD_OPTIONS = [
 ] as const;
 
 const SENSOR_CATALOG = [
-  { name: "Temperatura", shortLabel: "Temperatura", unit: "°C", icon: Thermometer, color: "#d9582b" },
-  { name: "Umidade", shortLabel: "Umidade do Ar", unit: "%", icon: Droplets, color: "#2f6fb3" },
-  { name: "Velocidade do Vento", shortLabel: "Vento", unit: "km/h", icon: Wind, color: "#4b8a8a" },
-  { name: "Índice Pluviométrico", shortLabel: "Chuva", unit: "mm", icon: CloudRain, color: "#5b61c9" },
-  { name: "Pressão", shortLabel: "Pressão", unit: "hPa", icon: Gauge, color: "#6d7468" },
-  { name: "Temperatura do Solo", shortLabel: "Temp. Solo", unit: "°C", icon: Thermometer, color: "#b85c38" },
-  { name: "Umidade do Solo", shortLabel: "Umid. Solo", unit: "%", icon: Sprout, color: "#7c5b2e" },
+  {
+    name: "Temperatura",
+    shortLabel: "Temperatura",
+    unit: "°C",
+    icon: Thermometer,
+    color: "#d9582b",
+  },
+  {
+    name: "Umidade",
+    shortLabel: "Umidade do Ar",
+    unit: "%",
+    icon: Droplets,
+    color: "#2f6fb3",
+  },
+  {
+    name: "Velocidade do Vento",
+    shortLabel: "Vento",
+    unit: "km/h",
+    icon: Wind,
+    color: "#4b8a8a",
+  },
+  {
+    name: "Índice Pluviométrico",
+    shortLabel: "Chuva",
+    unit: "mm",
+    icon: CloudRain,
+    color: "#5b61c9",
+  },
+  {
+    name: "Pressão",
+    shortLabel: "Pressão",
+    unit: "hPa",
+    icon: Gauge,
+    color: "#6d7468",
+  },
+  {
+    name: "Temperatura do Solo",
+    shortLabel: "Temp. Solo",
+    unit: "°C",
+    icon: Thermometer,
+    color: "#b85c38",
+  },
+  {
+    name: "Umidade do Solo",
+    shortLabel: "Umid. Solo",
+    unit: "%",
+    icon: Sprout,
+    color: "#7c5b2e",
+  },
 ] as const;
 
 export function DashboardStats() {
@@ -86,7 +131,10 @@ export function DashboardStats() {
   const sensorTypesQuery = useSensorTypes();
   const alertRules = useAlertRules();
 
-  const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
+  const stations = useMemo(
+    () => overview.data?.stations ?? [],
+    [overview.data],
+  );
   const forecastStation = useMemo(
     () => stations.find((s) => s.id === lineStationId) ?? stations[0],
     [stations, lineStationId],
@@ -94,7 +142,8 @@ export function DashboardStats() {
   const forecastQuery = useForecast(forecastStation?.id, 7);
 
   // Cálculo de intervalo [from, to] do Gráfico de Barras e KPIs
-  const currentBarOption = PERIOD_OPTIONS.find((p) => p.value === barPeriod) ?? PERIOD_OPTIONS[2]!;
+  const currentBarOption =
+    PERIOD_OPTIONS.find((p) => p.value === barPeriod) ?? PERIOD_OPTIONS[2]!;
   const { fromIso, toIso } = useMemo(() => {
     const to = new Date(anchorMs);
     const from = new Date(anchorMs - currentBarOption.hours * 3_600_000);
@@ -118,14 +167,20 @@ export function DashboardStats() {
 
   // 2. Dados do Gráfico 1 (Barras): Estatísticas por Estação no Banco
   const targetStationsForBars = useMemo(() => {
-    const communicating = stations.filter((s) => s.last_communication_at !== null);
+    const communicating = stations.filter(
+      (s) => s.last_communication_at !== null,
+    );
     return (communicating.length ? communicating : stations).slice(0, 8);
   }, [stations]);
 
   const stationStatsQueries = useQueries({
     queries: targetStationsForBars.map((st) => ({
-      queryKey: stationKeys.stationStatistics(st.id, { from: fromIso, to: toIso }),
-      queryFn: () => stationsApi.stationStatistics(st.id, { from: fromIso, to: toIso }),
+      queryKey: stationKeys.stationStatistics(st.id, {
+        from: fromIso,
+        to: toIso,
+      }),
+      queryFn: () =>
+        stationsApi.stationStatistics(st.id, { from: fromIso, to: toIso }),
       staleTime: 60_000,
     })),
   });
@@ -157,7 +212,8 @@ export function DashboardStats() {
   const barVisual = sensorVisual(barSensor);
   const barUnit =
     barStat?.unit_of_measure ??
-    SENSOR_CATALOG.find((c) => c.name.toLowerCase() === barSensor.toLowerCase())?.unit ??
+    SENSOR_CATALOG.find((c) => c.name.toLowerCase() === barSensor.toLowerCase())
+      ?.unit ??
     "";
 
   const barLow = stationExtremesList.length
@@ -191,16 +247,22 @@ export function DashboardStats() {
   const selectedLineSeries = useMemo(() => {
     const list = lineSeriesQuery.data?.series ?? [];
     return (
-      list.find((s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase()) ??
-      list[0]
+      list.find(
+        (s) => s.sensor_type.toLowerCase() === lineSensor.toLowerCase(),
+      ) ?? list[0]
     );
   }, [lineSeriesQuery.data, lineSensor]);
 
-  const linePoints = useMemo(() => selectedLineSeries?.points ?? [], [selectedLineSeries]);
+  const linePoints = useMemo(
+    () => selectedLineSeries?.points ?? [],
+    [selectedLineSeries],
+  );
   const lineVisual = sensorVisual(lineSensor);
   const lineUnit =
     selectedLineSeries?.unit_of_measure ??
-    SENSOR_CATALOG.find((c) => c.name.toLowerCase() === lineSensor.toLowerCase())?.unit ??
+    SENSOR_CATALOG.find(
+      (c) => c.name.toLowerCase() === lineSensor.toLowerCase(),
+    )?.unit ??
     "";
 
   // Regra de alerta ativa no banco (alert_configs) para o sensor do Gráfico 2
@@ -250,18 +312,29 @@ export function DashboardStats() {
     }
 
     return null;
-  }, [alertRules.data, sensorsQuery.data, sensorTypesQuery.data, stations, lineSensor, lineStationId, propertyId]);
+  }, [
+    alertRules.data,
+    sensorsQuery.data,
+    sensorTypesQuery.data,
+    stations,
+    lineSensor,
+    lineStationId,
+    propertyId,
+  ]);
 
   const linePeriodAvg = useMemo(() => {
     if (!linePoints.length) return undefined;
     return Number(
-      (linePoints.reduce((acc, p) => acc + p.avg, 0) / linePoints.length).toFixed(2),
+      (
+        linePoints.reduce((acc, p) => acc + p.avg, 0) / linePoints.length
+      ).toFixed(2),
     );
   }, [linePoints]);
 
   const violationsCount = useMemo(() => {
     if (!matchedRule || !linePoints.length) return 0;
-    return linePoints.filter((p) => isThresholdViolated(p.avg, matchedRule)).length;
+    return linePoints.filter((p) => isThresholdViolated(p.avg, matchedRule))
+      .length;
   }, [linePoints, matchedRule]);
 
   function handleExportCsv() {
@@ -273,7 +346,9 @@ export function DashboardStats() {
         `${s.sensor_type};${s.unit_of_measure};${s.count};${s.min};${s.avg};${s.max}`,
       );
     }
-    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([rows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -305,7 +380,9 @@ export function DashboardStats() {
                 id={propSelectId}
                 value={propertyId ?? ""}
                 onChange={(e) => {
-                  setPropertyId(e.target.value ? Number(e.target.value) : undefined);
+                  setPropertyId(
+                    e.target.value ? Number(e.target.value) : undefined,
+                  );
                   setLineStationId(undefined);
                 }}
                 className="h-9 min-w-52 border-white/15 bg-white/10 text-white"
@@ -383,7 +460,10 @@ export function DashboardStats() {
               return (
                 <div key={item.name} className="p-4 text-left">
                   <p className="flex items-center gap-1.5 text-xs font-medium text-muted">
-                    <Icon className="size-3.5 shrink-0" style={{ color: item.color }} />
+                    <Icon
+                      className="size-3.5 shrink-0"
+                      style={{ color: item.color }}
+                    />
                     <span className="truncate">{item.shortLabel}</span>
                   </p>
                   <p className="mt-2 text-2xl leading-none font-semibold tracking-tight tabular-nums text-ink">
@@ -395,13 +475,21 @@ export function DashboardStats() {
                   {stat ? (
                     <div className="mt-2 space-y-0.5 text-[11px] tabular-nums text-faint">
                       <p>
-                        Mín <span className="font-medium text-info">{formatNumber(stat.min)}</span> · Máx{" "}
-                        <span className="font-medium text-danger">{formatNumber(stat.max)}</span>
+                        Mín{" "}
+                        <span className="font-medium text-info">
+                          {formatNumber(stat.min)}
+                        </span>{" "}
+                        · Máx{" "}
+                        <span className="font-medium text-danger">
+                          {formatNumber(stat.max)}
+                        </span>
                       </p>
                       <p>{stat.count.toLocaleString("pt-BR")} leituras</p>
                     </div>
                   ) : (
-                    <p className="mt-2 text-[11px] text-faint">Sem leituras no período</p>
+                    <p className="mt-2 text-[11px] text-faint">
+                      Sem leituras no período
+                    </p>
                   )}
                 </div>
               );
@@ -422,7 +510,10 @@ export function DashboardStats() {
               label="Período"
               value={barPeriod}
               onChange={setBarPeriod}
-              options={PERIOD_OPTIONS.map(({ value, label }) => ({ value, label }))}
+              options={PERIOD_OPTIONS.map(({ value, label }) => ({
+                value,
+                label,
+              }))}
             />
           }
         />
@@ -455,35 +546,44 @@ export function DashboardStats() {
             </div>
           </div>
 
-          {barAvg !== undefined && barLow !== undefined && barHigh !== undefined && (
-            <dl className="flex gap-6 text-right">
-              <div>
-                <dt className="text-xs text-faint">Mínimo</dt>
-                <dd className="text-lg font-semibold tabular-nums text-info">
-                  {formatNumber(barLow)}{" "}
-                  <span className="text-xs font-medium text-muted">{barUnit}</span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-faint">Média</dt>
-                <dd className="text-lg font-semibold tabular-nums text-ok">
-                  {formatNumber(barAvg)}{" "}
-                  <span className="text-xs font-medium text-muted">{barUnit}</span>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-faint">Máximo</dt>
-                <dd className="text-lg font-semibold tabular-nums text-danger">
-                  {formatNumber(barHigh)}{" "}
-                  <span className="text-xs font-medium text-muted">{barUnit}</span>
-                </dd>
-              </div>
-            </dl>
-          )}
+          {barAvg !== undefined &&
+            barLow !== undefined &&
+            barHigh !== undefined && (
+              <dl className="flex gap-6 text-right">
+                <div>
+                  <dt className="text-xs text-faint">Mínimo</dt>
+                  <dd className="text-lg font-semibold tabular-nums text-info">
+                    {formatNumber(barLow)}{" "}
+                    <span className="text-xs font-medium text-muted">
+                      {barUnit}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-faint">Média</dt>
+                  <dd className="text-lg font-semibold tabular-nums text-ok">
+                    {formatNumber(barAvg)}{" "}
+                    <span className="text-xs font-medium text-muted">
+                      {barUnit}
+                    </span>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-faint">Máximo</dt>
+                  <dd className="text-lg font-semibold tabular-nums text-danger">
+                    {formatNumber(barHigh)}{" "}
+                    <span className="text-xs font-medium text-muted">
+                      {barUnit}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
+            )}
         </div>
 
         <div className="flex-1 px-3 pt-3 pb-4">
-          {overview.isLoading || stationStatsQueries.some((q) => q.isLoading) ? (
+          {overview.isLoading ||
+          stationStatsQueries.some((q) => q.isLoading) ? (
             <Skeleton className="mx-2 h-64 rounded-xl" />
           ) : overview.error ? (
             <ErrorState
@@ -561,7 +661,9 @@ export function DashboardStats() {
                 className="h-9 w-56"
                 value={lineStationId ?? ""}
                 onChange={(e) =>
-                  setLineStationId(e.target.value ? Number(e.target.value) : undefined)
+                  setLineStationId(
+                    e.target.value ? Number(e.target.value) : undefined,
+                  )
                 }
               >
                 <option value="">Todas as estações</option>
@@ -580,7 +682,9 @@ export function DashboardStats() {
                 <dt className="text-xs text-faint">Média</dt>
                 <dd className="text-lg font-semibold tabular-nums text-ok">
                   {formatNumber(linePeriodAvg)}{" "}
-                  <span className="text-xs font-medium text-muted">{lineUnit}</span>
+                  <span className="text-xs font-medium text-muted">
+                    {lineUnit}
+                  </span>
                 </dd>
               </div>
             )}
@@ -651,8 +755,16 @@ export function DashboardStats() {
         <ForecastCalendarCard
           stationName={forecastStation?.name ?? "Estação Sede"}
           propertyName={forecastStation?.property_name ?? "Fazenda Santa Rita"}
-          latitude={forecastStation?.latitude ?? forecastQuery.data?.latitude ?? -23.1896}
-          longitude={forecastStation?.longitude ?? forecastQuery.data?.longitude ?? -45.8841}
+          latitude={
+            forecastStation?.latitude ??
+            forecastQuery.data?.latitude ??
+            -23.1896
+          }
+          longitude={
+            forecastStation?.longitude ??
+            forecastQuery.data?.longitude ??
+            -45.8841
+          }
           forecast={forecastQuery.data}
           isLoading={forecastQuery.isLoading}
         />

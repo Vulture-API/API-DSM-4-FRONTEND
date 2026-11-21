@@ -7,15 +7,27 @@ import type { TelemetryRow } from "./HistoryPage";
 const MAX_POINTS = 500;
 const MAX_HOURS = 720;
 
-const GROUPING_MINUTES: Record<string, number> = { "10m": 10, "30m": 30, "1h": 60, "1d": 1440 };
+const GROUPING_MINUTES: Record<string, number> = {
+  "10m": 10,
+  "30m": 30,
+  "1h": 60,
+  "1d": 1440,
+};
 
 /**
  * Janela da série agregada que cobre o período pedido. A série é contada a
  * partir de agora; o intervalo é aumentado quando o período não cabe em 500
  * pontos (ex.: 30 dias a cada 10 min vira 30 dias a cada 90 min).
  */
-export function seriesWindow(startUnix: number, nowUnix: number, grouping: string) {
-  const hours = Math.min(MAX_HOURS, Math.max(1, Math.ceil((nowUnix - startUnix) / 3600)));
+export function seriesWindow(
+  startUnix: number,
+  nowUnix: number,
+  grouping: string,
+) {
+  const hours = Math.min(
+    MAX_HOURS,
+    Math.max(1, Math.ceil((nowUnix - startUnix) / 3600)),
+  );
   const wanted = GROUPING_MINUTES[grouping] ?? 60;
   const minimum = Math.ceil((hours * 60) / MAX_POINTS);
   return { hours, bucketMinutes: Math.max(5, wanted, minimum) };
@@ -62,7 +74,8 @@ export function buildHistoryRows(
     for (const typeSeries of series?.series ?? []) {
       const field = FIELD_BY_TYPE[typeSeries.sensor_type];
       if (!field) continue;
-      if (sensorFilter !== "all" && typeSeries.sensor_type !== sensorFilter) continue;
+      if (sensorFilter !== "all" && typeSeries.sensor_type !== sensorFilter)
+        continue;
       for (const point of typeSeries.points) {
         if (point.t < start || point.t > end) continue;
         const values = byTime.get(point.t) ?? {};
@@ -96,10 +109,17 @@ export function buildHistoryRows(
         soilTemp: v.soilTemp ?? null,
         soilHum,
         soilAlert: isSoilDry,
-        alertMessage: isHot ? "Temp. acima de 35 °C" : isSoilDry ? "Solo seco (< 38%)" : null,
+        alertMessage: isHot
+          ? "Temp. acima de 35 °C"
+          : isSoilDry
+            ? "Solo seco (< 38%)"
+            : null,
         warnMessage: isDry ? "Umidade relativa baixa" : null,
       });
     }
   }
-  return rows.sort((a, b) => b.unixTime - a.unixTime || a.stationName.localeCompare(b.stationName));
+  return rows.sort(
+    (a, b) =>
+      b.unixTime - a.unixTime || a.stationName.localeCompare(b.stationName),
+  );
 }

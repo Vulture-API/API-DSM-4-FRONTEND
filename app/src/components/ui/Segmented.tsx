@@ -4,7 +4,11 @@ import { type KeyboardEvent, useRef } from "react";
 
 import { cn } from "@/lib/cn";
 
-export type SegmentOption<T extends string> = { value: T; label: string; count?: number };
+export type SegmentOption<T extends string> = {
+  value: T;
+  label: string;
+  count?: number;
+};
 
 const NEXT_KEYS = ["ArrowRight", "ArrowDown"];
 const PREV_KEYS = ["ArrowLeft", "ArrowUp"];
@@ -32,8 +36,10 @@ export function Segmented<T extends string>({
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     let next: number | undefined;
-    if (NEXT_KEYS.includes(event.key)) next = (selectedIndex + 1) % options.length;
-    if (PREV_KEYS.includes(event.key)) next = (selectedIndex - 1 + options.length) % options.length;
+    if (NEXT_KEYS.includes(event.key))
+      next = (selectedIndex + 1) % options.length;
+    if (PREV_KEYS.includes(event.key))
+      next = (selectedIndex - 1 + options.length) % options.length;
     if (event.key === "Home") next = 0;
     if (event.key === "End") next = options.length - 1;
     if (next === undefined) return;
@@ -64,7 +70,9 @@ export function Segmented<T extends string>({
             onClick={() => onChange(option.value)}
             className={cn(
               "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition-colors",
-              active ? "bg-surface text-ink shadow-sm ring-1 ring-line" : "text-muted hover:text-ink",
+              active
+                ? "bg-surface text-ink shadow-sm ring-1 ring-line"
+                : "text-muted hover:text-ink",
             )}
           >
             {option.label}

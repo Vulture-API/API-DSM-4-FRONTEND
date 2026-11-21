@@ -16,7 +16,12 @@ export function communicationDelay(
   thresholdMinutes = COMMUNICATION_ALERT_MINUTES,
 ): string | null {
   if (!lastCommunicationAt) return "Sem registro de comunicação";
-  const minutes = Math.max(0, Math.floor((now.getTime() - new Date(lastCommunicationAt).getTime()) / 60_000));
+  const minutes = Math.max(
+    0,
+    Math.floor(
+      (now.getTime() - new Date(lastCommunicationAt).getTime()) / 60_000,
+    ),
+  );
   if (minutes <= thresholdMinutes) return null;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
@@ -33,7 +38,9 @@ export function LastCommunication({
   className?: string;
 }) {
   const delay = communicationDelay(lastCommunicationAt);
-  const title = lastCommunicationAt ? formatDateTime(lastCommunicationAt) : undefined;
+  const title = lastCommunicationAt
+    ? formatDateTime(lastCommunicationAt)
+    : undefined;
   if (!delay) {
     return (
       <span className={cn("text-muted", className)} title={title}>
@@ -42,7 +49,13 @@ export function LastCommunication({
     );
   }
   return (
-    <span className={cn("inline-flex items-center gap-1.5 font-medium text-danger", className)} title={title}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 font-medium text-danger",
+        className,
+      )}
+      title={title}
+    >
       <TriangleAlert className="size-4 shrink-0" aria-hidden />
       {delay}
     </span>

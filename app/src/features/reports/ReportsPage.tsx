@@ -28,13 +28,20 @@ export function ReportsPage() {
   const [startDate, setStartDate] = useState<string>(DEFAULT_START_DATE);
   const [endDate, setEndDate] = useState<string>(DEFAULT_END_DATE);
   const [days, setDays] = useState<string>(DEFAULT_DAYS);
-  const [exportingFormat, setExportingFormat] = useState<ReportExportFormat | null>(null);
+  const [exportingFormat, setExportingFormat] =
+    useState<ReportExportFormat | null>(null);
 
   const propertiesQuery = useProperties();
   const stationsQuery = useStations();
 
-  const properties = useMemo(() => propertiesQuery.data ?? [], [propertiesQuery.data]);
-  const stations = useMemo(() => stationsQuery.data ?? [], [stationsQuery.data]);
+  const properties = useMemo(
+    () => propertiesQuery.data ?? [],
+    [propertiesQuery.data],
+  );
+  const stations = useMemo(
+    () => stationsQuery.data ?? [],
+    [stationsQuery.data],
+  );
 
   const effectiveStationId = useMemo(() => {
     if (reportType === "forecast" && (stationId === "all" || !stationId)) {
@@ -71,12 +78,15 @@ export function ReportsPage() {
     setPropertyId(nextPropertyId);
     if (nextPropertyId !== "all" && stationId !== "all") {
       const currentStation = stations.find((s) => String(s.id) === stationId);
-      if (currentStation && String(currentStation.property_id) !== nextPropertyId) {
-        const firstForProp = stations.find((s) => String(s.property_id) === nextPropertyId);
+      if (
+        currentStation &&
+        String(currentStation.property_id) !== nextPropertyId
+      ) {
+        const firstForProp = stations.find(
+          (s) => String(s.property_id) === nextPropertyId,
+        );
         setStationId(
-          reportType === "forecast"
-            ? String(firstForProp?.id ?? "1")
-            : "all",
+          reportType === "forecast" ? String(firstForProp?.id ?? "1") : "all",
         );
       }
     }
@@ -84,7 +94,9 @@ export function ReportsPage() {
 
   function handleReset() {
     setPropertyId("all");
-    setStationId(reportType === "forecast" ? String(stations[0]?.id ?? "1") : "all");
+    setStationId(
+      reportType === "forecast" ? String(stations[0]?.id ?? "1") : "all",
+    );
     setStartDate(DEFAULT_START_DATE);
     setEndDate(DEFAULT_END_DATE);
     setDays(DEFAULT_DAYS);
@@ -98,7 +110,11 @@ export function ReportsPage() {
 
     setExportingFormat(format);
     try {
-      const exported = await reportsApi.export(reportQuery.data, format, validatedFilters);
+      const exported = await reportsApi.export(
+        reportQuery.data,
+        format,
+        validatedFilters,
+      );
       const blob = new Blob([exported.content], {
         type: exported.contentType,
       });
@@ -123,7 +139,8 @@ export function ReportsPage() {
   }
 
   const errorMessage = reportQuery.error
-    ? (reportQuery.error as Error).message || "Falha ao carregar os dados do relatório."
+    ? (reportQuery.error as Error).message ||
+      "Falha ao carregar os dados do relatório."
     : null;
 
   const canExport =

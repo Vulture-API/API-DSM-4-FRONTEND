@@ -8,7 +8,17 @@ const integrationFiles = ["src/**/*.integration.test.{ts,tsx}"];
 const coberturaParcial = process.env.COBERTURA_PARCIAL === "1";
 
 export default defineConfig({
-  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)), "server-only": fileURLToPath(new URL("./node_modules/next/dist/compiled/server-only/empty.js", import.meta.url)) } },
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "server-only": fileURLToPath(
+        new URL(
+          "./node_modules/next/dist/compiled/server-only/empty.js",
+          import.meta.url,
+        ),
+      ),
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],

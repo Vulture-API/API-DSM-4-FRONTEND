@@ -12,11 +12,26 @@ export function LoginScreen() {
   const auth = useAuth();
   const router = useRouter();
   useEffect(() => {
-    if (auth.user) router.replace(safeDestination(new URLSearchParams(window.location.search).get("next"), auth.user.permissions));
+    if (auth.user)
+      router.replace(
+        safeDestination(
+          new URLSearchParams(window.location.search).get("next"),
+          auth.user.permissions,
+        ),
+      );
   }, [auth.user, router]);
-  return <LoginPage onLogin={async (credentials) => {
-    const user = await auth.login(credentials);
-    router.replace(safeDestination(new URLSearchParams(window.location.search).get("next"), user.permissions));
-    router.refresh();
-  }} />;
+  return (
+    <LoginPage
+      onLogin={async (credentials) => {
+        const user = await auth.login(credentials);
+        router.replace(
+          safeDestination(
+            new URLSearchParams(window.location.search).get("next"),
+            user.permissions,
+          ),
+        );
+        router.refresh();
+      }}
+    />
+  );
 }

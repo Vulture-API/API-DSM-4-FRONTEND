@@ -50,15 +50,23 @@ export function StationsPage() {
   const [editing, setEditing] = useState<Station | "new" | null>(null);
   const [deleting, setDeleting] = useState<StationOverview | null>(null);
 
-  const stations = useMemo(() => overview.data?.stations ?? [], [overview.data]);
-  const byProperty = stations.filter((s) => !propertyId || s.property_id === Number(propertyId));
+  const stations = useMemo(
+    () => overview.data?.stations ?? [],
+    [overview.data],
+  );
+  const byProperty = stations.filter(
+    (s) => !propertyId || s.property_id === Number(propertyId),
+  );
   const term = search.trim().toLowerCase();
   const visible = byProperty.filter(
     (s) =>
       (status === "all" || s.status === status) &&
-      (!term || s.name.toLowerCase().includes(term) || s.mac_address.toLowerCase().includes(term)),
+      (!term ||
+        s.name.toLowerCase().includes(term) ||
+        s.mac_address.toLowerCase().includes(term)),
   );
-  const count = (value: StationStatus) => byProperty.filter((s) => s.status === value).length;
+  const count = (value: StationStatus) =>
+    byProperty.filter((s) => s.status === value).length;
 
   async function confirmDelete() {
     if (!deleting) return;
@@ -78,9 +86,15 @@ export function StationsPage() {
         title="Estações"
         description="Estações meteorológicas instaladas, seus sensores e a última comunicação."
         actions={
-          <Can permission="stations.create"><Button variant="light" icon={<Plus className="size-4" />} onClick={() => setEditing("new")}>
-            Nova estação
-          </Button></Can>
+          <Can permission="stations.create">
+            <Button
+              variant="light"
+              icon={<Plus className="size-4" />}
+              onClick={() => setEditing("new")}
+            >
+              Nova estação
+            </Button>
+          </Can>
         }
       />
 
@@ -114,7 +128,11 @@ export function StationsPage() {
               options={[
                 { value: "all", label: "Todas", count: byProperty.length },
                 { value: "Online", label: "Online", count: count("Online") },
-                { value: "Com alerta", label: "Com alerta", count: count("Com alerta") },
+                {
+                  value: "Com alerta",
+                  label: "Com alerta",
+                  count: count("Com alerta"),
+                },
                 { value: "Offline", label: "Offline", count: count("Offline") },
               ]}
             />
@@ -128,12 +146,23 @@ export function StationsPage() {
             ))}
           </div>
         ) : overview.error ? (
-          <ErrorState message={overview.error.message} onRetry={() => void overview.refetch()} />
+          <ErrorState
+            message={overview.error.message}
+            onRetry={() => void overview.refetch()}
+          />
         ) : visible.length === 0 ? (
           <EmptyState
             icon={<RadioTower className="size-5" />}
-            title={stations.length ? "Nenhuma estação com esses filtros" : "Nenhuma estação cadastrada"}
-            description={stations.length ? "Tente limpar a busca ou trocar o status." : "Cadastre a primeira estação para começar."}
+            title={
+              stations.length
+                ? "Nenhuma estação com esses filtros"
+                : "Nenhuma estação cadastrada"
+            }
+            description={
+              stations.length
+                ? "Tente limpar a busca ou trocar o status."
+                : "Cadastre a primeira estação para começar."
+            }
           />
         ) : (
           <Table>
@@ -153,38 +182,68 @@ export function StationsPage() {
               {visible.map((station) => (
                 <Tr key={station.id}>
                   <Td>
-                    <Link href={`/estacoes/${station.id}`} className="group flex items-center gap-3">
+                    <Link
+                      href={`/estacoes/${station.id}`}
+                      className="group flex items-center gap-3"
+                    >
                       <StatusDot status={station.status} />
                       <span className="min-w-0">
-                        <span className="block font-medium text-ink group-hover:text-brand-700">{station.name}</span>
-                        <span className="block font-mono text-xs text-faint">{station.mac_address}</span>
+                        <span className="block font-medium text-ink group-hover:text-brand-700">
+                          {station.name}
+                        </span>
+                        <span className="block font-mono text-xs text-faint">
+                          {station.mac_address}
+                        </span>
                         <span className="block text-xs text-muted md:hidden">
                           {station.property_name} ·{" "}
-                          {communicationDelay(station.last_communication_at) ?? formatRelative(station.last_communication_at)} ·{" "}
-                          {station.sensors_active}/{station.sensors_total} sensores
+                          {communicationDelay(station.last_communication_at) ??
+                            formatRelative(station.last_communication_at)}{" "}
+                          · {station.sensors_active}/{station.sensors_total}{" "}
+                          sensores
                         </span>
                       </span>
                       <span className="sr-only">, {station.status}</span>
                     </Link>
                   </Td>
-                  <Td className="hidden text-muted md:table-cell">{station.property_name}</Td>
+                  <Td className="hidden text-muted md:table-cell">
+                    {station.property_name}
+                  </Td>
                   <Td>
-                    <StationStatusBadge status={station.status} alerts={station.active_alerts} />
+                    <StationStatusBadge
+                      status={station.status}
+                      alerts={station.active_alerts}
+                    />
                   </Td>
                   <Td className="hidden text-right md:table-cell">
-                    <SensorsMeter active={station.sensors_active} total={station.sensors_total} />
+                    <SensorsMeter
+                      active={station.sensors_active}
+                      total={station.sensors_total}
+                    />
                   </Td>
                   <Td className="hidden sm:table-cell">
-                    <LastCommunication lastCommunicationAt={station.last_communication_at} />
+                    <LastCommunication
+                      lastCommunicationAt={station.last_communication_at}
+                    />
                   </Td>
                   <Td>
                     <RowActions>
-                      <Can permission="stations.update"><IconButton label={`Editar ${station.name}`} onClick={() => setEditing(toStation(station))}>
-                        <Pencil className="size-4" />
-                      </IconButton></Can>
-                      <Can permission="stations.delete"><IconButton label={`Excluir ${station.name}`} onClick={() => setDeleting(station)} className="hover:text-danger">
-                        <Trash2 className="size-4" />
-                      </IconButton></Can>
+                      <Can permission="stations.update">
+                        <IconButton
+                          label={`Editar ${station.name}`}
+                          onClick={() => setEditing(toStation(station))}
+                        >
+                          <Pencil className="size-4" />
+                        </IconButton>
+                      </Can>
+                      <Can permission="stations.delete">
+                        <IconButton
+                          label={`Excluir ${station.name}`}
+                          onClick={() => setDeleting(station)}
+                          className="hover:text-danger"
+                        >
+                          <Trash2 className="size-4" />
+                        </IconButton>
+                      </Can>
                       <Link
                         href={`/estacoes/${station.id}`}
                         aria-label={`Abrir ${station.name}`}
@@ -202,20 +261,26 @@ export function StationsPage() {
       </Card>
 
       {editing && (
-        <Can permission={editing === "new" ? "stations.create" : "stations.update"}><StationFormModal
-          open
-          station={editing === "new" ? undefined : editing}
-          onClose={() => setEditing(null)}
-        /></Can>
+        <Can
+          permission={editing === "new" ? "stations.create" : "stations.update"}
+        >
+          <StationFormModal
+            open
+            station={editing === "new" ? undefined : editing}
+            onClose={() => setEditing(null)}
+          />
+        </Can>
       )}
-      <Can permission="stations.delete"><ConfirmDialog
-        open={Boolean(deleting)}
-        title="Excluir estação"
-        message={`${deleting?.name ?? ""} e todos os sensores e leituras dela serão apagados. Essa ação não pode ser desfeita.`}
-        loading={remove.isPending}
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleting(null)}
-      /></Can>
+      <Can permission="stations.delete">
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          title="Excluir estação"
+          message={`${deleting?.name ?? ""} e todos os sensores e leituras dela serão apagados. Essa ação não pode ser desfeita.`}
+          loading={remove.isPending}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleting(null)}
+        />
+      </Can>
     </>
   );
 }
@@ -223,11 +288,21 @@ export function StationsPage() {
 function SensorsMeter({ active, total }: { active: number; total: number }) {
   const ratio = total ? active / total : 0;
   return (
-    <span className="inline-flex items-center gap-2" title={`${active} de ${total} sensores operacionais`}>
-      <span className="hidden h-1.5 w-14 overflow-hidden rounded-full bg-subtle sm:block" aria-hidden>
+    <span
+      className="inline-flex items-center gap-2"
+      title={`${active} de ${total} sensores operacionais`}
+    >
+      <span
+        className="hidden h-1.5 w-14 overflow-hidden rounded-full bg-subtle sm:block"
+        aria-hidden
+      >
         <span
           className="block h-full rounded-full"
-          style={{ width: `${ratio * 100}%`, background: ratio === 1 ? "var(--color-dot-ok)" : "var(--color-dot-warn)" }}
+          style={{
+            width: `${ratio * 100}%`,
+            background:
+              ratio === 1 ? "var(--color-dot-ok)" : "var(--color-dot-warn)",
+          }}
         />
       </span>
       <span className="tabular-nums text-muted">

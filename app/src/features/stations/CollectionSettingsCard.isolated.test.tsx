@@ -9,9 +9,24 @@ import { CollectionSettingsCard } from "./CollectionSettingsCard";
 
 const state = vi.hoisted(() => ({
   permissions: [] as string[],
-  collection: { data: undefined as StationCollectionSettings | undefined, isPending: false, error: null as Error | null, refetch: vi.fn() },
-  status: { data: undefined as StationStatusResponse | undefined, isPending: false, error: null as Error | null, refetch: vi.fn() },
-  save: { isPending: false, error: null as Error | null, mutateAsync: vi.fn(), reset: vi.fn() },
+  collection: {
+    data: undefined as StationCollectionSettings | undefined,
+    isPending: false,
+    error: null as Error | null,
+    refetch: vi.fn(),
+  },
+  status: {
+    data: undefined as StationStatusResponse | undefined,
+    isPending: false,
+    error: null as Error | null,
+    refetch: vi.fn(),
+  },
+  save: {
+    isPending: false,
+    error: null as Error | null,
+    mutateAsync: vi.fn(),
+    reset: vi.fn(),
+  },
   success: vi.fn(),
 }));
 
@@ -20,35 +35,62 @@ vi.mock("./hooks", () => ({
   useStationStatus: () => state.status,
   useSaveCollectionSettings: () => state.save,
 }));
-vi.mock("@/features/auth/AuthProvider", () => ({ useCan: (permission: string) => state.permissions.includes(permission) }));
-vi.mock("@/components/ui/Toast", () => ({ useToast: () => ({ success: state.success }) }));
+vi.mock("@/features/auth/AuthProvider", () => ({
+  useCan: (permission: string) => state.permissions.includes(permission),
+}));
+vi.mock("@/components/ui/Toast", () => ({
+  useToast: () => ({ success: state.success }),
+}));
 
-const mount = () => render(<CollectionSettingsCard stationId={1} stationName="Estação Sede" />);
-const field = () => screen.getByLabelText("Novo intervalo de coleta (segundos)");
-const saveButton = () => screen.getByRole("button", { name: "Salvar intervalo" });
+const mount = () =>
+  render(<CollectionSettingsCard stationId={1} stationName="Estação Sede" />);
+const field = () =>
+  screen.getByLabelText("Novo intervalo de coleta (segundos)");
+const saveButton = () =>
+  screen.getByRole("button", { name: "Salvar intervalo" });
 
 // SCRUM-590: componente isolado de autenticação, TanStack Query e rede.
 describe("CollectionSettingsCard isolado", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    state.permissions = ["station-collection.read", "station-collection.update"];
-    state.collection.data = { station_id: 1, mac_address: "AA:BB:CC:DD:EE:01", collection_interval_seconds: 60,
-      min_interval_seconds: 10, max_interval_seconds: 300 };
+    state.permissions = [
+      "station-collection.read",
+      "station-collection.update",
+    ];
+    state.collection.data = {
+      station_id: 1,
+      mac_address: "AA:BB:CC:DD:EE:01",
+      collection_interval_seconds: 60,
+      min_interval_seconds: 10,
+      max_interval_seconds: 300,
+    };
     state.collection.isPending = false;
     state.collection.error = null;
-    state.status.data = { station_id: 1, status: "Online", last_communication_at: "2026-11-17T12:00:00Z",
-      checked_at: "2026-11-17T12:01:00Z", offline_threshold_minutes: 10 };
+    state.status.data = {
+      station_id: 1,
+      status: "Online",
+      last_communication_at: "2026-11-17T12:00:00Z",
+      checked_at: "2026-11-17T12:01:00Z",
+      offline_threshold_minutes: 10,
+    };
     state.status.isPending = false;
     state.status.error = null;
     state.save.isPending = false;
     state.save.error = null;
     state.save.mutateAsync.mockReset().mockResolvedValue(undefined);
-    vi.stubGlobal("fetch", vi.fn(() => { throw new Error("Teste unitário não deve acessar a rede"); }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        throw new Error("Teste unitário não deve acessar a rede");
+      }),
+    );
   });
 
   it("apresenta frequência e identificação sem acessar serviços", () => {
     mount();
-    expect(screen.getByText("Estação selecionada: Estação Sede")).toBeInTheDocument();
+    expect(
+      screen.getByText("Estação selecionada: Estação Sede"),
+    ).toBeInTheDocument();
     expect(screen.getByText("AA:BB:CC:DD:EE:01")).toBeInTheDocument();
     expect(screen.getByText("60 segundos (1 minuto)")).toBeInTheDocument();
     expect(field()).toHaveValue("60");
@@ -56,17 +98,24 @@ describe("CollectionSettingsCard isolado", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it.each([10, 300])("permite informar e enviar o limite válido %s como número", async (seconds) => {
-    const user = userEvent.setup();
-    mount();
-    await user.clear(field());
-    await user.type(field(), String(seconds));
-    expect(saveButton()).toBeEnabled();
-    await user.click(saveButton());
-    await waitFor(() => expect(state.success).toHaveBeenCalledWith("Intervalo de coleta atualizado."));
-    expect(state.save.mutateAsync).toHaveBeenCalledExactlyOnceWith(seconds);
-    expect(fetch).not.toHaveBeenCalled();
-  });
+  it.each([10, 300])(
+    "permite informar e enviar o limite válido %s como número",
+    async (seconds) => {
+      const user = userEvent.setup();
+      mount();
+      await user.clear(field());
+      await user.type(field(), String(seconds));
+      expect(saveButton()).toBeEnabled();
+      await user.click(saveButton());
+      await waitFor(() =>
+        expect(state.success).toHaveBeenCalledWith(
+          "Intervalo de coleta atualizado.",
+        ),
+      );
+      expect(state.save.mutateAsync).toHaveBeenCalledExactlyOnceWith(seconds);
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
 
   it.each([
     ["", "Informe o intervalo de coleta."],
@@ -108,7 +157,9 @@ describe("CollectionSettingsCard isolado", () => {
     const user = userEvent.setup();
     state.collection.data!.max_interval_seconds = 900;
     mount();
-    expect(screen.getByText("Número inteiro entre 10 e 900 segundos.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Número inteiro entre 10 e 900 segundos."),
+    ).toBeInTheDocument();
     await user.clear(field());
     await user.type(field(), "600");
     await user.click(saveButton());
@@ -122,7 +173,9 @@ describe("CollectionSettingsCard isolado", () => {
     await user.clear(field());
     await user.type(field(), "120");
     await user.click(saveButton());
-    await waitFor(() => expect(state.save.mutateAsync).toHaveBeenCalledWith(120));
+    await waitFor(() =>
+      expect(state.save.mutateAsync).toHaveBeenCalledWith(120),
+    );
     expect(field()).toHaveValue("120");
     expect(screen.getByText("60 segundos (1 minuto)")).toBeInTheDocument();
     expect(state.success).not.toHaveBeenCalled();
@@ -133,11 +186,20 @@ describe("CollectionSettingsCard isolado", () => {
     const { rerender } = mount();
     await user.clear(field());
     await user.type(field(), "180");
-    state.collection.data = { ...state.collection.data!, station_id: 2, collection_interval_seconds: 120, mac_address: "AA:BB:CC:DD:EE:02" };
-    rerender(<CollectionSettingsCard stationId={2} stationName="Estação Norte" />);
+    state.collection.data = {
+      ...state.collection.data!,
+      station_id: 2,
+      collection_interval_seconds: 120,
+      mac_address: "AA:BB:CC:DD:EE:02",
+    };
+    rerender(
+      <CollectionSettingsCard stationId={2} stationName="Estação Norte" />,
+    );
     expect(field()).toHaveValue("120");
     expect(screen.getByText("120 segundos (2 minutos)")).toBeInTheDocument();
-    expect(screen.getByText("Estação selecionada: Estação Norte")).toBeInTheDocument();
+    expect(
+      screen.getByText("Estação selecionada: Estação Norte"),
+    ).toBeInTheDocument();
     expect(state.save.mutateAsync).not.toHaveBeenCalled();
   });
 
@@ -145,7 +207,9 @@ describe("CollectionSettingsCard isolado", () => {
     state.collection.data = undefined;
     state.collection.isPending = true;
     mount();
-    expect(screen.getByText("Carregando configuração da coleta…")).toHaveAttribute("role", "status");
+    expect(
+      screen.getByText("Carregando configuração da coleta…"),
+    ).toHaveAttribute("role", "status");
     expect(screen.queryByRole("form")).not.toBeInTheDocument();
   });
 
@@ -153,16 +217,19 @@ describe("CollectionSettingsCard isolado", () => {
     [404, "Estação não encontrada ou removida"],
     [403, "Você não tem permissão"],
     [503, "Serviço de coleta indisponível"],
-  ])("trata configuração ausente com erro %s e permite repetir a consulta", async (status, message) => {
-    const user = userEvent.setup();
-    state.collection.data = undefined;
-    state.collection.error = new ApiError(status, "raw");
-    mount();
-    expect(screen.getByRole("alert")).toHaveTextContent(message);
-    expect(screen.queryByRole("form")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
-    expect(state.collection.refetch).toHaveBeenCalledOnce();
-  });
+  ])(
+    "trata configuração ausente com erro %s e permite repetir a consulta",
+    async (status, message) => {
+      const user = userEvent.setup();
+      state.collection.data = undefined;
+      state.collection.error = new ApiError(status, "raw");
+      mount();
+      expect(screen.getByRole("alert")).toHaveTextContent(message);
+      expect(screen.queryByRole("form")).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
+      expect(state.collection.refetch).toHaveBeenCalledOnce();
+    },
+  );
 
   it("não permite salvar configuração em cache após falha de atualização", async () => {
     state.collection.error = new ApiError(503, "raw");
@@ -185,9 +252,14 @@ describe("CollectionSettingsCard isolado", () => {
 
   it("apresenta o erro do salvamento e limpa a mensagem ao editar novamente", async () => {
     const user = userEvent.setup();
-    state.save.error = new ApiError(400, "Intervalo não permitido pelo servidor");
+    state.save.error = new ApiError(
+      400,
+      "Intervalo não permitido pelo servidor",
+    );
     mount();
-    expect(screen.getByRole("alert")).toHaveTextContent("Intervalo não permitido pelo servidor");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Intervalo não permitido pelo servidor",
+    );
     await user.type(field(), "0");
     expect(state.save.reset).toHaveBeenCalled();
   });
@@ -196,7 +268,10 @@ describe("CollectionSettingsCard isolado", () => {
     state.status.data = undefined;
     state.status.isPending = true;
     mount();
-    expect(screen.getByText("Consultando comunicação…")).toHaveAttribute("role", "status");
+    expect(screen.getByText("Consultando comunicação…")).toHaveAttribute(
+      "role",
+      "status",
+    );
     expect(screen.queryByText("Em comunicação")).not.toBeInTheDocument();
     expect(screen.queryByText("Sem comunicação")).not.toBeInTheDocument();
     expect(field()).toBeEnabled();

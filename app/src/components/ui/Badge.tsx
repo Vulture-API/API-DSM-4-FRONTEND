@@ -46,9 +46,19 @@ export function Badge({
       {dot && (
         <span className="relative flex size-1.5">
           {pulse && (
-            <span className={cn("absolute inline-flex size-full animate-ping rounded-full opacity-60", dots[tone])} />
+            <span
+              className={cn(
+                "absolute inline-flex size-full animate-ping rounded-full opacity-60",
+                dots[tone],
+              )}
+            />
           )}
-          <span className={cn("relative inline-flex size-1.5 rounded-full", dots[tone])} />
+          <span
+            className={cn(
+              "relative inline-flex size-1.5 rounded-full",
+              dots[tone],
+            )}
+          />
         </span>
       )}
       {children}
